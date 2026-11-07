@@ -1,0 +1,67 @@
+# {{ finding.title | md }}
+
+**Severity**: {{ finding.severity | md }}
+{% if finding.cvss_score is not none %}
+
+**CVSS Score**: {{ finding.cvss_score }}{% if finding.cvss_vector %} ({{ finding.cvss_vector | md }}){% endif %}
+{% endif %}
+
+**Source**: {{ finding.source_tool | md }}
+{% if finding.port %}
+
+**Port**: {{ finding.port | md }}
+{% endif %}
+{% if finding.identifiers %}
+
+**Identifiers**: {% for ident in finding.identifiers %}{{ ident | md }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}
+
+## Description
+{{ finding.description | mdtext }}
+
+{% if finding.remediation %}
+## Remediation
+{{ finding.remediation | mdtext }}
+{% endif %}
+
+{% if finding.references %}
+## References
+{% for url in finding.references %}
+- <{{ url }}>
+{% endfor %}
+
+{% endif %}
+{% if finding.sources %}
+## Reported by
+{% for s in finding.sources %}
+
+### {{ s.source_tool | md }}
+
+**Severity**: {{ s.severity | md }}{% if s.cvss_score is not none %}, **CVSS Score**: {{ s.cvss_score }}{% if s.cvss_vector %} ({{ s.cvss_vector | md }}){% endif %}{% endif %}
+
+{{ s.description | mdtext }}
+{% if s.remediation %}
+
+**Remediation**: {{ s.remediation | mdtext }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+## Hosts
+{% for host in finding.hosts %}
+- {{ host.ip | md }}{% if host.hostname %} ({{ host.hostname | md }}){% endif %}{% if host.os %} - OS: {{ host.os | md }}{% endif %}
+{% else %}
+No host information.
+{% endfor %}
+
+## Evidence
+{% for ev in finding.evidence %}
+### {{ ev.type | md }}{% if ev.source %} ({{ ev.source | md }}){% endif %}
+
+{% set fence = ev.data | fence %}
+{{ fence }}
+{{ ev.data }}
+{{ fence }}
+{% else %}
+No evidence provided.
+{% endfor %}

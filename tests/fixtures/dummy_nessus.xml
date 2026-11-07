@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+    <Policy>...</Policy>
+    <Report name="My Report">
+        <ReportHost name="192.168.1.1">
+            <HostProperties>
+                <tag name="host-ip">192.168.1.1</tag>
+                <tag name="host-fqdn">example.com</tag>
+                <tag name="operating-system">Windows</tag>
+            </HostProperties>
+            <ReportItem port="443" svc_name="www" protocol="tcp" severity="3" pluginID="12345" pluginName="SSL Certificate Expiry" pluginFamily="General">
+                <description>The SSL certificate will expire soon.</description>
+                <solution>Renew the certificate.</solution>
+                <plugin_output>The certificate expires in 3 days.</plugin_output>
+                <cvss_base_score>4.3</cvss_base_score>
+                <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:N/I:P/A:N</cvss_vector>
+                <risk_factor>Medium</risk_factor>
+            </ReportItem>
+        </ReportHost>
+    </Report>
+</NessusClientData_v2>

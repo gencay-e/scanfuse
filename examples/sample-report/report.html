@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='color-scheme' content='light dark'>
+<title>Pentest Report</title>
+<style>
+:root { --fg: #24292f; --bg: #ffffff; --muted-bg: #f6f8fa; --border: #d0d7de; --head-bg: #eaeef2; --link: #0969da; }
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #e6edf3; --bg: #0d1117; --muted-bg: #161b22; --border: #30363d; --head-bg: #21262d; --link: #4493f8; }
+}
+body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); }
+a { color: var(--link); }
+table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+th { background-color: var(--head-bg); }
+pre { background: var(--muted-bg); padding: 15px; overflow-x: auto; border: 1px solid var(--border); }
+code { background: var(--muted-bg); }
+hr { margin: 40px 0; border: 0; border-top: 2px solid var(--border); }
+.filter-bar { padding: 15px; background: var(--muted-bg); border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-bar input, .filter-bar select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); }
+</style>
+</head>
+<body>
+
+<div class="filter-bar">
+  <input type="text" id="searchTitle" placeholder="Search by title..." aria-label="Search by title">
+  <select id="filterSeverity" aria-label="Filter by severity">
+    <option value="All">All Severities</option>
+    <option value="Critical">Critical</option>
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+    <option value="Info">Info</option>
+  </select>
+</div>
+<script>
+document.getElementById('searchTitle').addEventListener('input', filterFindings);
+document.getElementById('filterSeverity').addEventListener('change', filterFindings);
+function filterFindings() {
+  const search = document.getElementById('searchTitle').value.toLowerCase();
+  const sev = document.getElementById('filterSeverity').value;
+  document.querySelectorAll('.finding-block').forEach(el => {
+    const titleMatch = el.getAttribute('data-title').includes(search);
+    const sevMatch = sev === 'All' || el.getAttribute('data-severity') === sev;
+    el.style.display = (titleMatch && sevMatch) ? 'block' : 'none';
+  });
+}
+</script>
+<h1>Pentest Report Summary</h1>
+<h2>Import status</h2>
+<p>Complete. All inputs were read.</p>
+<h2>Executive Summary</h2>
+<p>Total Findings: 39</p>
+<h3>Risk Matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>1</td>
+</tr>
+<tr>
+<td>High</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Low</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Info</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<h2>Findings Overview</h2>
+<ul>
+<li>
+<p>[Critical] <a href="#moby-authz-zero-length-regression" rel="noopener noreferrer">moby: Authz zero length regression</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#ssl-scanner-offer-sslv3" rel="noopener noreferrer">[SSL Scanner] Offer SSLv3</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#ssl-scanner-poodle-sslv3" rel="noopener noreferrer">[SSL Scanner] POODLE (SSLv3)</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#asymmetric-private-key" rel="noopener noreferrer">Asymmetric Private Key</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#attacker-can-cause-kyverno-user-to-unintentionally-consume-insecure-image" rel="noopener noreferrer">Attacker can cause Kyverno user to unintentionally consume insecure image</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#cilium-has-insecure-ipsec-transport-encryption" rel="noopener noreferrer">Cilium has insecure IPsec transport encryption</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#cilium-leaks-sensitive-information-in-cilium-bugtool" rel="noopener noreferrer">Cilium leaks sensitive information in cilium-bugtool</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#cross-site-scripting" rel="noopener noreferrer">Cross Site Scripting</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#external-service-interaction-dns" rel="noopener noreferrer">External service interaction (DNS)</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#intermittent-http-policy-bypass" rel="noopener noreferrer">Intermittent HTTP policy bypass</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default" rel="noopener noreferrer">Kyverno's PolicyException objects can be created in any namespace by default</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#path-traversal" rel="noopener noreferrer">Path Traversal</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#sql-injection" rel="noopener noreferrer">SQL Injection</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[High] <a href="#sql-injection-fingerprinting" rel="noopener noreferrer">SQL Injection Fingerprinting</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#ssl-scanner-breach" rel="noopener noreferrer">[SSL Scanner] BREACH</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#cilium-s-cidr-deny-policies-may-not-take-effect-when-a-more-narrow-cidr-allow-is-present" rel="noopener noreferrer">Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#cosign-malicious-artifects-can-cause-machine-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious artifects can cause machine-wide denial of service</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#cosign-malicious-attachments-can-cause-system-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious attachments can cause system-wide denial of service</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#cross-site-request-forgery" rel="noopener noreferrer">Cross Site Request Forgery</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#directory-browsing" rel="noopener noreferrer">Directory browsing</a> (Source: zap, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#go-retryablehttp-url-might-write-sensitive-information-to-log-file" rel="noopener noreferrer">go-retryablehttp: url might write sensitive information to log file</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#golang-net-http-x-net-http2-unlimited-number-of-continuation-frames-causes-dos" rel="noopener noreferrer">golang: net/http, x/net/http2: unlimited number of CONTINUATION frames causes DoS</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#jose-go-improper-handling-of-highly-compressed-data" rel="noopener noreferrer">jose-go: improper handling of highly compressed data</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#jwt-token" rel="noopener noreferrer">JWT token</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#kyverno-resource-with-a-deletiontimestamp-may-allow-policy-circumvention" rel="noopener noreferrer">Kyverno resource with a deletionTimestamp may allow policy circumvention</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#kyverno-seccomp-control-can-be-circumvented" rel="noopener noreferrer">kyverno seccomp control can be circumvented</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#kyverno-vulnerable-due-to-usage-of-insecure-cipher" rel="noopener noreferrer">Kyverno vulnerable due to usage of insecure cipher</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#mholt-archiver-path-traversal-vulnerability" rel="noopener noreferrer">mholt/archiver: path traversal vulnerability</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#microsoft-windows-remote-desktop-protocol-server-man-in-the-middle-weakness" rel="noopener noreferrer">Microsoft Windows Remote Desktop Protocol Server Man-in-the-Middle Weakness</a> (Source: nessus, 2 hosts)</p>
+</li>
+<li>
+<p>[Medium] <a href="#opa-opa-smb-force-authentication" rel="noopener noreferrer">opa: OPA SMB Force-Authentication</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#policy-bypass-for-host-firewall-policy-due-to-race-condition-in-cilium-agent" rel="noopener noreferrer">Policy bypass for Host Firewall policy due to race condition in Cilium agent</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#smb-signing-disabled" rel="noopener noreferrer">SMB Signing Disabled</a> (Source: nessus, 2 hosts)</p>
+</li>
+<li>
+<p>[Medium] <a href="#ssl-certificate" rel="noopener noreferrer">SSL certificate</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#strict-transport-security-misconfiguration" rel="noopener noreferrer">Strict Transport Security Misconfiguration</a> (Source: burp, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#terminal-services-encryption-level-is-medium-or-low" rel="noopener noreferrer">Terminal Services Encryption Level is Medium or Low</a> (Source: nessus, 2 hosts)</p>
+</li>
+<li>
+<p>[Medium] <a href="#unencrypted-ingress-health-traffic-when-using-wireguard-transparent-encryption" rel="noopener noreferrer">Unencrypted ingress/health traffic when using Wireguard transparent encryption</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-ipsec-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using IPsec and L7 policies</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-wireguard-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using WireGuard and L7 policies</a> (Source: trivy, 1 host)</p>
+</li>
+<li>
+<p>[Medium] <a href="#unencrypted-traffic-between-pods-when-using-wireguard-and-an-external-kvstore" rel="noopener noreferrer">Unencrypted traffic between pods when using Wireguard and an external kvstore</a> (Source: trivy, 1 host)</p>
+</li>
+</ul>
+<h2>Affected Hosts</h2>
+<ul>
+<li>
+<p>10.2.100.1</p>
+</li>
+<li>
+<p>unknown</p>
+</li>
+<li>
+<p>127.0.0.1</p>
+</li>
+<li>
+<p>10.31.112.24</p>
+</li>
+<li>
+<p>10.31.112.23</p>
+</li>
+</ul>
+<div id="cross-site-request-forgery" class="finding-block" data-severity="Medium" data-title="cross site request forgery"><hr>
+<h1>Cross Site Request Forgery</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:10014</p>
+<h2>Description</h2>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<h2>Remediation</h2>
+<p>Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
+</li>
+<li>
+<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
+</li>
+</ul>
+<h2>Reported by</h2>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
+<p>CSRF attacks are effective in a number of situations, including:</p>
+<ul>
+<li>The victim has an active session on the target site.</li>
+<li>The victim is authenticated via HTTP auth on the target site.</li>
+<li>The victim is on the same local network as the target site.</li>
+</ul>
+<p>CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p>
+<p>Phase: Implementation
+Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p>
+<p>Phase: Architecture and Design
+Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).
+Note that this can be bypassed using XSS.</p>
+<p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.
+Note that this can be bypassed using XSS.</p>
+<p>Use the ESAPI Session Management control.
+This control includes a component for CSRF.</p>
+<p>Do not use the GET method for any request that triggers a state change.</p>
+<p>Phase: Implementation
+Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XSS-reflected.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/LDAPInjection.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/EvalInjection.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/SQLI.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XSS-cookie.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XPathInjection.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/FormatString.php
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/OSCommandInjection.php
+</code></pre></div>
+<div id="directory-browsing" class="finding-block" data-severity="Medium" data-title="directory browsing"><hr>
+<h1>Directory browsing</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:0</p>
+<h2>Description</h2>
+<p>It is possible to view the directory listing.  Directory listing may reveal hidden scripts, include files , backup source files etc which be accessed to read sensitive information.</p>
+<h2>Remediation</h2>
+<p>Disable directory browsing.  If this is required, make sure the listed files does not induce risks.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://httpd.apache.org/docs/mod/core.html#options" rel="noopener noreferrer">http://httpd.apache.org/docs/mod/core.html#options</a></p>
+</li>
+<li>
+<p><a href="http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html" rel="noopener noreferrer">http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request</h3>
+<pre><code>Request: http://10.2.100.1/demo/DirectoryIndexing/
+</code></pre></div>
+<div id="path-traversal" class="finding-block" data-severity="High" data-title="path traversal"><hr>
+<h1>Path Traversal</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:6</p>
+<h2>Description</h2>
+<p>The Path Traversal attack technique allows an attacker access to files, directories, and commands that potentially reside outside the web document root directory. An attacker may manipulate a URL in such a way that the web site will execute or reveal the contents of arbitrary files anywhere on the web server. Any device that exposes an HTTP-based interface is potentially vulnerable to Path Traversal.</p>
+<p>Most web sites restrict user access to a specific portion of the file-system, typically called the "web document root" or "CGI root" directory. These directories contain the files intended for user access and the executable necessary to drive web application functionality. To access files or execute commands anywhere on the file-system, Path Traversal attacks will utilize the ability of special-characters sequences.</p>
+<p>The most basic Path Traversal attack uses the "../" special-character sequence to alter the resource location requested in the URL. Although most popular web servers will prevent this technique from escaping the web document root, alternate encodings of the "../" sequence may help bypass the security filters. These method variations include valid and invalid Unicode-encoding ("..%u2216" or "..%c0%af") of the forward slash character, backslash characters ("..\") on Windows-based servers, URL encoded characters "%2e%2e%2f"), and double URL encoding ("..%255c") of the backslash character.</p>
+<p>Even if the web server properly restricts Path Traversal attempts in the URL path, a web application itself may still be vulnerable due to improper handling of user-supplied input. This is a common problem of web applications that use template mechanisms or load static text from files. In variations of the attack, the original URL parameter value is substituted with the file name of one of the web application's dynamic scripts. Consequently, the results can reveal source code because the file is interpreted as text instead of an executable script. These techniques often employ additional special characters such as the dot (".") to reveal the listing of the current working directory, or "%00" NULL characters in order to bypass rudimentary file extension checks.</p>
+<h2>Remediation</h2>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>For filenames, use stringent whitelists that limit the character set to be used. If feasible, only allow a single "." character in the filename to avoid weaknesses, and exclude directory separators such as "/". Use a whitelist of allowable file extensions.</p>
+<p>Warning: if you attempt to cleanse your data, then do so that the end result is not in the form that can be dangerous. A sanitizing mechanism can remove characters such as '.' and ';' which may be required for some exploits. An attacker can try to fool the sanitizing mechanism into "cleaning" data into a dangerous form. Suppose the attacker injects a '.' inside a filename (e.g. "sensi.tiveFile") and the sanitizing mechanism removes the character resulting in the valid filename, "sensitiveFile". If the input data are now assumed to be safe, then the file may be compromised. </p>
+<p>Inputs should be decoded and canonicalized to the application's current internal representation before being validated. Make sure that your application does not decode the same input twice. Such errors could be used to bypass whitelist schemes by introducing dangerous inputs after they have been checked.</p>
+<p>Use a built-in path canonicalization function (such as realpath() in C) that produces the canonical version of the pathname, which effectively removes ".." sequences and symbolic links.</p>
+<p>Run your code using the lowest privileges that are required to accomplish the necessary tasks. If possible, create isolated accounts with limited privileges that are only used for a single task. That way, a successful attack will not immediately give the attacker access to the rest of the software or its environment. For example, database applications rarely need to run as the database administrator, especially in day-to-day operations.</p>
+<p>When the set of acceptable objects, such as filenames or URLs, is limited or known, create a mapping from a set of fixed input values (such as numeric IDs) to the actual filenames or URLs, and reject all other inputs.</p>
+<p>Run your code in a "jail" or similar sandbox environment that enforces strict boundaries between the process and the operating system. This may effectively restrict which files can be accessed in a particular directory or which commands can be executed by your software.</p>
+<p>OS-level examples include the Unix chroot jail, AppArmor, and SELinux. In general, managed code may provide some protection. For example, java.io.FilePermission in the Java SecurityManager allows you to specify restrictions on file operations.</p>
+<p>This may not be a feasible solution, and it only limits the impact to the operating system; the rest of your application may still be subject to compromise.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://projects.webappsec.org/Path-Traversal" rel="noopener noreferrer">http://projects.webappsec.org/Path-Traversal</a></p>
+</li>
+<li>
+<p><a href="http://cwe.mitre.org/data/definitions/22.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/22.html</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request</h3>
+<pre><code>Request: http://10.2.100.1/demo/PathTraversal.php?action=%5cWindows%5csystem.ini
+Parameter: action
+Attack: null
+</code></pre>
+<h3>other-info</h3>
+<pre><code>%5cWindows%5csystem.ini
+</code></pre></div>
+<div id="sql-injection-fingerprinting" class="finding-block" data-severity="High" data-title="sql injection fingerprinting"><hr>
+<h1>SQL Injection Fingerprinting</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:40004</p>
+<h2>Description</h2>
+<p>SQL injection may be possible.</p>
+<h2>Remediation</h2>
+<p>Do not trust client side input even if there is client side validation.  In general, If the input string is numeric, type check it.
+If the application used JDBC, use PreparedStatement or CallableStatement with parameters passed by '?'
+If the application used ASP, use ADO Command Objects with strong type checking and parameterized query.
+If stored procedure or bind variables can be used, use it for parameter passing into query.  Do not just concatenate string into query in the stored procedure!
+Do not create dynamic SQL query by simple string concatentation.
+Use minimum database user privilege for the application.  This does not eliminate SQL injection but minimize its damage.  Eg if the application require reading one table only, grant such access to the application.  Avoid using 'sa' or 'db-owner'.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></p>
+</li>
+<li>
+<p><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></p>
+</li>
+<li>
+<p><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></p>
+</li>
+<li>
+<p><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request</h3>
+<pre><code>Request: http://10.2.100.1/demo/SQLI2.php
+Parameter: username
+Attack: 1'INJECTED_PARAM
+</code></pre>
+<h3>other-info</h3>
+<pre><code>SQL
+</code></pre></div>
+<div id="sql-injection" class="finding-block" data-severity="High" data-title="sql injection"><hr>
+<h1>SQL Injection</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:40005</p>
+<h2>Description</h2>
+<p>SQL injection is possible.  User parameters submitted will be formulated into a SQL query for database processing.  If the query is built by simple 'string concatenation', it is possible to modify the meaning of the query by carefully crafting the parameters.  Depending on the access right and type of database used, tampered query can be used to retrieve sensitive information from the database or execute arbitrary code.  MS SQL and PostGreSQL, which supports multiple statements, may be exploited if the database access right is more powerful.
+This can occur in URL query strings, POST paramters or even cookies.  Currently check on cookie is not supported by Paros.  You should check SQL injection manually as well as some blind SQL injection areas cannot be discovered by this check.</p>
+<h2>Remediation</h2>
+<p>Do not trust client side input even if there is client side validation.  In general, If the input string is numeric, type check it.
+If the application used JDBC, use PreparedStatement or CallableStatement with parameters passed by '?'
+If the application used ASP, use ADO Command Objects with strong type checking and parameterized query.
+If stored procedure or bind variables can be used, use it for parameter passing into query.  Do not just concatenate string into query in the stored procedure!
+Do not create dynamic SQL query by simple string concatentation.
+Use minimum database user privilege for the application.  This does not eliminate SQL injection but minimize its damage.  Eg if the application require reading one table only, grant such access to the application.  Avoid using 'sa' or 'db-owner'.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></p>
+</li>
+<li>
+<p><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></p>
+</li>
+<li>
+<p><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></p>
+</li>
+<li>
+<p><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request</h3>
+<pre><code>Request: http://10.2.100.1/demo/SQLI2.php
+Parameter: username
+Attack: 1%27INJECTED_PARAM'INJECTED_PARAM
+</code></pre>
+<h3>other-info</h3>
+<pre><code>SQL
+</code></pre></div>
+<div id="cross-site-scripting" class="finding-block" data-severity="High" data-title="cross site scripting"><hr>
+<h1>Cross Site Scripting</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: zap</p>
+<p><strong>Identifiers</strong>: zap-plugin:40012</p>
+<h2>Description</h2>
+<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
+When an attacker gets a user's browser to execute his/her code, the code will run within the security context (or zone) of the hosting web site. With this level of privilege, the code has the ability to read, modify and transmit any sensitive data accessible by the browser. A Cross-site Scripted user could have his/her account hijacked (cookie theft), their browser redirected to another location, or possibly shown fraudulent content delivered by the web site they are visiting. Cross-site Scripting attacks essentially compromise the trust relationship between a user and the web site. Applications utilizing browser object instances which load content from the file system may execute code under the local machine zone allowing for system compromise.</p>
+<p>There are three types of Cross-site Scripting attacks: non-persistent, persistent and DOM-based.
+Non-persistent attacks and DOM-based attacks require a user to either visit a specially crafted link laced with malicious code, or visit a malicious web page containing a web form, which when posted to the vulnerable site, will mount the attack. Using a malicious form will oftentimes take place when the vulnerable resource only accepts HTTP POST requests. In such a case, the form can be submitted automatically, without the victim's knowledge (e.g. by using JavaScript). Upon clicking on the malicious link or submitting the malicious form, the XSS payload will get echoed back and will get interpreted by the user's browser and execute. Another technique to send almost arbitrary requests (GET and POST) is by using an embedded client, such as Adobe Flash.
+Persistent attacks occur when the malicious code is submitted to a web site where it's stored for a period of time. Examples of an attacker's favorite targets often include message board posts, web mail messages, and web chat software. The unsuspecting user is not required to interact with any additional site/link (e.g. an attacker site or a malicious link sent via email), just simply view the web page containing the code.</p>
+<h2>Remediation</h2>
+<p>Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+Examples of libraries and frameworks that make it easier to generate properly encoded output include Microsoft's Anti-XSS library, the OWASP ESAPI Encoding module, and Apache Wicket.</p>
+<p>Phases: Implementation; Architecture and Design
+Understand the context in which your data will be used and the encoding that will be expected. This is especially important when transmitting data between different components, or when generating outputs that can contain multiple encodings at the same time, such as web pages or multi-part mail messages. Study all expected communication protocols and data representations to determine the required encoding strategies.
+For any data that will be output to another web page, especially any data that was received from external inputs, use the appropriate encoding on all non-alphanumeric characters.
+Consult the XSS Prevention Cheat Sheet for more details on the types of encoding and escaping that are needed.</p>
+<p>Phase: Architecture and Design
+For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by modifying values after the checks have been performed, or by changing the client to remove the client-side checks entirely. Then, these modified values would be submitted to the server.</p>
+<p>If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms may be able to provide the relevant quoting, encoding, and validation automatically, instead of relying on the developer to provide this capability at every point where output is generated.</p>
+<p>Phase: Implementation
+For every web page that is generated, use and specify a character encoding such as ISO-8859-1 or UTF-8. When an encoding is not specified, the web browser may choose a different encoding by guessing which encoding is actually being used by the web page. This can cause the web browser to treat certain sequences as special, opening up the client to subtle XSS attacks. See CWE-116 for more mitigations related to encoding/escaping.</p>
+<p>To help mitigate XSS attacks against the user's session cookie, set the session cookie to be HttpOnly. In browsers that support the HttpOnly feature (such as more recent versions of Internet Explorer and Firefox), this attribute can prevent the user's session cookie from being accessible to malicious client-side scripts that use document.cookie. This is not a complete solution, since HttpOnly is not supported by all browsers. More importantly, XMLHTTPRequest and other powerful browser technologies provide read access to HTTP headers, including the Set-Cookie header in which the HttpOnly flag is set.</p>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></p>
+</li>
+<li>
+<p><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></p>
+</li>
+</ul>
+<h2>Reported by</h2>
+<h3>zap</h3>
+<p><strong>Severity</strong>: High</p>
+<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
+When an attacker gets a user's browser to execute his/her code, the code will run within the security context (or zone) of the hosting web site. With this level of privilege, the code has the ability to read, modify and transmit any sensitive data accessible by the browser. A Cross-site Scripted user could have his/her account hijacked (cookie theft), their browser redirected to another location, or possibly shown fraudulent content delivered by the web site they are visiting. Cross-site Scripting attacks essentially compromise the trust relationship between a user and the web site. Applications utilizing browser object instances which load content from the file system may execute code under the local machine zone allowing for system compromise.</p>
+<p>There are three types of Cross-site Scripting attacks: non-persistent, persistent and DOM-based.
+Non-persistent attacks and DOM-based attacks require a user to either visit a specially crafted link laced with malicious code, or visit a malicious web page containing a web form, which when posted to the vulnerable site, will mount the attack. Using a malicious form will oftentimes take place when the vulnerable resource only accepts HTTP POST requests. In such a case, the form can be submitted automatically, without the victim's knowledge (e.g. by using JavaScript). Upon clicking on the malicious link or submitting the malicious form, the XSS payload will get echoed back and will get interpreted by the user's browser and execute. Another technique to send almost arbitrary requests (GET and POST) is by using an embedded client, such as Adobe Flash.
+Persistent attacks occur when the malicious code is submitted to a web site where it's stored for a period of time. Examples of an attacker's favorite targets often include message board posts, web mail messages, and web chat software. The unsuspecting user is not required to interact with any additional site/link (e.g. an attacker site or a malicious link sent via email), just simply view the web page containing the code.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+Examples of libraries and frameworks that make it easier to generate properly encoded output include Microsoft's Anti-XSS library, the OWASP ESAPI Encoding module, and Apache Wicket.</p>
+<p>Phases: Implementation; Architecture and Design
+Understand the context in which your data will be used and the encoding that will be expected. This is especially important when transmitting data between different components, or when generating outputs that can contain multiple encodings at the same time, such as web pages or multi-part mail messages. Study all expected communication protocols and data representations to determine the required encoding strategies.
+For any data that will be output to another web page, especially any data that was received from external inputs, use the appropriate encoding on all non-alphanumeric characters.
+Consult the XSS Prevention Cheat Sheet for more details on the types of encoding and escaping that are needed.</p>
+<p>Phase: Architecture and Design
+For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by modifying values after the checks have been performed, or by changing the client to remove the client-side checks entirely. Then, these modified values would be submitted to the server.</p>
+<p>If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms may be able to provide the relevant quoting, encoding, and validation automatically, instead of relying on the developer to provide this capability at every point where output is generated.</p>
+<p>Phase: Implementation
+For every web page that is generated, use and specify a character encoding such as ISO-8859-1 or UTF-8. When an encoding is not specified, the web browser may choose a different encoding by guessing which encoding is actually being used by the web page. This can cause the web browser to treat certain sequences as special, opening up the client to subtle XSS attacks. See CWE-116 for more mitigations related to encoding/escaping.</p>
+<p>To help mitigate XSS attacks against the user's session cookie, set the session cookie to be HttpOnly. In browsers that support the HttpOnly feature (such as more recent versions of Internet Explorer and Firefox), this attribute can prevent the user's session cookie from being accessible to malicious client-side scripts that use document.cookie. This is not a complete solution, since HttpOnly is not supported by all browsers. More importantly, XMLHTTPRequest and other powerful browser technologies provide read access to HTTP headers, including the Set-Cookie header in which the HttpOnly flag is set.</p>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: High</p>
+<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
+When an attacker gets a user's browser to execute his/her code, the code will run within the security context (or zone) of the hosting web site. With this level of privilege, the code has the ability to read, modify and transmit any sensitive data accessible by the browser. A Cross-site Scripted user could have his/her account hijacked (cookie theft), their browser redirected to another location, or possibly shown fraudulent content delivered by the web site they are visiting. Cross-site Scripting attacks essentially compromise the trust relationship between a user and the web site. Applications utilizing browser object instances which load content from the file system may execute code under the local machine zone allowing for system compromise.</p>
+<p>There are three types of Cross-site Scripting attacks: non-persistent, persistent and DOM-based.
+Non-persistent attacks and DOM-based attacks require a user to either visit a specially crafted link laced with malicious code, or visit a malicious web page containing a web form, which when posted to the vulnerable site, will mount the attack. Using a malicious form will oftentimes take place when the vulnerable resource only accepts HTTP POST requests. In such a case, the form can be submitted automatically, without the victim's knowledge (e.g. by using JavaScript). Upon clicking on the malicious link or submitting the malicious form, the XSS payload will get echoed back and will get interpreted by the user's browser and execute. Another technique to send almost arbitrary requests (GET and POST) is by using an embedded client, such as Adobe Flash.
+Persistent attacks occur when the malicious code is submitted to a web site where it's stored for a period of time. Examples of an attacker's favorite targets often include message board posts, web mail messages, and web chat software. The unsuspecting user is not required to interact with any additional site/link (e.g. an attacker site or a malicious link sent via email), just simply view the web page containing the code.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+Examples of libraries and frameworks that make it easier to generate properly encoded output include Microsoft's Anti-XSS library, the OWASP ESAPI Encoding module, and Apache Wicket.</p>
+<p>Phases: Implementation; Architecture and Design
+Understand the context in which your data will be used and the encoding that will be expected. This is especially important when transmitting data between different components, or when generating outputs that can contain multiple encodings at the same time, such as web pages or multi-part mail messages. Study all expected communication protocols and data representations to determine the required encoding strategies.
+For any data that will be output to another web page, especially any data that was received from external inputs, use the appropriate encoding on all non-alphanumeric characters.
+Consult the XSS Prevention Cheat Sheet for more details on the types of encoding and escaping that are needed.</p>
+<p>Phase: Architecture and Design
+For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by modifying values after the checks have been performed, or by changing the client to remove the client-side checks entirely. Then, these modified values would be submitted to the server.</p>
+<p>If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms may be able to provide the relevant quoting, encoding, and validation automatically, instead of relying on the developer to provide this capability at every point where output is generated.</p>
+<p>Phase: Implementation
+For every web page that is generated, use and specify a character encoding such as ISO-8859-1 or UTF-8. When an encoding is not specified, the web browser may choose a different encoding by guessing which encoding is actually being used by the web page. This can cause the web browser to treat certain sequences as special, opening up the client to subtle XSS attacks. See CWE-116 for more mitigations related to encoding/escaping.</p>
+<p>To help mitigate XSS attacks against the user's session cookie, set the session cookie to be HttpOnly. In browsers that support the HttpOnly feature (such as more recent versions of Internet Explorer and Firefox), this attribute can prevent the user's session cookie from being accessible to malicious client-side scripts that use document.cookie. This is not a complete solution, since HttpOnly is not supported by all browsers. More importantly, XMLHTTPRequest and other powerful browser technologies provide read access to HTTP headers, including the Set-Cookie header in which the HttpOnly flag is set.</p>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: High</p>
+<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
+When an attacker gets a user's browser to execute his/her code, the code will run within the security context (or zone) of the hosting web site. With this level of privilege, the code has the ability to read, modify and transmit any sensitive data accessible by the browser. A Cross-site Scripted user could have his/her account hijacked (cookie theft), their browser redirected to another location, or possibly shown fraudulent content delivered by the web site they are visiting. Cross-site Scripting attacks essentially compromise the trust relationship between a user and the web site. Applications utilizing browser object instances which load content from the file system may execute code under the local machine zone allowing for system compromise.</p>
+<p>There are three types of Cross-site Scripting attacks: non-persistent, persistent and DOM-based.
+Non-persistent attacks and DOM-based attacks require a user to either visit a specially crafted link laced with malicious code, or visit a malicious web page containing a web form, which when posted to the vulnerable site, will mount the attack. Using a malicious form will oftentimes take place when the vulnerable resource only accepts HTTP POST requests. In such a case, the form can be submitted automatically, without the victim's knowledge (e.g. by using JavaScript). Upon clicking on the malicious link or submitting the malicious form, the XSS payload will get echoed back and will get interpreted by the user's browser and execute. Another technique to send almost arbitrary requests (GET and POST) is by using an embedded client, such as Adobe Flash.
+Persistent attacks occur when the malicious code is submitted to a web site where it's stored for a period of time. Examples of an attacker's favorite targets often include message board posts, web mail messages, and web chat software. The unsuspecting user is not required to interact with any additional site/link (e.g. an attacker site or a malicious link sent via email), just simply view the web page containing the code.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+Examples of libraries and frameworks that make it easier to generate properly encoded output include Microsoft's Anti-XSS library, the OWASP ESAPI Encoding module, and Apache Wicket.</p>
+<p>Phases: Implementation; Architecture and Design
+Understand the context in which your data will be used and the encoding that will be expected. This is especially important when transmitting data between different components, or when generating outputs that can contain multiple encodings at the same time, such as web pages or multi-part mail messages. Study all expected communication protocols and data representations to determine the required encoding strategies.
+For any data that will be output to another web page, especially any data that was received from external inputs, use the appropriate encoding on all non-alphanumeric characters.
+Consult the XSS Prevention Cheat Sheet for more details on the types of encoding and escaping that are needed.</p>
+<p>Phase: Architecture and Design
+For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by modifying values after the checks have been performed, or by changing the client to remove the client-side checks entirely. Then, these modified values would be submitted to the server.</p>
+<p>If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms may be able to provide the relevant quoting, encoding, and validation automatically, instead of relying on the developer to provide this capability at every point where output is generated.</p>
+<p>Phase: Implementation
+For every web page that is generated, use and specify a character encoding such as ISO-8859-1 or UTF-8. When an encoding is not specified, the web browser may choose a different encoding by guessing which encoding is actually being used by the web page. This can cause the web browser to treat certain sequences as special, opening up the client to subtle XSS attacks. See CWE-116 for more mitigations related to encoding/escaping.</p>
+<p>To help mitigate XSS attacks against the user's session cookie, set the session cookie to be HttpOnly. In browsers that support the HttpOnly feature (such as more recent versions of Internet Explorer and Firefox), this attribute can prevent the user's session cookie from being accessible to malicious client-side scripts that use document.cookie. This is not a complete solution, since HttpOnly is not supported by all browsers. More importantly, XMLHTTPRequest and other powerful browser technologies provide read access to HTTP headers, including the Set-Cookie header in which the HttpOnly flag is set.</p>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
+<h3>zap</h3>
+<p><strong>Severity</strong>: High</p>
+<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
+When an attacker gets a user's browser to execute his/her code, the code will run within the security context (or zone) of the hosting web site. With this level of privilege, the code has the ability to read, modify and transmit any sensitive data accessible by the browser. A Cross-site Scripted user could have his/her account hijacked (cookie theft), their browser redirected to another location, or possibly shown fraudulent content delivered by the web site they are visiting. Cross-site Scripting attacks essentially compromise the trust relationship between a user and the web site. Applications utilizing browser object instances which load content from the file system may execute code under the local machine zone allowing for system compromise.</p>
+<p>There are three types of Cross-site Scripting attacks: non-persistent, persistent and DOM-based.
+Non-persistent attacks and DOM-based attacks require a user to either visit a specially crafted link laced with malicious code, or visit a malicious web page containing a web form, which when posted to the vulnerable site, will mount the attack. Using a malicious form will oftentimes take place when the vulnerable resource only accepts HTTP POST requests. In such a case, the form can be submitted automatically, without the victim's knowledge (e.g. by using JavaScript). Upon clicking on the malicious link or submitting the malicious form, the XSS payload will get echoed back and will get interpreted by the user's browser and execute. Another technique to send almost arbitrary requests (GET and POST) is by using an embedded client, such as Adobe Flash.
+Persistent attacks occur when the malicious code is submitted to a web site where it's stored for a period of time. Examples of an attacker's favorite targets often include message board posts, web mail messages, and web chat software. The unsuspecting user is not required to interact with any additional site/link (e.g. an attacker site or a malicious link sent via email), just simply view the web page containing the code.</p>
+<p><strong>Remediation</strong>: Phase: Architecture and Design
+Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+Examples of libraries and frameworks that make it easier to generate properly encoded output include Microsoft's Anti-XSS library, the OWASP ESAPI Encoding module, and Apache Wicket.</p>
+<p>Phases: Implementation; Architecture and Design
+Understand the context in which your data will be used and the encoding that will be expected. This is especially important when transmitting data between different components, or when generating outputs that can contain multiple encodings at the same time, such as web pages or multi-part mail messages. Study all expected communication protocols and data representations to determine the required encoding strategies.
+For any data that will be output to another web page, especially any data that was received from external inputs, use the appropriate encoding on all non-alphanumeric characters.
+Consult the XSS Prevention Cheat Sheet for more details on the types of encoding and escaping that are needed.</p>
+<p>Phase: Architecture and Design
+For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by modifying values after the checks have been performed, or by changing the client to remove the client-side checks entirely. Then, these modified values would be submitted to the server.</p>
+<p>If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms may be able to provide the relevant quoting, encoding, and validation automatically, instead of relying on the developer to provide this capability at every point where output is generated.</p>
+<p>Phase: Implementation
+For every web page that is generated, use and specify a character encoding such as ISO-8859-1 or UTF-8. When an encoding is not specified, the web browser may choose a different encoding by guessing which encoding is actually being used by the web page. This can cause the web browser to treat certain sequences as special, opening up the client to subtle XSS attacks. See CWE-116 for more mitigations related to encoding/escaping.</p>
+<p>To help mitigate XSS attacks against the user's session cookie, set the session cookie to be HttpOnly. In browsers that support the HttpOnly feature (such as more recent versions of Internet Explorer and Firefox), this attribute can prevent the user's session cookie from being accessible to malicious client-side scripts that use document.cookie. This is not a complete solution, since HttpOnly is not supported by all browsers. More importantly, XMLHTTPRequest and other powerful browser technologies provide read access to HTTP headers, including the Set-Cookie header in which the HttpOnly flag is set.</p>
+<p>Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.</p>
+<p>When performing input validation, consider all potentially relevant properties, including length, type of input, the full range of acceptable values, missing or extra inputs, syntax, consistency across related fields, and conformance to business rules. As an example of business rule logic, "boat" may be syntactically valid because it only contains alphanumeric characters, but it is not valid if you are expecting colors such as "red" or "blue."</p>
+<p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
+<h2>Hosts</h2>
+<ul>
+<li>10.2.100.1</li>
+</ul>
+<h2>Evidence</h2>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/EvalInjection2.php
+Parameter: command
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XSS-reflected2.php
+Parameter: username
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XPathInjection2.php
+Parameter: username
+Attack: '"
+</code></pre>
+<h3>http-request (zap)</h3>
+<pre><code>Request: http://10.2.100.1/demo/XPathInjection2.php
+Parameter: password
+Attack: '"
+</code></pre></div>
+<div id="jwt-token" class="finding-block" data-severity="Medium" data-title="jwt token"><hr>
+<h1>JWT token</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: trivy-rule:jwt-token</p>
+<h2>Description</h2>
+<p>Secret detected: jwt-token</p>
+<h2>Reported by</h2>
+<h3>trivy</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>Secret detected: jwt-token</p>
+<h3>trivy</h3>
+<p><strong>Severity</strong>: Medium</p>
+<p>Secret detected: jwt-token</p>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target (trivy)</h3>
+<pre><code>frontend/src/app/app.guard.spec.ts
+</code></pre>
+<h3>match (trivy)</h3>
+<pre><code>Match: ocalStorage.setItem('token', '***********************************************************************************************************************************************************')
+</code></pre>
+<h3>target (trivy)</h3>
+<pre><code>frontend/src/app/last-login-ip/last-login-ip.component.spec.ts
+</code></pre>
+<h3>match (trivy)</h3>
+<pre><code>Match: ocalStorage.setItem('token', '*******************************************************************************************************************************')
+</code></pre></div>
+<div id="asymmetric-private-key" class="finding-block" data-severity="High" data-title="asymmetric private key"><hr>
+<h1>Asymmetric Private Key</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: trivy-rule:private-key</p>
+<h2>Description</h2>
+<p>Secret detected: private-key</p>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>lib/insecurity.ts
+</code></pre>
+<h3>match</h3>
+<pre><code>Match: ----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE
+</code></pre></div>
+<div id="intermittent-http-policy-bypass" class="finding-block" data-severity="High" data-title="intermittent http policy bypass"><hr>
+<h1>Intermittent HTTP policy bypass</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>CVSS Score</strong>: 7.2 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-28248, CWE-693</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Starting in version 1.13.9 and prior to versions 1.13.13, 1.14.8, and 1.15.2, Cilium's HTTP policies are not consistently applied to all traffic in the scope of the policies, leading to HTTP traffic being incorrectly and intermittently forwarded when it should be dropped. This issue has been patched in Cilium 1.15.2, 1.14.8, and 1.13.13. There are no known workarounds for this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.13.13, 1.14.8, 1.15.2.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-28248" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28248</a></p>
+</li>
+<li>
+<p><a href="https://docs.cilium.io/en/stable/security/policy/language/#http" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/policy/language/#http</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28248" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28248</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="cilium-has-insecure-ipsec-transport-encryption" class="finding-block" data-severity="High" data-title="cilium has insecure ipsec transport encryption"><hr>
+<h1>Cilium has insecure IPsec transport encryption</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>CVSS Score</strong>: 8.0 (CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-28860, CWE-326</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Users of IPsec transparent encryption in Cilium may be vulnerable to cryptographic attacks that render the transparent encryption ineffective. In particular, Cilium is vulnerable to chosen plaintext, key recovery, replay attacks by a man-in-the-middle attacker. These attacks are possible due to an ESP sequence number collision when multiple nodes are configured with the same key. Fixed versions of Cilium use unique keys for each IPsec tunnel established between nodes, resolving all of the above attacks. This vulnerability is fixed in 1.13.13, 1.14.9, and 1.15.3.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.13.14, 1.14.9, 1.15.3.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-28860" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28860</a></p>
+</li>
+<li>
+<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-ipsec" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-ipsec</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28860" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28860</a></p>
+</li>
+<li>
+<p><a href="https://pkg.go.dev/vuln/GO-2024-2666" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2666</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="cilium-leaks-sensitive-information-in-cilium-bugtool" class="finding-block" data-severity="High" data-title="cilium leaks sensitive information in cilium-bugtool"><hr>
+<h1>Cilium leaks sensitive information in cilium-bugtool</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>CVSS Score</strong>: 7.9 (CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:C/C:H/I:H/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-37307, CWE-200</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Starting in version 1.13.0 and prior to versions 1.13.7, 1.14.12, and 1.15.6, the output of <code>cilium-bugtool</code> can contain sensitive data when the tool is run (with the <code>--envoy-dump</code> flag set) against Cilium deployments with the Envoy proxy enabled. Users of the TLS inspection, Ingress with TLS termination, Gateway API with TLS termination, and Kafka network policies with API key filtering features are affected. The sensitive data includes the CA certificate, certificate chain, and private key used by Cilium HTTP Network Policies, and when using Ingress/Gateway API and the API keys used in Kafka-related network policy. <code>cilium-bugtool</code> is a debugging tool that is typically invoked manually and does not run during the normal operation of a Cilium cluster. This issue has been patched in Cilium v1.15.6, v1.14.12, and v1.13.17. There is no workaround to this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.13.17, 1.14.12, 1.15.6.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-37307" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-37307</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-37307" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-37307</a></p>
+</li>
+<li>
+<p><a href="https://pkg.go.dev/vuln/GO-2024-2922" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2922</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="unencrypted-ingress-health-traffic-when-using-wireguard-transparent-encryption" class="finding-block" data-severity="Medium" data-title="unencrypted ingress/health traffic when using wireguard transparent encryption"><hr>
+<h1>Unencrypted ingress/health traffic when using Wireguard transparent encryption</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.1 (CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:C/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-25630, CWE-311</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. For Cilium users who are using CRDs to store Cilium state (the default configuration) and Wireguard transparent encryption, traffic to/from the Ingress and health endpoints is not encrypted. This issue affects Cilium v1.14 before v1.14.7 and has been patched in Cilium v1.14.7. There is no workaround to this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.14.7.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-25630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25630</a></p>
+</li>
+<li>
+<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25630</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="unencrypted-traffic-between-pods-when-using-wireguard-and-an-external-kvstore" class="finding-block" data-severity="Medium" data-title="unencrypted traffic between pods when using wireguard and an external kvstore"><hr>
+<h1>Unencrypted traffic between pods when using Wireguard and an external kvstore</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.1 (CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:C/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-25631, CWE-311</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. For Cilium users who have enabled an external kvstore and Wireguard transparent encryption, traffic between pods in the affected cluster is not encrypted. This issue affects Cilium v1.14 before v1.14.7 and has been patched in Cilium v1.14.7. There is no workaround to this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.14.7.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-25631" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25631</a></p>
+</li>
+<li>
+<p><a href="https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore" rel="noopener noreferrer">https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore</a></p>
+</li>
+<li>
+<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25631" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25631</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="unencrypted-traffic-between-nodes-when-using-ipsec-and-l7-policies" class="finding-block" data-severity="Medium" data-title="unencrypted traffic between nodes when using ipsec and l7 policies"><hr>
+<h1>Unencrypted traffic between nodes when using IPsec and L7 policies</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.1 (CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:C/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-28249, CWE-311</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Prior to versions 1.13.13, 1.14.8, and 1.15.2, in Cilium clusters with IPsec enabled and traffic matching Layer 7 policies, IPsec-eligible traffic between a node's Envoy proxy and pods on other nodes is sent unencrypted and IPsec-eligible traffic between a node's DNS proxy and pods on other nodes is sent unencrypted. This issue has been resolved in Cilium 1.15.2, 1.14.8, and 1.13.13. There is no known workaround for this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.13.13, 1.14.8, 1.15.2.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-28249" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28249</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28249" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28249</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="unencrypted-traffic-between-nodes-when-using-wireguard-and-l7-policies" class="finding-block" data-severity="Medium" data-title="unencrypted traffic between nodes when using wireguard and l7 policies"><hr>
+<h1>Unencrypted traffic between nodes when using WireGuard and L7 policies</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.1 (CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:C/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-28250, CWE-311</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Starting in version 1.14.0 and prior to versions 1.14.8 and 1.15.2, In Cilium clusters with WireGuard enabled and traffic matching Layer 7 policies Wireguard-eligible traffic that is sent between a node's Envoy proxy and pods on other nodes is sent unencrypted and Wireguard-eligible traffic that is sent between a node's DNS proxy and pods on other nodes is sent unencrypted. This issue has been resolved in Cilium 1.14.8 and 1.15.2 in in native routing mode (<code>routingMode=native</code>) and in Cilium 1.14.4 in tunneling mode (<code>routingMode=tunnel</code>). Not that in tunneling mode, <code>encryption.wireguard.encapsulate</code> must be set to <code>true</code>. There is no known workaround for this issue.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.14.8, 1.15.2.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-28250" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28250</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28250" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28250</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="policy-bypass-for-host-firewall-policy-due-to-race-condition-in-cilium-agent" class="finding-block" data-severity="Medium" data-title="policy bypass for host firewall policy due to race condition in cilium agent"><hr>
+<h1>Policy bypass for Host Firewall policy due to race condition in Cilium agent</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.8 (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-42488, CWE-362</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Prior to versions 1.14.14 and 1.15.8, a race condition in the Cilium agent can cause the agent to ignore labels that should be applied to a node. This could in turn cause CiliumClusterwideNetworkPolicies intended for nodes with the ignored label to not apply, leading to policy bypass. This issue has been patched in Cilium v1.14.14 and v1.15.8 As the underlying issue depends on a race condition, users unable to upgrade can restart the Cilium agent on affected nodes until the affected policies are confirmed to be working as expected.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.14.14, 1.15.8.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-42488" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-42488</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/pull/33511" rel="noopener noreferrer">https://github.com/cilium/cilium/pull/33511</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-42488" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-42488</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="cilium-s-cidr-deny-policies-may-not-take-effect-when-a-more-narrow-cidr-allow-is-present" class="finding-block" data-severity="Medium" data-title="cilium&#x27;s cidr deny policies may not take effect when a more narrow cidr allow is present"><hr>
+<h1>Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 4.0 (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:L/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-47825, CWE-276</p>
+<h2>Description</h2>
+<p>Cilium is a networking, observability, and security solution with an eBPF-based dataplane. Starting in version 1.14.0 and prior to versions 1.14.16 and 1.15.10, a policy rule denying a prefix that is broader than <code>/32</code> may be ignored if there is a policy rule referencing a more narrow prefix (<code>CIDRSet</code> or <code>toFQDN</code>) and this narrower policy rule specifies either <code>enableDefaultDeny: false</code> or <code>- toEntities: all</code>. Note that a rule specifying <code>toEntities: world</code> or <code>toEntities: 0.0.0.0/0</code> is insufficient, it must be to entity <code>all</code>.This issue has been patched in Cilium v1.14.16 and v1.15.10. As this issue only affects policies using <code>enableDefaultDeny: false</code> or that set <code>toEntities</code> to <code>all</code>, some workarounds are available. For users with policies using <code>enableDefaultDeny: false</code>, remove this configuration option and explicitly define any allow rules required. For users with egress policies that explicitly specify <code>toEntities: all</code>, use <code>toEntities: world</code>.</p>
+<h2>Remediation</h2>
+<p>Update github.com/cilium/cilium from 1.14.5 to 1.15.10, 1.14.16.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-47825" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-47825</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524</a></p>
+</li>
+<li>
+<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-47825" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-47825</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/cilium/cilium
+Installed: 1.14.5
+</code></pre></div>
+<div id="moby-authz-zero-length-regression" class="finding-block" data-severity="Critical" data-title="moby: authz zero length regression"><hr>
+<h1>moby: Authz zero length regression</h1>
+<p><strong>Severity</strong>: Critical</p>
+<p><strong>CVSS Score</strong>: 9.9 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-41110, CWE-187, CWE-444, CWE-863</p>
+<h2>Description</h2>
+<p>Moby is an open-source project created by Docker for software containerization. A security vulnerability has been detected in certain versions of Docker Engine, which could allow an attacker to bypass authorization plugins (AuthZ) under specific circumstances. The base likelihood of this being exploited is low.</p>
+<p>Using a specially-crafted API request, an Engine API client could make the daemon forward the request or response to an authorization plugin without the body. In certain circumstances, the authorization plugin may allow a request which it would have otherwise denied if the body had been forwarded to it.</p>
+<p>A security issue was discovered In 2018, where an attacker could bypass AuthZ plugins using a specially crafted API request. This could lead to unauthorized actions, including privilege escalation. Although this issue was fixed in Docker Engine v18.09.1 in January 2019, the fix was not carried forward to later major versions, resulting in a regression. Anyone who depends on authorization plugins that introspect the request and/or response body to make access control decisions is potentially impacted.</p>
+<p>Docker EE v19.03.x and all versions of Mirantis Container Runtime are not vulnerable.</p>
+<p>docker-ce v27.1.1 containes patches to fix the vulnerability. Patches have also been merged into the master, 19.03, 20.0, 23.0, 24.0, 25.0, 26.0, and 26.1 release branches. If one is unable to upgrade immediately, avoid using AuthZ plugins and/or restrict access to the Docker API to trusted parties, following the principle of least privilege.</p>
+<h2>Remediation</h2>
+<p>Update github.com/docker/docker from 25.0.5+incompatible to 23.0.15, 26.1.5, 27.1.1, 25.0.6.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-41110" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-41110</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-41110" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-41110</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby" rel="noopener noreferrer">https://github.com/moby/moby</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191" rel="noopener noreferrer">https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76" rel="noopener noreferrer">https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919" rel="noopener noreferrer">https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b" rel="noopener noreferrer">https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0" rel="noopener noreferrer">https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1" rel="noopener noreferrer">https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801" rel="noopener noreferrer">https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb" rel="noopener noreferrer">https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb</a></p>
+</li>
+<li>
+<p><a href="https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq" rel="noopener noreferrer">https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-41110" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-41110</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-41110" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-41110</a></p>
+</li>
+<li>
+<p><a href="https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin" rel="noopener noreferrer">https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/docker/docker
+Installed: 25.0.5+incompatible
+</code></pre></div>
+<div id="jose-go-improper-handling-of-highly-compressed-data" class="finding-block" data-severity="Medium" data-title="jose-go: improper handling of highly compressed data"><hr>
+<h1>jose-go: improper handling of highly compressed data</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 4.3 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-28180, CWE-409</p>
+<h2>Description</h2>
+<p>Package jose aims to provide an implementation of the Javascript Object Signing and Encryption set of standards. An attacker could send a JWE containing compressed data that used large amounts of memory and CPU when decompressed by Decrypt or DecryptMulti. Those functions now return an error if the decompressed data would exceed 250kB or 10x the compressed size (whichever is larger). This vulnerability has been patched in versions 4.0.1, 3.0.3 and 2.6.3.</p>
+<h2>Remediation</h2>
+<p>Update github.com/go-jose/go-jose/v3 from 3.0.1 to 3.0.3.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-28180" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28180</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/errata/RHSA-2024:3827" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:3827</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-28180" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-28180</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/2268820</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/2268854</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268820</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268854</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180</a></p>
+</li>
+<li>
+<p><a href="https://errata.almalinux.org/9/ALSA-2024-3827.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-3827.html</a></p>
+</li>
+<li>
+<p><a href="https://errata.rockylinux.org/RLSA-2024:3827" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:3827</a></p>
+</li>
+<li>
+<p><a href="https://github.com/go-jose/go-jose" rel="noopener noreferrer">https://github.com/go-jose/go-jose</a></p>
+</li>
+<li>
+<p><a href="https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298</a></p>
+</li>
+<li>
+<p><a href="https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a</a></p>
+</li>
+<li>
+<p><a href="https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502</a></p>
+</li>
+<li>
+<p><a href="https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g" rel="noopener noreferrer">https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/cve/CVE-2024-28180.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-28180.html</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/errata/ELSA-2024-3968.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3968.html</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28180" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28180</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-28180" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-28180</a></p>
+</li>
+</ul>
+<h2>Reported by</h2>
+<h3>trivy</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 4.3 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)</p>
+<p>Package jose aims to provide an implementation of the Javascript Object Signing and Encryption set of standards. An attacker could send a JWE containing compressed data that used large amounts of memory and CPU when decompressed by Decrypt or DecryptMulti. Those functions now return an error if the decompressed data would exceed 250kB or 10x the compressed size (whichever is larger). This vulnerability has been patched in versions 4.0.1, 3.0.3 and 2.6.3.</p>
+<p><strong>Remediation</strong>: Update github.com/go-jose/go-jose/v3 from 3.0.1 to 3.0.3.</p>
+<h3>trivy</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 4.3 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)</p>
+<p>Package jose aims to provide an implementation of the Javascript Object Signing and Encryption set of standards. An attacker could send a JWE containing compressed data that used large amounts of memory and CPU when decompressed by Decrypt or DecryptMulti. Those functions now return an error if the decompressed data would exceed 250kB or 10x the compressed size (whichever is larger). This vulnerability has been patched in versions 4.0.1, 3.0.3 and 2.6.3.</p>
+<p><strong>Remediation</strong>: Update gopkg.in/go-jose/go-jose.v2 from 2.6.1 to 2.6.3.</p>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target (trivy)</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package (trivy)</h3>
+<pre><code>Package: github.com/go-jose/go-jose/v3
+Installed: 3.0.1
+</code></pre>
+<h3>package (trivy)</h3>
+<pre><code>Package: gopkg.in/go-jose/go-jose.v2
+Installed: 2.6.1
+</code></pre></div>
+<div id="go-retryablehttp-url-might-write-sensitive-information-to-log-file" class="finding-block" data-severity="Medium" data-title="go-retryablehttp: url might write sensitive information to log file"><hr>
+<h1>go-retryablehttp: url might write sensitive information to log file</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 5.5 (CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-6104, CWE-532</p>
+<h2>Description</h2>
+<p>go-retryablehttp prior to 0.7.7 did not sanitize urls when writing them to its log file. This could lead to go-retryablehttp writing sensitive HTTP basic auth credentials to its log file. This vulnerability, CVE-2024-6104, was fixed in go-retryablehttp 0.7.7.</p>
+<h2>Remediation</h2>
+<p>Update github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.7.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-6104" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-6104</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/errata/RHSA-2024:9115" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:9115</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-6104" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-6104</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2279814" rel="noopener noreferrer">https://bugzilla.redhat.com/2279814</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2292668" rel="noopener noreferrer">https://bugzilla.redhat.com/2292668</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2292787" rel="noopener noreferrer">https://bugzilla.redhat.com/2292787</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2294000" rel="noopener noreferrer">https://bugzilla.redhat.com/2294000</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2295310" rel="noopener noreferrer">https://bugzilla.redhat.com/2295310</a></p>
+</li>
+<li>
+<p><a href="https://discuss.hashicorp.com/c/security" rel="noopener noreferrer">https://discuss.hashicorp.com/c/security</a></p>
+</li>
+<li>
+<p><a href="https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027" rel="noopener noreferrer">https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027</a></p>
+</li>
+<li>
+<p><a href="https://errata.almalinux.org/9/ALSA-2024-9115.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-9115.html</a></p>
+</li>
+<li>
+<p><a href="https://github.com/advisories/GHSA-v6v8-xj6m-xwqh" rel="noopener noreferrer">https://github.com/advisories/GHSA-v6v8-xj6m-xwqh</a></p>
+</li>
+<li>
+<p><a href="https://github.com/hashicorp/go-retryablehttp" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp</a></p>
+</li>
+<li>
+<p><a href="https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/cve/CVE-2024-6104.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-6104.html</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/errata/ELSA-2024-9115.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-9115.html</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-6104" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-6104</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-6104" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-6104</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/hashicorp/go-retryablehttp
+Installed: 0.7.5
+</code></pre></div>
+<div id="attacker-can-cause-kyverno-user-to-unintentionally-consume-insecure-image" class="finding-block" data-severity="High" data-title="attacker can cause kyverno user to unintentionally consume insecure image"><hr>
+<h1>Attacker can cause Kyverno user to unintentionally consume insecure image</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>CVSS Score</strong>: 7.1 (CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2023-47630, CWE-345</p>
+<h2>Description</h2>
+<p>Kyverno is a policy engine designed for Kubernetes. An issue was found in Kyverno that allowed an attacker to control the digest of images used by Kyverno users. The issue would require the attacker to compromise the registry that the Kyverno users fetch their images from. The attacker could then return an vulnerable image to the the user and leverage that to further escalate their position. As such, the attacker would need to know which images the Kyverno user consumes and know of one of multiple exploitable vulnerabilities in previous digests of the images. Alternatively, if the attacker has compromised the registry, they could craft a malicious image with a different digest with intentionally placed vulnerabilities and deliver the image to the user.  Users pulling their images by digests and from trusted registries are not impacted by this vulnerability. There is no evidence of this being exploited in the wild. The issue has been patched in 1.10.5. All users are advised to upgrade. There are no known workarounds for this vulnerability.</p>
+<h2>Remediation</h2>
+<p>Update github.com/kyverno/kyverno from 1.9.2 to 1.10.5.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2023-47630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-47630</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.11.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.11.0</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-47630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-47630</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/kyverno/kyverno
+Installed: 1.9.2
+</code></pre></div>
+<div id="kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default" class="finding-block" data-severity="High" data-title="kyverno&#x27;s policyexception objects can be created in any namespace by default"><hr>
+<h1>Kyverno's PolicyException objects can be created in any namespace by default</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>CVSS Score</strong>: 2.7 (CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:N/I:L/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-48921, CWE-863, CWE-285</p>
+<h2>Description</h2>
+<p>Kyverno is a policy engine designed for Kubernetes. A kyverno ClusterPolicy, ie. "disallow-privileged-containers," can be overridden by the creation of a PolicyException in a random namespace. By design, PolicyExceptions are consumed from any namespace. Administrators may not recognize that this allows users with privileges to non-kyverno namespaces to create exceptions. This vulnerability is fixed in 1.13.0.</p>
+<h2>Remediation</h2>
+<p>Update github.com/kyverno/kyverno from 1.9.2 to 1.13.0.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-48921" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-48921</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-48921" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-48921</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/kyverno/kyverno
+Installed: 1.9.2
+</code></pre></div>
+<div id="kyverno-seccomp-control-can-be-circumvented" class="finding-block" data-severity="Medium" data-title="kyverno seccomp control can be circumvented"><hr>
+<h1>kyverno seccomp control can be circumvented</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 8.8 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2023-33191, CWE-284</p>
+<h2>Description</h2>
+<p>Kyverno is a policy engine designed for Kubernetes. Kyverno seccomp control can be circumvented. Users of the podSecurity <code>validate.podSecurity</code> subrule in Kyverno 1.9.2 and 1.9.3 are vulnerable. This issue was patched in version 1.9.4.</p>
+<h2>Remediation</h2>
+<p>Update github.com/kyverno/kyverno from 1.9.2 to 1.9.4.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2023-33191" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-33191</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/pull/7263" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7263</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.4" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.4</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-33191" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-33191</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/kyverno/kyverno
+Installed: 1.9.2
+</code></pre></div>
+<div id="kyverno-resource-with-a-deletiontimestamp-may-allow-policy-circumvention" class="finding-block" data-severity="Medium" data-title="kyverno resource with a deletiontimestamp may allow policy circumvention"><hr>
+<h1>Kyverno resource with a deletionTimestamp may allow policy circumvention</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.5 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2023-34091, CWE-285</p>
+<h2>Description</h2>
+<p>Kyverno is a policy engine designed for Kubernetes. In versions of Kyverno prior to 1.10.0, resources which have the <code>deletionTimestamp</code> field defined can bypass validate, generate, or mutate-existing policies, even in cases where the <code>validationFailureAction</code> field is set to <code>Enforce</code>. This situation occurs as resources pending deletion were being consciously exempted by Kyverno, as a way to reduce processing load as policies are typically not applied to objects which are being deleted. However, this could potentially result in allowing a malicious user to leverage the Kubernetes finalizers feature by setting a finalizer which causes the Kubernetes API server to set the <code>deletionTimestamp</code> and then not completing the delete operation as a way to explicitly to bypass a Kyverno policy. Note that this is not applicable to Kubernetes Pods but, as an example, a Kubernetes Service resource can be manipulated using an indefinite finalizer to bypass policies. This is resolved in Kyverno 1.10.0. There is no known workaround.</p>
+<h2>Remediation</h2>
+<p>Update github.com/kyverno/kyverno from 1.9.2 to 1.10.0.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2023-34091" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-34091</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.10.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.10.0</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-34091" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-34091</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/kyverno/kyverno
+Installed: 1.9.2
+</code></pre></div>
+<div id="kyverno-vulnerable-due-to-usage-of-insecure-cipher" class="finding-block" data-severity="Medium" data-title="kyverno vulnerable due to usage of insecure cipher"><hr>
+<h1>Kyverno vulnerable due to usage of insecure cipher</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: GHSA-hgv6-w7r3-w4qw</p>
+<h2>Description</h2>
+<p>### Summary
+Insecure 3DES ciphers are used which may lead to exploitation of the <a href="https://sweet32.info/" rel="noopener noreferrer">Sweet32 vulnerability</a>. Specifically, the ciphers TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA (secp256r1) and TLS_RSA_WITH_3DES_EDE_CBC_SHA (rsa 2048) are allowed. See CVE-2016-2183. This is fixed in Kyverno v1.9.5 and v1.10.0 and no known users have been affected.</p>
+<p>### Details</p>
+<p>The ciphers in affected versions can be read using the following command which uses <code>nmap</code>:</p>
+<pre><code>$ kubectl exec -it mypod -n kyverno sh 
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+**nmap -sV --script ssl-enum-ciphers -p 443 kyverno-cleanup-controller** or  
+**nmap -sV --script ssl-enum-ciphers -p 443 kyverno-svc**
+Starting Nmap 7.92 ( https://nmap.org ) at 2023-05-26 10:55 UTC
+Nmap scan report for kyverno-cleanup-controller (10.103.199.233)
+Host is up (0.000058s latency).
+rDNS record for 10.103.199.233: kyverno-cleanup-controller.kyverno.svc.cluster.local
+
+PORT    STATE SERVICE  VERSION
+443/tcp open  ssl/http Golang net/http server (Go-IPFS json-rpc or InfluxDB API)
+| ssl-enum-ciphers: 
+|   TLSv1.2: 
+|     ciphers: 
+**|       TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA (secp256r1) - C**
+|       TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA (secp256r1) - A
+|       TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (secp256r1) - A
+|       TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA (secp256r1) - A
+|       TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (secp256r1) - A
+|       TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 (secp256r1) - A
+**|       TLS_RSA_WITH_3DES_EDE_CBC_SHA (rsa 2048) - C**
+|       TLS_RSA_WITH_AES_128_CBC_SHA (rsa 2048) - A
+|       TLS_RSA_WITH_AES_128_GCM_SHA256 (rsa 2048) - A
+|       TLS_RSA_WITH_AES_256_CBC_SHA (rsa 2048) - A
+|       TLS_RSA_WITH_AES_256_GCM_SHA384 (rsa 2048) - A
+|     compressors: 
+|       NULL
+|     cipher preference: client
+|     warnings: 
+|       64-bit block cipher 3DES vulnerable to SWEET32 attack
+|   TLSv1.3: 
+|     ciphers: 
+|       TLS_AKE_WITH_AES_128_GCM_SHA256 (ecdh_x25519) - A
+|       TLS_AKE_WITH_AES_256_GCM_SHA384 (ecdh_x25519) - A
+|       TLS_AKE_WITH_CHACHA20_POLY1305_SHA256 (ecdh_x25519) - A
+|     cipher preference: server
+|_  least strength: C
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 12.72 seconds
+</code></pre>
+<h2>Remediation</h2>
+<p>Update github.com/kyverno/kyverno from 1.9.2 to 1.9.5.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://github.com/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/advisories/GHSA-hgv6-w7r3-w4qw</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/pull/7308" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7308</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.5" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.5</a></p>
+</li>
+<li>
+<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/kyverno/kyverno
+Installed: 1.9.2
+</code></pre></div>
+<div id="mholt-archiver-path-traversal-vulnerability" class="finding-block" data-severity="Medium" data-title="mholt/archiver: path traversal vulnerability"><hr>
+<h1>mholt/archiver: path traversal vulnerability</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 6.1 (CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:L/I:H/A:N)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-0406, CWE-22</p>
+<h2>Description</h2>
+<p>A flaw was discovered in the mholt/archiver package. This flaw allows an attacker to create a specially crafted tar file, which, when unpacked, may allow access to restricted files or directories. This issue can allow the creation or overwriting of files with the user's or application's privileges using the library.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-0406" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-0406</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-0406" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-0406</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2257749" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2257749</a></p>
+</li>
+<li>
+<p><a href="https://github.com/advisories/GHSA-rhh4-rh7c-7r5v" rel="noopener noreferrer">https://github.com/advisories/GHSA-rhh4-rh7c-7r5v</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mholt/archiver" rel="noopener noreferrer">https://github.com/mholt/archiver</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-0406" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-0406</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-0406" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-0406</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/mholt/archiver/v3
+Installed: 3.5.1
+</code></pre></div>
+<div id="opa-opa-smb-force-authentication" class="finding-block" data-severity="Medium" data-title="opa: opa smb force-authentication"><hr>
+<h1>opa: OPA SMB Force-Authentication</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 7.3 (CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-8260, CWE-294</p>
+<h2>Description</h2>
+<p>A SMB force-authentication vulnerability exists in all versions of OPA for Windows prior to v0.68.0. The vulnerability exists because of improper input validation, allowing a user to pass an arbitrary SMB share instead of a Rego file as an argument to OPA CLI or to one of the OPA Go library’s functions.</p>
+<h2>Remediation</h2>
+<p>Update github.com/open-policy-agent/opa from 0.60.0 to 0.68.0.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-8260" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-8260</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-8260" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-8260</a></p>
+</li>
+<li>
+<p><a href="https://github.com/open-policy-agent/opa" rel="noopener noreferrer">https://github.com/open-policy-agent/opa</a></p>
+</li>
+<li>
+<p><a href="https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e</a></p>
+</li>
+<li>
+<p><a href="https://github.com/open-policy-agent/opa/releases/tag/v0.68.0" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/releases/tag/v0.68.0</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-8260" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-8260</a></p>
+</li>
+<li>
+<p><a href="https://pkg.go.dev/vuln/GO-2024-3141" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-3141</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-8260" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-8260</a></p>
+</li>
+<li>
+<p><a href="https://www.tenable.com/security/research/tra-2024-36" rel="noopener noreferrer">https://www.tenable.com/security/research/tra-2024-36</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/open-policy-agent/opa
+Installed: 0.60.0
+</code></pre></div>
+<div id="cosign-malicious-attachments-can-cause-system-wide-denial-of-service" class="finding-block" data-severity="Medium" data-title="cosign: malicious attachments can cause system-wide denial of service"><hr>
+<h1>cosign: Malicious attachments can cause system-wide denial of service</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 4.2 (CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:U/C:N/I:N/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-29902, CWE-770</p>
+<h2>Description</h2>
+<p>Cosign provides code signing and transparency for containers and binaries. Prior to version 2.2.4, a remote image with a malicious attachment can cause denial of service of the host machine running Cosign. This can impact other services on the machine that rely on having memory available such as a Redis database which can result in data loss. It can also impact the availability of other services on the machine that will not be available for the duration of the machine denial. The root cause of this issue is that Cosign reads the attachment from a remote image entirely into memory without checking the size of the attachment first. As such, a large attachment can make Cosign read a large attachment into memory; If the attachments size is larger than the machine has memory available, the machine will be denied of service. The Go runtime will make a SigKill after a few seconds of system-wide denial. This issue can allow a supply-chain escalation from a compromised registry to the Cosign user: If an attacher has compromised a registry or the account of an image vendor, they can include a malicious attachment and hurt the image consumer. Version 2.2.4 contains a patch for the vulnerability.</p>
+<h2>Remediation</h2>
+<p>Update github.com/sigstore/cosign/v2 from 2.2.2 to 2.2.4.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-29902" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29902</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-29902" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29902</a></p>
+</li>
+<li>
+<p><a href="https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40" rel="noopener noreferrer">https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29902" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29902</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-29902" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29902</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/sigstore/cosign/v2
+Installed: 2.2.2
+</code></pre></div>
+<div id="cosign-malicious-artifects-can-cause-machine-wide-denial-of-service" class="finding-block" data-severity="Medium" data-title="cosign: malicious artifects can cause machine-wide denial of service"><hr>
+<h1>cosign: Malicious artifects can cause machine-wide denial of service</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 4.2 (CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:U/C:N/I:N/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2024-29903, CWE-770</p>
+<h2>Description</h2>
+<p>Cosign provides code signing and transparency for containers and binaries. Prior to version 2.2.4, maliciously-crafted software artifacts can cause denial of service of the machine running Cosign thereby impacting all services on the machine. The root cause is that Cosign creates slices based on the number of signatures, manifests or attestations in untrusted artifacts. As such, the untrusted artifact can control the amount of memory that Cosign allocates. The exact issue is Cosign allocates excessive memory on the lines that creates a slice of the same length as the manifests. Version 2.2.4 contains a patch for the vulnerability.</p>
+<h2>Remediation</h2>
+<p>Update github.com/sigstore/cosign/v2 from 2.2.2 to 2.2.4.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2024-29903" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29903</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2024-29903" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29903</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></p>
+</li>
+<li>
+<p><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29903" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29903</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-29903" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29903</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: github.com/sigstore/cosign/v2
+Installed: 2.2.2
+</code></pre></div>
+<div id="golang-net-http-x-net-http2-unlimited-number-of-continuation-frames-causes-dos" class="finding-block" data-severity="Medium" data-title="golang: net/http, x/net/http2: unlimited number of continuation frames causes dos"><hr>
+<h1>golang: net/http, x/net/http2: unlimited number of CONTINUATION frames causes DoS</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)</p>
+<p><strong>Source</strong>: trivy</p>
+<p><strong>Identifiers</strong>: CVE-2023-45288</p>
+<h2>Description</h2>
+<p>An attacker may cause an HTTP/2 endpoint to read arbitrary amounts of header data by sending an excessive number of CONTINUATION frames. Maintaining HPACK state requires parsing and processing all HEADERS and CONTINUATION frames on a connection. When a request's headers exceed MaxHeaderBytes, no memory is allocated to store the excess headers, but they are still parsed. This permits an attacker to cause an HTTP/2 endpoint to read arbitrary amounts of header data, all associated with a request which is going to be rejected. These headers can include Huffman-encoded data which is significantly more expensive for the receiver to decode than for an attacker to send. The fix sets a limit on the amount of excess header frames we will process before closing a connection.</p>
+<h2>Remediation</h2>
+<p>Update golang.org/x/net from 0.22.0 to 0.23.0.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://avd.aquasec.com/nvd/cve-2023-45288" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-45288</a></p>
+</li>
+<li>
+<p><a href="http://www.openwall.com/lists/oss-security/2024/04/03/16" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/03/16</a></p>
+</li>
+<li>
+<p><a href="http://www.openwall.com/lists/oss-security/2024/04/05/4" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/05/4</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/errata/RHSA-2024:2724" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:2724</a></p>
+</li>
+<li>
+<p><a href="https://access.redhat.com/security/cve/CVE-2023-45288" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2023-45288</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/2268018</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/2268019</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/2268273</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268018</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268019</a></p>
+</li>
+<li>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268273</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></p>
+</li>
+<li>
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783</a></p>
+</li>
+<li>
+<p><a href="https://errata.almalinux.org/9/ALSA-2024-2724.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-2724.html</a></p>
+</li>
+<li>
+<p><a href="https://errata.rockylinux.org/RLSA-2024:2724" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:2724</a></p>
+</li>
+<li>
+<p><a href="https://go.dev/cl/576155" rel="noopener noreferrer">https://go.dev/cl/576155</a></p>
+</li>
+<li>
+<p><a href="https://go.dev/issue/65051" rel="noopener noreferrer">https://go.dev/issue/65051</a></p>
+</li>
+<li>
+<p><a href="https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M" rel="noopener noreferrer">https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M</a></p>
+</li>
+<li>
+<p><a href="https://kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://kb.cert.org/vuls/id/421644</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/cve/CVE-2023-45288.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2023-45288.html</a></p>
+</li>
+<li>
+<p><a href="https://linux.oracle.com/errata/ELSA-2024-3346.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3346.html</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT</a></p>
+</li>
+<li>
+<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/</a></p>
+</li>
+<li>
+<p><a href="https://nowotarski.info/http2-continuation-flood-technical-details" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood-technical-details</a></p>
+</li>
+<li>
+<p><a href="https://nowotarski.info/http2-continuation-flood/" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood/</a></p>
+</li>
+<li>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-45288" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-45288</a></p>
+</li>
+<li>
+<p><a href="https://pkg.go.dev/vuln/GO-2024-2687" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2687</a></p>
+</li>
+<li>
+<p><a href="https://security.netapp.com/advisory/ntap-20240419-0009" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009</a></p>
+</li>
+<li>
+<p><a href="https://security.netapp.com/advisory/ntap-20240419-0009/" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009/</a></p>
+</li>
+<li>
+<p><a href="https://ubuntu.com/security/notices/USN-6886-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-6886-1</a></p>
+</li>
+<li>
+<p><a href="https://ubuntu.com/security/notices/USN-7109-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7109-1</a></p>
+</li>
+<li>
+<p><a href="https://ubuntu.com/security/notices/USN-7111-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7111-1</a></p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2023-45288" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2023-45288</a></p>
+</li>
+<li>
+<p><a href="https://www.kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://www.kb.cert.org/vuls/id/421644</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>unknown (.)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>target</h3>
+<pre><code>go.mod
+</code></pre>
+<h3>package</h3>
+<pre><code>Package: golang.org/x/net
+Installed: 0.22.0
+</code></pre></div>
+<div id="strict-transport-security-misconfiguration" class="finding-block" data-severity="Medium" data-title="strict transport security misconfiguration"><hr>
+<h1>Strict Transport Security Misconfiguration</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:134217728</p>
+<h2>Description</h2>
+<p>There was no "Strict-Transport-Security" header in the server response.</p>
+<p>The HTTP Strict Transport Security policy defines a timeframe where a browser must connect to the web server via HTTPS. Without a Strict Transport         Security policy the web application may be vulnerable against several attacks:</p>
+<ul>
+<li>
+<p>If the web application mixes usage of HTTP and HTTPS, an attacker can manipulate pages in the unsecured area of the application or change redirection targets         in a manner that the switch to the secured page is not performed or done in a manner, that the attacker remains between client and server.</p>
+</li>
+<li>
+<p>If there is no HTTP server, an attacker in the same network could simulate a HTTP server and motivate the user to click on a prepared URL by a social         engineering attack.</p>
+</li>
+</ul>
+<p>The protection is effective only for the given amount of time. Multiple occurrence of this header could cause undefined behaviour in browsers and should be avoided.</p>
+<h2>Remediation</h2>
+<p>A Strict-Transport-Security HTTP header should be sent with each HTTPS response. The syntax is as follows:</p>
+<p>Strict-Transport-Security: max-age=&lt;seconds&gt;[; includeSubDomains]</p>
+<p>The parameter max-age gives the time frame for requirement of HTTPS in seconds and should be chosen quite high, e.g. several months.            A value below 7776000 is considered as too low by this scanner check.             The flag includeSubDomains defines that the policy applies also for sub domains of the sender of the response.</p>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Certain
+</code></pre></div>
+<div id="ssl-certificate" class="finding-block" data-severity="Medium" data-title="ssl certificate"><hr>
+<h1>SSL certificate</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:16777472, CWE-295, CWE-326, CWE-327</p>
+<h2>Description</h2>
+<p>The following problem was identified with the server's SSL certificate:</p>
+<ul>
+<li>The server's certificate is not valid for the server's hostname.</li>
+</ul>
+<p>The server presented the following certificates:</p>
+<p>Server certificate</p>
+<p>Issued to:  *.example.com, example.com</p>
+<p>Issued by:  Go Daddy Secure Certificate Authority - G2</p>
+<p>Valid from:  Wed Jun 13 15:04:11 EDT 2018</p>
+<p>Valid to:  Sat Jun 13 15:04:11 EDT 2020</p>
+<p>Certificate chain #1</p>
+<p>Issued to:  Go Daddy Secure Certificate Authority - G2</p>
+<p>Issued by:  Go Daddy Root Certificate Authority - G2</p>
+<p>Valid from:  Tue May 03 03:00:00 EDT 2011</p>
+<p>Valid to:  Sat May 03 03:00:00 EDT 2031</p>
+<p>Certificate chain #2</p>
+<p>Issued to:  Go Daddy Root Certificate Authority - G2</p>
+<p>Issued by:  Go Daddy Root Certificate Authority - G2</p>
+<p>Valid from:  Mon Aug 31 20:00:00 EDT 2009</p>
+<p>Valid to:  Thu Dec 31 18:59:59 EST 2037</p>
+<p>Certificate chain #3</p>
+<p>Issued to:  Go Daddy Root Certificate Authority - G2</p>
+<p>Issued by:  Go Daddy Root Certificate Authority - G2</p>
+<p>Valid from:  Mon Aug 31 20:00:00 EDT 2009</p>
+<p>Valid to:  Thu Dec 31 18:59:59 EST 2037</p>
+<p>SSL (or TLS) helps to protect the confidentiality and integrity of information in transit between the browser and server, and to provide authentication of the server's identity. To serve this purpose, the server must present an SSL certificate that is valid for the server's hostname, is issued by a trusted authority and is valid for the current date. If any one of these requirements is not met, SSL connections to the server will not provide the full protection for which SSL is designed.</p>
+<p>It should be noted that various attacks exist against SSL in general, and in the context of HTTPS web connections in particular. It may be possible for a determined and suitably-positioned attacker to compromise SSL connections without user detection even when a valid SSL certificate is used.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="https://wiki.mozilla.org/Security/Server_Side_TLS" rel="noopener noreferrer">https://wiki.mozilla.org/Security/Server_Side_TLS</a></p>
+</li>
+<li>
+<p><a href="https://cwe.mitre.org/data/definitions/295.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/295.html</a></p>
+</li>
+<li>
+<p><a href="https://cwe.mitre.org/data/definitions/326.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/326.html</a></p>
+</li>
+<li>
+<p><a href="https://cwe.mitre.org/data/definitions/327.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/327.html</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Certain
+</code></pre></div>
+<div id="external-service-interaction-dns" class="finding-block" data-severity="High" data-title="external service interaction (dns)"><hr>
+<h1>External service interaction (DNS)</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:3146240, CWE-918, CWE-406</p>
+<h2>Description</h2>
+<p>It is possible to induce the application to perform server-side DNS lookups of arbitrary domain names.</p>
+<p>The payload xxxxxxxxxxxxxxxxxxxxxx.burpcollaborator.net was submitted in the SSL SNI value and the HTTP Host header.</p>
+<p>The application performed a DNS lookup of the specified domain.</p>
+<p>External service interaction arises when it is possible to induce an application to interact with an arbitrary external service, such as a web or mail server. The ability to trigger arbitrary external service interactions does not constitute a vulnerability in its own right, and in some cases might even be the intended behavior of the application.
+However, in many cases, it can indicate a vulnerability with serious consequences.</p>
+<p>In cases where DNS-based interactions can be triggered, it is normally possible to trigger interactions using other service types, and these are reported as separate issues.
+If a payload that specifies a particular service type (e.g. a URL) triggers only a DNS-based interaction,
+then this strongly indicates that the application attempted to connect using that other service,
+but was prevented from doing so by egress filters in place at the network layer. The ability to send requests to other systems can allow the vulnerable server to be used as an attack proxy.
+By submitting suitable payloads, an attacker can cause the application server to attack other systems that it can interact with.
+This may include public third-party systems, internal systems within the same organization, or services available on the local loopback adapter of the application server itself.
+Depending on the network architecture, this may expose highly vulnerable internal services that are not otherwise accessible to external attackers.</p>
+<h2>Remediation</h2>
+<p>You should review the purpose and intended use of the relevant application functionality,
+and determine whether the ability to trigger arbitrary external service interactions is intended behavior.
+If so, you should be aware of the types of attacks that can be performed via this behavior and take appropriate measures.
+These measures might include blocking network access from the application server to other internal systems, and hardening the application server itself to remove any services available on the local loopback adapter.</p>
+<p>If the ability to trigger arbitrary external service interactions is not intended behavior, then you should implement a whitelist of permitted services and hosts, and block any interactions that do not appear on this whitelist.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html" rel="noopener noreferrer">http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html</a></p>
+</li>
+<li>
+<p><a href="https://cwe.mitre.org/data/definitions/918.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/918.html</a></p>
+</li>
+<li>
+<p><a href="https://cwe.mitre.org/data/definitions/406.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/406.html</a></p>
+</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Certain
+</code></pre></div>
+<div id="ssl-scanner-offer-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] offer sslv3"><hr>
+<h1>[SSL Scanner] Offer SSLv3</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:134217728</p>
+<h2>Description</h2>
+<p>The host uses SSLv3, which is a weak encryption scheme broken by the POODLE attack. (CWE-326)</p>
+<h2>Remediation</h2>
+<p>SSLv3 should never be enabled on production systems.</p>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Certain
+</code></pre></div>
+<div id="ssl-scanner-poodle-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] poodle (sslv3)"><hr>
+<h1>[SSL Scanner] POODLE (SSLv3)</h1>
+<p><strong>Severity</strong>: High</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:134217728</p>
+<h2>Description</h2>
+<p>The host is vulnerable to the POODLE attack which affects every website that supports SSLv3. The POODLE attack allows an attacker to extract the plaintext message of a targeted part of a request. There is also a variant of the attack that affects more recent versions of TLS. (Requires external tools) (CVE-2014-3566)</p>
+<h2>Remediation</h2>
+<p>If OpenSSL is used, update to version 1.0.1j or higher. Otherwise, update the web server and client to the latest version. Check for TLS_FALLBACK_SCSV support on the server to prevent downgrade attack and help mitigate this issue (SSL Scanner will report if there is no support for TLS_FALLBACK_SCSV). Also, SSLv3 should never be offered.</p>
+<ul>
+<li>For Internet Explorer 6, there is an option to disable SSLv3 and enable TLS1.0. However, it is only advisable as a workaround.</li>
+</ul>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Tentative
+</code></pre></div>
+<div id="ssl-scanner-breach" class="finding-block" data-severity="Medium" data-title="[ssl scanner] breach"><hr>
+<h1>[SSL Scanner] BREACH</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>Source</strong>: burp</p>
+<p><strong>Identifiers</strong>: burp-type:134217728</p>
+<h2>Description</h2>
+<p>This server offers HTTP compression which can lead to chosen plaintext attack similar to CRIME where the attack can recover secret cookie such as authentication cookie using the size of compressed request/response. This issue can be ignored if there is no secret in the page or static pages.</p>
+<h2>Remediation</h2>
+<p>Disable HTTP compression on the server or ignored if there is no secret in the page.</p>
+<h2>Hosts</h2>
+<ul>
+<li>127.0.0.1 (https://127.0.0.1)</li>
+</ul>
+<h2>Evidence</h2>
+<h3>path</h3>
+<pre><code>/
+</code></pre>
+<h3>burp-details</h3>
+<pre><code>Confidence: Tentative
+</code></pre></div>
+<div id="microsoft-windows-remote-desktop-protocol-server-man-in-the-middle-weakness" class="finding-block" data-severity="Medium" data-title="microsoft windows remote desktop protocol server man-in-the-middle weakness"><hr>
+<h1>Microsoft Windows Remote Desktop Protocol Server Man-in-the-Middle Weakness</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 5.1 (CVSS2#AV:N/AC:H/Au:N/C:P/I:P/A:P)</p>
+<p><strong>Source</strong>: nessus</p>
+<p><strong>Port</strong>: 3389/tcp</p>
+<p><strong>Identifiers</strong>: nessus-plugin:18405, CVE-2005-1794</p>
+<h2>Description</h2>
+<p>It may be possible to get access to the remote host.</p>
+<p>The remote version of the Remote Desktop Protocol Server (Terminal Service) is vulnerable to a man-in-the-middle (MiTM) attack. The RDP client makes no effort to validate the identity of the server when setting up encryption. An attacker with the ability to intercept traffic from the RDP server can establish encryption with the client and server without being detected. A MiTM attack of this nature would allow the attacker to obtain any sensitive information transmitted, including authentication credentials.</p>
+<p>This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.</p>
+<h2>Remediation</h2>
+<ul>
+<li>Force the use of SSL as a transport layer for this service if supported, or/and</li>
+<li>Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://www.oxid.it/downloads/rdp-gbu.pdf" rel="noopener noreferrer">http://www.oxid.it/downloads/rdp-gbu.pdf</a></p>
+</li>
+<li>
+<p><a href="http://www.nessus.org/u?e2628096" rel="noopener noreferrer">http://www.nessus.org/u?e2628096</a></p>
+</li>
+<li>
+<p><a href="http://technet.microsoft.com/en-us/library/cc782610.aspx" rel="noopener noreferrer">http://technet.microsoft.com/en-us/library/cc782610.aspx</a></p>
+</li>
+</ul>
+<h2>Reported by</h2>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.1 (CVSS2#AV:N/AC:H/Au:N/C:P/I:P/A:P)</p>
+<p>It may be possible to get access to the remote host.</p>
+<p>The remote version of the Remote Desktop Protocol Server (Terminal Service) is vulnerable to a man-in-the-middle (MiTM) attack. The RDP client makes no effort to validate the identity of the server when setting up encryption. An attacker with the ability to intercept traffic from the RDP server can establish encryption with the client and server without being detected. A MiTM attack of this nature would allow the attacker to obtain any sensitive information transmitted, including authentication credentials.</p>
+<p>This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.</p>
+<p><strong>Remediation</strong>: - Force the use of SSL as a transport layer for this service if supported, or/and
+- Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.</p>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.1 (CVSS2#AV:N/AC:H/Au:N/C:P/I:P/A:P)</p>
+<p>It may be possible to get access to the remote host.</p>
+<p>The remote version of the Remote Desktop Protocol Server (Terminal Service) is vulnerable to a man-in-the-middle (MiTM) attack. The RDP client makes no effort to validate the identity of the server when setting up encryption. An attacker with the ability to intercept traffic from the RDP server can establish encryption with the client and server without being detected. A MiTM attack of this nature would allow the attacker to obtain any sensitive information transmitted, including authentication credentials.</p>
+<p>This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.</p>
+<p><strong>Remediation</strong>: - Force the use of SSL as a transport layer for this service if supported, or/and
+- Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.</p>
+<h2>Hosts</h2>
+<ul>
+<li>
+<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+<li>
+<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+</ul>
+<h2>Evidence</h2>
+<h3>port-info (nessus)</h3>
+<pre><code>Port: 3389/tcp
+Service: msrdp
+</code></pre></div>
+<div id="terminal-services-encryption-level-is-medium-or-low" class="finding-block" data-severity="Medium" data-title="terminal services encryption level is medium or low"><hr>
+<h1>Terminal Services Encryption Level is Medium or Low</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 4.3 (CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N)</p>
+<p><strong>Source</strong>: nessus</p>
+<p><strong>Port</strong>: 3389/tcp</p>
+<p><strong>Identifiers</strong>: nessus-plugin:57690</p>
+<h2>Description</h2>
+<p>The remote host is using weak cryptography.</p>
+<p>The remote Terminal Services service is not configured to use strong cryptography. </p>
+<p>Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</p>
+<h2>Remediation</h2>
+<p>Change RDP encryption level to one of :</p>
+<ol>
+<li>
+<p>High</p>
+</li>
+<li>
+<p>FIPS Compliant</p>
+</li>
+</ol>
+<h2>Reported by</h2>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 4.3 (CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N)</p>
+<p>The remote host is using weak cryptography.</p>
+<p>The remote Terminal Services service is not configured to use strong cryptography. </p>
+<p>Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</p>
+<p><strong>Remediation</strong>: Change RDP encryption level to one of :</p>
+<ol>
+<li>
+<p>High</p>
+</li>
+<li>
+<p>FIPS Compliant</p>
+</li>
+</ol>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 4.3 (CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N)</p>
+<p>The remote host is using weak cryptography.</p>
+<p>The remote Terminal Services service is not configured to use strong cryptography. </p>
+<p>Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</p>
+<p><strong>Remediation</strong>: Change RDP encryption level to one of :</p>
+<ol>
+<li>
+<p>High</p>
+</li>
+<li>
+<p>FIPS Compliant</p>
+</li>
+</ol>
+<h2>Hosts</h2>
+<ul>
+<li>
+<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+<li>
+<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+</ul>
+<h2>Evidence</h2>
+<h3>port-info (nessus)</h3>
+<pre><code>Port: 3389/tcp
+Service: msrdp
+</code></pre>
+<h3>plugin-output (nessus)</h3>
+<pre><code>The terminal services encryption level is set to :
+
+2. Medium
+</code></pre></div>
+<div id="smb-signing-disabled" class="finding-block" data-severity="Medium" data-title="smb signing disabled"><hr>
+<h1>SMB Signing Disabled</h1>
+<p><strong>Severity</strong>: Medium</p>
+<p><strong>CVSS Score</strong>: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)</p>
+<p><strong>Source</strong>: nessus</p>
+<p><strong>Port</strong>: 445/tcp</p>
+<p><strong>Identifiers</strong>: nessus-plugin:57608</p>
+<h2>Description</h2>
+<p>Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.</p>
+<h2>Remediation</h2>
+<p>Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><a href="http://support.microsoft.com/kb/887429" rel="noopener noreferrer">http://support.microsoft.com/kb/887429</a></p>
+</li>
+<li>
+<p><a href="http://www.nessus.org/u?74b80723" rel="noopener noreferrer">http://www.nessus.org/u?74b80723</a></p>
+</li>
+<li>
+<p><a href="http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html" rel="noopener noreferrer">http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</a></p>
+</li>
+</ul>
+<h2>Reported by</h2>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)</p>
+<p>Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.</p>
+<p><strong>Remediation</strong>: Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)</p>
+<p>Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.</p>
+<p><strong>Remediation</strong>: Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
+<h2>Hosts</h2>
+<ul>
+<li>
+<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+<li>
+<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
+</li>
+</ul>
+<h2>Evidence</h2>
+<h3>port-info (nessus)</h3>
+<pre><code>Port: 445/tcp
+Service: cifs
+</code></pre></div>
+</body>
+</html>

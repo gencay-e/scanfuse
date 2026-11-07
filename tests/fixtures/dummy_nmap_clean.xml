@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sV -p 80,443 -oX dummy.xml 192.168.1.10">
+<host starttime="1700000000" endtime="1700000010">
+  <status state="up" reason="arp-response" reason_ttl="0"/>
+  <address addr="192.168.1.10" addrtype="ipv4"/>
+  <hostnames>
+    <hostname name="target.local" type="PTR"/>
+  </hostnames>
+  <ports>
+    <port protocol="tcp" portid="80">
+      <state state="open" reason="syn-ack" reason_ttl="64"/>
+      <service name="http" product="Apache httpd" version="2.4.41" extrainfo="(Ubuntu)" method="probed" conf="10"/>
+      <script id="http-title" output="Welcome to VulnApp"/>
+    </port>
+    <port protocol="tcp" portid="443">
+      <state state="open" reason="syn-ack" reason_ttl="64"/>
+      <service name="https" product="nginx" version="1.18.0" method="probed" conf="10"/>
+      <script id="ssl-cert" output="Subject: commonName=target.local&#xa;Issuer: commonName=target.local"/>
+    </port>
+  </ports>
+</host>
+</nmaprun>

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<OWASPZAPReport version="2.11.1" generated="Thu, 24 Mar 2022 10:00:00">
+    <site name="http://192.168.1.20" host="192.168.1.20" port="80" ssl="false">
+        <alerts>
+            <alertitem>
+                <pluginid>10021</pluginid>
+                <alert>X-Content-Type-Options Header Missing</alert>
+                <name>X-Content-Type-Options Header Missing</name>
+                <riskcode>1</riskcode>
+                <confidence>2</confidence>
+                <riskdesc>Low (Medium)</riskdesc>
+                <desc><![CDATA[The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'.]]></desc>
+                <instances>
+                    <instance>
+                        <uri>http://192.168.1.20/api/login</uri>
+                        <method>POST</method>
+                        <evidence><![CDATA[HTTP/1.1 200 OK]]></evidence>
+                    </instance>
+                </instances>
+                <count>1</count>
+                <solution><![CDATA[Ensure that the application/web server sets the Content-Type header appropriately.]]></solution>
+            </alertitem>
+            <alertitem>
+                <pluginid>40018</pluginid>
+                <alert>SQL Injection</alert>
+                <name>SQL Injection</name>
+                <riskcode>3</riskcode>
+                <confidence>3</confidence>
+                <riskdesc>High (High)</riskdesc>
+                <desc><![CDATA[SQL injection may be possible.]]></desc>
+                <instances>
+                    <instance>
+                        <uri>http://192.168.1.20/view?id=1</uri>
+                        <method>GET</method>
+                        <evidence><![CDATA[SQL syntax error]]></evidence>
+                    </instance>
+                </instances>
+                <count>1</count>
+                <solution><![CDATA[Use parameterized queries.]]></solution>
+            </alertitem>
+        </alerts>
+    </site>
+</OWASPZAPReport>

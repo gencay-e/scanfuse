@@ -1,0 +1,44 @@
+# Pentest Report Summary
+
+## Import status
+{% if complete %}
+Complete. All inputs were read.
+{% else %}
+**INCOMPLETE.** {{ errors|length }} input problem(s). The findings below come only from inputs that could be read.
+{% for e in errors %}
+- {{ e.file | md }}: {{ e.message | md }}
+{% endfor %}
+{% endif %}
+
+## Executive Summary
+Total Findings: {{ findings|length }}
+
+### Risk Matrix
+| Severity | Count |
+|----------|-------|
+| Critical | {{ findings|selectattr('severity', 'equalto', 'Critical')|list|length }} |
+| High     | {{ findings|selectattr('severity', 'equalto', 'High')|list|length }} |
+| Medium   | {{ findings|selectattr('severity', 'equalto', 'Medium')|list|length }} |
+| Low      | {{ findings|selectattr('severity', 'equalto', 'Low')|list|length }} |
+| Info     | {{ findings|selectattr('severity', 'equalto', 'Info')|list|length }} |
+
+## Findings Overview
+{% for finding in findings_sorted %}
+- [{{ finding.severity | md }}] [{{ finding.title | md }}]({{ finding.slug }}.md) (Source: {{ finding.source_tool | md }}, {{ finding.hosts | length }} host{{ "" if finding.hosts | length == 1 else "s" }})
+{% endfor %}
+
+## Affected Hosts
+{% set hosts = {} %}
+{% for finding in findings %}
+  {% for host in finding.hosts %}
+    {% if host.ip not in hosts %}
+      {% set _ = hosts.update({host.ip: 1}) %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% for ip in hosts %}
+- {{ ip | md }}
+{% else %}
+No host data extracted.
+{% endfor %}

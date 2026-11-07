@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap">
+<host>
+  <status state="up"/>
+  <address addr="10.0.0.5" addrtype="ipv4"/>
+  <!-- No hostnames block -->
+  <ports>
+    <port protocol="tcp" portid="22">
+      <state state="filtered"/>
+      <!-- No service info -->
+    </port>
+    <port protocol="tcp" portid="3306">
+      <state state="open"/>
+      <!-- Service name, but no product/version -->
+      <service name="mysql"/>
+    </port>
+  </ports>
+</host>
+</nmaprun>
