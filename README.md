@@ -1,12 +1,14 @@
 # scanfuse
 
-A local command-line tool that reads pentest scanner reports and writes one report from them.
+[![PyPI](https://img.shields.io/pypi/v/scanfuse.svg)](https://pypi.org/project/scanfuse/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml/badge.svg)](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml)
+
+`scanfuse` parses output from Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus and Trivy, merges duplicate findings across scanners, and writes a single report as Markdown (with an index and a standalone HTML page), JSON or CSV. It runs offline and makes no network calls.
 
 <img alt="Scan files from Nmap, Nuclei, ZAP, Burp, Nessus and Trivy go into scanfuse, which writes index.md, report.html, report.json and report.csv" src="docs/images/scanfuse-flow.svg" width="900">
 
-It imports Nmap, Nuclei, ZAP, Burp, Nessus and Trivy files and writes Markdown (with an index and a standalone HTML page), JSON or CSV. It runs offline and sends nothing anywhere.
-
-Version 0.2.0, a pre-release. See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md) for the current release (`0.2.0`).
 
 ## Example
 
