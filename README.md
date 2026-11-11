@@ -1,25 +1,25 @@
 # scanfuse
 
 [![PyPI](https://img.shields.io/pypi/v/scanfuse.svg)](https://pypi.org/project/scanfuse/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/gencay-e/scanfuse/blob/main/LICENSE)
 [![CI](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml/badge.svg)](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml)
 
 `scanfuse` parses output from Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus and Trivy, merges duplicate findings across scanners, and writes a single report as Markdown (with an index and a standalone HTML page), JSON or CSV. It runs offline and makes no network calls.
 
-<img alt="Scan files from Nmap, Nuclei, ZAP, Burp, Nessus and Trivy go into scanfuse, which writes index.md, report.html, report.json and report.csv" src="docs/images/scanfuse-flow.svg" width="900">
+<img alt="Scan files from Nmap, Nuclei, ZAP, Burp, Nessus and Trivy go into scanfuse, which writes index.md, report.html, report.json, report.csv, report.sarif or report.pdf" src="https://raw.githubusercontent.com/gencay-e/scanfuse/main/docs/images/scanfuse-flow.svg" width="900">
 
-See [CHANGELOG.md](CHANGELOG.md) for the current release (`1.0.0`).
+Release notes are in [CHANGELOG.md](https://github.com/gencay-e/scanfuse/blob/main/CHANGELOG.md).
 
 ## Example
 
-<img alt="The summary of a report" src="docs/images/report-summary.png" width="900">
+<img alt="The summary of a report" src="https://raw.githubusercontent.com/gencay-e/scanfuse/main/docs/images/report-summary.png" width="900">
 
-<img alt="A finding in the report" src="docs/images/report-finding.png" width="900">
+<img alt="A finding in the report" src="https://raw.githubusercontent.com/gencay-e/scanfuse/main/docs/images/report-finding.png" width="900">
 
-`report.html` follows the light or dark setting of your system; the screenshots show the dark one.
+`report.html` follows the light or dark setting of your system by default. The Theme menu switches between System, Light and Dark and remembers the choice in the browser. The screenshots show the dark theme.
 
 The report above was made from six real scan files (Nmap, ZAP, Trivy, Burp, Nessus). The input files, the
-command and the full report are in [examples/](examples/).
+command and the full report are in [examples/](https://github.com/gencay-e/scanfuse/tree/main/examples).
 
 ## Install
 
@@ -109,7 +109,7 @@ Findings from several files are merged when they are the same finding:
 * they have the same port, and
 * the same tool does not give them different tool ids (for example two Nessus plugin ids).
 
-Titles that are only similar are not merged. A merged finding keeps all hosts and all evidence. Evidence shows which tool reported it. What each tool wrote (description, remediation, severity, CVSS score and vector, ids) is listed under **Reported by** in the Markdown and in `sources` in the JSON. The summary severity is the highest of all reports. The summary CVSS score is the highest score, together with its own vector.
+Titles that are only similar are not merged. A merged finding keeps all hosts and all evidence. Evidence shows which tool reported it. What each tool wrote (description, remediation, severity, CVSS score and vector, ids) is listed under **Reported by** in the Markdown and in `sources` in the JSON. The summary severity is the highest of all reports. The summary CVSS score is the highest score, together with its own vector. If the tools give CVSS vectors with different base metrics, `cvss_merge_conflict` is `true` in the JSON.
 
 ## Output
 
@@ -217,4 +217,4 @@ uv run pytest tests/
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The standalone programs include third-party packages, among them fpdf2 (LGPL-3.0). Their licenses are in `THIRD_PARTY_LICENSES.txt` in each release archive.
+MIT, see [LICENSE](https://github.com/gencay-e/scanfuse/blob/main/LICENSE). The standalone programs include third-party packages, among them fpdf2 (LGPL-3.0). Their licenses are in `THIRD_PARTY_LICENSES.txt` in each release archive.

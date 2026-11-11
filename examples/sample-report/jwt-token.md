@@ -28,14 +28,6 @@ Secret detected: jwt-token
 
 
 
-### trivy
-
-**Severity**: Medium
-
-Secret detected: jwt-token
-
-
-
 
 ## Hosts
 

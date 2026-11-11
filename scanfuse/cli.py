@@ -15,7 +15,7 @@ from scanfuse.parsers.base import PartialImportError
 
 app = typer.Typer(
     name="scanfuse",
-    help="Fast, local-first pentest finding extractor & markdown report engine.",
+    help="Merge pentest scanner findings into one report: Markdown/HTML, JSON, CSV, SARIF or PDF. Runs offline.",
     add_completion=False,
 )
 console = Console()

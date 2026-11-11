@@ -153,7 +153,7 @@ jobs:
 
   pypi:
     name: Publish to PyPI
-    needs: [ test, audit, packages ]
+    needs: [ test, audit, standalone, packages ]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # Trusted publishing: no token. The project on PyPI must trust this workflow and environment.

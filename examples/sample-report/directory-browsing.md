@@ -6,6 +6,9 @@
 **Source**: zap
 
 
+**Port**: 80/tcp
+
+
 
 **Identifiers**: zap-plugin:0
 

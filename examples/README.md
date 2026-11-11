@@ -1,6 +1,6 @@
 # Example
 
-`sample-report/` is a report made from six real scan files of four tools. The files come from the public
+`sample-report/` is a report made from six real scan files of five tools. The files come from the public
 [DefectDojo sample-scan-files](https://github.com/DefectDojo/sample-scan-files) repository (MIT license) and are
 kept in `tests/fixtures/public/`. They were made on demo systems.
 
@@ -11,7 +11,7 @@ scanfuse nmap_output_v7.12.xml zaproxy-demo-site_1.4.0.1.xml juice_shop-trivy-re
   -o ../../../examples/sample-report --min-severity Medium
 ```
 
-Result: the six files hold 206 findings. 54 of them are Medium or higher, and merging the same finding on several hosts leaves 39.
+Result: the six files hold 206 findings. Merging the same finding on several hosts leaves 104, and 39 of them are Medium or higher.
 
 * `sample-report/report.html`: one HTML file with search and a severity filter. It needs no network.
 * `sample-report/index.md`: the summary with the risk matrix and the list of findings.

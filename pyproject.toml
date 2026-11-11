@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "scanfuse"
 dynamic = ["version"]
-description = "Fast, local-first pentest finding extractor & markdown report engine."
+description = "Offline CLI that merges pentest scanner findings into one report: Markdown/HTML, JSON, CSV, SARIF or PDF."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"

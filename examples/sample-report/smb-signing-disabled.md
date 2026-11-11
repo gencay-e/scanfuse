@@ -50,17 +50,6 @@ Signing is disabled on the remote SMB server.  This can allow man-in-the-middle 
 
 
 
-### nessus
-
-**Severity**: Medium, **CVSS Score**: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)
-
-Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.
-
-
-**Remediation**: Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.
-
-
-
 
 ## Hosts
 

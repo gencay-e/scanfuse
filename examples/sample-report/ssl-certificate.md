@@ -6,6 +6,9 @@
 **Source**: burp
 
 
+**Port**: 443/tcp
+
+
 
 **Identifiers**: burp-type:16777472, CWE-295, CWE-326, CWE-327
 
@@ -19,43 +22,43 @@ The server presented the following certificates:
 
 Server certificate
 
-Issued to:  *.example.com, example.com
+Issued to:    *.example.com, example.com
 
-Issued by:  Go Daddy Secure Certificate Authority - G2
+Issued by:    Go Daddy Secure Certificate Authority - G2
 
-Valid from:  Wed Jun 13 15:04:11 EDT 2018
+Valid from:    Wed Jun 13 15:04:11 EDT 2018
 
-Valid to:  Sat Jun 13 15:04:11 EDT 2020
+Valid to:    Sat Jun 13 15:04:11 EDT 2020
 
 Certificate chain #1
 
-Issued to:  Go Daddy Secure Certificate Authority - G2
+Issued to:    Go Daddy Secure Certificate Authority - G2
 
-Issued by:  Go Daddy Root Certificate Authority - G2
+Issued by:    Go Daddy Root Certificate Authority - G2
 
-Valid from:  Tue May 03 03:00:00 EDT 2011
+Valid from:    Tue May 03 03:00:00 EDT 2011
 
-Valid to:  Sat May 03 03:00:00 EDT 2031
+Valid to:    Sat May 03 03:00:00 EDT 2031
 
 Certificate chain #2
 
-Issued to:  Go Daddy Root Certificate Authority - G2
+Issued to:    Go Daddy Root Certificate Authority - G2
 
-Issued by:  Go Daddy Root Certificate Authority - G2
+Issued by:    Go Daddy Root Certificate Authority - G2
 
-Valid from:  Mon Aug 31 20:00:00 EDT 2009
+Valid from:    Mon Aug 31 20:00:00 EDT 2009
 
-Valid to:  Thu Dec 31 18:59:59 EST 2037
+Valid to:    Thu Dec 31 18:59:59 EST 2037
 
 Certificate chain #3
 
-Issued to:  Go Daddy Root Certificate Authority - G2
+Issued to:    Go Daddy Root Certificate Authority - G2
 
-Issued by:  Go Daddy Root Certificate Authority - G2
+Issued by:    Go Daddy Root Certificate Authority - G2
 
-Valid from:  Mon Aug 31 20:00:00 EDT 2009
+Valid from:    Mon Aug 31 20:00:00 EDT 2009
 
-Valid to:  Thu Dec 31 18:59:59 EST 2037
+Valid to:    Thu Dec 31 18:59:59 EST 2037
 
 SSL (or TLS) helps to protect the confidentiality and integrity of information in transit between the browser and server, and to provide authentication of the server's identity. To serve this purpose, the server must present an SSL certificate that is valid for the server's hostname, is issued by a trusted authority and is valid for the current date. If any one of these requirements is not met, SSL connections to the server will not provide the full protection for which SSL is designed.
 

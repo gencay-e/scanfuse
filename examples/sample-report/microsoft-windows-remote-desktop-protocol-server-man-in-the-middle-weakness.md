@@ -60,22 +60,6 @@ This flaw exists because the RDP server stores a hardcoded RSA private key in th
 
 
 
-### nessus
-
-**Severity**: Medium, **CVSS Score**: 5.1 (CVSS2#AV:N/AC:H/Au:N/C:P/I:P/A:P)
-
-It may be possible to get access to the remote host.
-
-The remote version of the Remote Desktop Protocol Server (Terminal Service) is vulnerable to a man-in-the-middle (MiTM) attack. The RDP client makes no effort to validate the identity of the server when setting up encryption. An attacker with the ability to intercept traffic from the RDP server can establish encryption with the client and server without being detected. A MiTM attack of this nature would allow the attacker to obtain any sensitive information transmitted, including authentication credentials.
-
-This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.
-
-
-**Remediation**: - Force the use of SSL as a transport layer for this service if supported, or/and
-- Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.
-
-
-
 
 ## Hosts
 

@@ -56,25 +56,6 @@ Using weak cryptography with this service may allow an attacker to eavesdrop on 
 
 
 
-### nessus
-
-**Severity**: Medium, **CVSS Score**: 4.3 (CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N)
-
-The remote host is using weak cryptography.
-
-The remote Terminal Services service is not configured to use strong cryptography. 
-
-Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.
-
-
-**Remediation**: Change RDP encryption level to one of :
-
-3. High
-
-4. FIPS Compliant
-
-
-
 
 ## Hosts
 

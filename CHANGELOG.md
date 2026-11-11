@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1 (2026-11-11)
+
+Documentation and release fixes, no change to how reports are made.
+
+* The images on the PyPI page were missing because the README used relative paths. They now point to GitHub.
+* The screenshots show the 1.0.0 report with the theme menu, the flow image lists the SARIF and PDF output, and the example report in `examples/` was made again with 1.0.0.
+* The package description on PyPI and in `scanfuse --help` names all output formats.
+* Release workflow: the upload to PyPI waits for the standalone programs, so a failed program build no longer leaves a release on PyPI without archives on GitHub.
+
 ## 1.0.0 (2026-11-11)
 
 First stable release. The command line, `.scanfuse.yaml` and the JSON format (`schema_version` 2) are now kept compatible within 1.x. The new input formats below are experimental and may still change.
