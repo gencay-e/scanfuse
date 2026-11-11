@@ -27,6 +27,9 @@ def runtime_requirements(name: str) -> list[str]:
 
 
 def main() -> None:
+    # License texts contain non-ASCII names; Windows consoles default to cp1252.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     seen: dict[str, md.Distribution] = {}
     todo = runtime_requirements("scanfuse")
     while todo:
@@ -67,7 +70,7 @@ def main() -> None:
             parts = str(file).replace("\\", "/").split("/")
             if parts[0].endswith(".dist-info") and re.match(r"(?i)(licen[cs]e|copying|notice|authors)", parts[-1]):
                 try:
-                    print(open(dist.locate_file(file), encoding="utf-8", errors="replace").read().strip())
+                    print(open(str(dist.locate_file(file)), encoding="utf-8", errors="replace").read().strip())
                     print()
                 except OSError:
                     pass
