@@ -13,3 +13,15 @@ dist/
 .env.*
 !.env.example
 .hypothesis/
+
+# Laufzeit-/Scratch-Ausgaben
+out*/
+report*/
+test_out/
+md_report/
+pre_created_folder/
+repx/
+scratch/
+
+# Claude Code: agents + settings.json versionieren, lokale Overrides nicht
+.claude/settings.local.json
