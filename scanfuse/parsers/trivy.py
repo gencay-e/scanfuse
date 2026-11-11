@@ -1,4 +1,5 @@
 import json
+import math
 
 from scanfuse.models import Evidence, Finding, Host
 from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, cwe_id, extract_urls
@@ -8,7 +9,7 @@ class TrivyParser(BaseParser):
     def parse(self, file_path: str) -> list[Finding]:
         findings = []
 
-        with open(file_path, encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError as e:
@@ -32,6 +33,7 @@ class TrivyParser(BaseParser):
             "HIGH": "High",
             "MEDIUM": "Medium",
             "LOW": "Low",
+            "INFO": "Info",
             "UNKNOWN": "Info"
         }
 
@@ -43,7 +45,7 @@ class TrivyParser(BaseParser):
             if not isinstance(result, dict):
                 continue
 
-            target = result.get("Target", "Unknown Target")
+            target = str(result.get("Target") or "Unknown Target")
 
             # Parse Vulnerabilities (CVEs)
             vulns = result.get("Vulnerabilities") or []
@@ -59,7 +61,7 @@ class TrivyParser(BaseParser):
 
                 desc_raw = vuln.get("Description")
                 desc = str(desc_raw).strip() if desc_raw else ""
-                sev_raw = (vuln.get("Severity") or "UNKNOWN").upper()
+                sev_raw = str(vuln.get("Severity") or "UNKNOWN").upper()
                 severity = severity_map.get(sev_raw, "Info")
 
                 installed_ver = vuln.get("InstalledVersion", "")
@@ -75,8 +77,21 @@ class TrivyParser(BaseParser):
                     # Prefer NVD V3, fallback to whatever is there
                     for provider, scores in cvss_data.items():
                         if isinstance(scores, dict) and "V3Score" in scores:
-                            cvss_score = scores["V3Score"]
-                            cvss_vector = scores.get("V3Vector")
+                            val = scores.get("V3Score")
+                            try:
+                                cvss_val = float(val) if val is not None else None
+                                if cvss_val is not None and (not math.isfinite(cvss_val) or cvss_val < 0.0 or cvss_val > 10.0):
+                                    cvss_val = None
+                            except (ValueError, TypeError):
+                                cvss_val = None
+                            vector = scores.get("V3Vector")
+                            vector = vector if isinstance(vector, str) else None
+                            if cvss_val is None:
+                                if cvss_score is None and cvss_vector is None:
+                                    cvss_vector = vector
+                                continue
+                            cvss_score = cvss_val
+                            cvss_vector = vector
                             if provider == "nvd":
                                 break
 
@@ -112,14 +127,14 @@ class TrivyParser(BaseParser):
             for misconf in misconfs:
                 if not isinstance(misconf, dict):
                     continue
-                misconf_id = misconf.get("ID", "Unknown ID")
+                misconf_id = misconf.get("ID") or "Unknown ID"
                 title_raw = misconf.get("Title")
-                title = str(title_raw).strip() if title_raw else misconf_id
+                title = str(title_raw).strip() if title_raw else str(misconf_id)
 
                 desc_raw = misconf.get("Description")
                 desc = str(desc_raw).strip() if desc_raw else ""
 
-                sev_raw = (misconf.get("Severity") or "UNKNOWN").upper()
+                sev_raw = str(misconf.get("Severity") or "UNKNOWN").upper()
                 severity = severity_map.get(sev_raw, "Info")
 
                 rem_raw = misconf.get("Resolution")
@@ -162,11 +177,11 @@ class TrivyParser(BaseParser):
             for secret in secrets:
                 if not isinstance(secret, dict):
                     continue
-                sec_id = secret.get("RuleID", "Unknown Secret")
+                sec_id = secret.get("RuleID") or "Unknown Secret"
                 title_raw = secret.get("Title")
-                title = str(title_raw).strip() if title_raw else sec_id
+                title = str(title_raw).strip() if title_raw else str(sec_id)
                 desc = f"Secret detected: {sec_id}"
-                sev_raw = (secret.get("Severity") or "CRITICAL").upper()
+                sev_raw = str(secret.get("Severity") or "CRITICAL").upper()
                 severity = severity_map.get(sev_raw, "Critical")
 
                 evidence_list = [Evidence(type="target", data=target)]

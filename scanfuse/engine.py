@@ -16,15 +16,20 @@ from jinja2 import ChoiceLoader, Environment, FileSystemLoader
 
 from scanfuse.html_report import render_report_fragment
 from scanfuse.models import Finding, Host
+from scanfuse.parsers.grype import GrypeParser
+from scanfuse.parsers.nikto import NiktoParser
 from scanfuse.parsers.nmap import NmapParser
 from scanfuse.parsers.nuclei import NucleiParser
+from scanfuse.parsers.sarif import SarifParser
+from scanfuse.parsers.semgrep import SemgrepParser
+from scanfuse.parsers.testssl import TestsslParser
 from scanfuse.parsers.zap import ZapParser
 from scanfuse.utils import unique_slug
 
 SEVERITIES = ("Critical", "High", "Medium", "Low", "Info")
 SEVERITY_RANK = {name: len(SEVERITIES) - i for i, name in enumerate(SEVERITIES)}
-INPUT_FORMATS = ("auto", "nmap", "nuclei", "zap", "burp", "nessus", "trivy")
-OUTPUT_FORMATS = ("markdown", "json", "csv")
+INPUT_FORMATS = ("auto", "nmap", "nuclei", "zap", "burp", "nessus", "trivy", "sarif", "semgrep", "grype", "nikto", "testssl")
+OUTPUT_FORMATS = ("markdown", "json", "csv", "sarif", "pdf")
 JSON_SCHEMA_VERSION = 2
 
 _MD_SPECIAL = re.compile(r"([\\`*_\[\]])")
@@ -40,7 +45,8 @@ def md_escape(value: object) -> str:
     text = "" if value is None else str(value)
     text = html.escape(text, quote=False)
     text = _MD_SPECIAL.sub(r"\\\1", text)
-    text = re.sub(r"^(\s*)([#+\-])(?=\s|$)", r"\1\\\2", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)(#+)", r"\1\\\2", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)([+\-])(?=\s|$)", r"\1\\\2", text, flags=re.MULTILINE)
     text = re.sub(r"^(\s*)(\d+)([.)])(?=\s|$)", r"\1\2\\\3", text, flags=re.MULTILINE)
     text = re.sub(r"^(\s*)(=+|-{2,})\s*$", r"\1\\\2", text, flags=re.MULTILINE)
     return text
@@ -68,13 +74,21 @@ def md_text(value: object) -> str:
     formatting such as emphasis, code and links is kept, but the text cannot start a heading,
     so it cannot fake a section of the report."""
     text = html.escape("" if value is None else str(value), quote=False)
-    # Indented lines would become code blocks in Markdown (four spaces). Scanner texts use
-    # indentation for layout only, so leading blanks are removed.
-    text = re.sub(r"^[ \t]+", "", text, flags=re.MULTILINE)
-    text = _separate_lists(text)
-    text = re.sub(r"^(\s*)(#+)", r"\1\\\2", text, flags=re.MULTILINE)
-    text = re.sub(r"^(\s*)(=+|-{2,})\s*$", r"\1\\\2", text, flags=re.MULTILINE)
-    return text
+    # Split text by fenced code blocks (```...```) to preserve code indentation.
+    parts = re.split(r"(```[^\n]*\n[\s\S]*?\n```)", text)
+    result = []
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            # Inside fenced code block: preserve indentation
+            result.append(part)
+        else:
+            # Outside code blocks: strip leading blanks so indented lines don't become 4-space code blocks
+            p = re.sub(r"^[ \t]+", "", part, flags=re.MULTILINE)
+            p = _separate_lists(p)
+            p = re.sub(r"^(\s*)(#+)", r"\1\\\2", p, flags=re.MULTILINE)
+            p = re.sub(r"^(\s*)(=+|-{2,})\s*$", r"\1\\\2", p, flags=re.MULTILINE)
+            result.append(p)
+    return "".join(result)
 
 
 def code_fence(data: object) -> str:
@@ -85,12 +99,16 @@ def code_fence(data: object) -> str:
 
 def csv_safe(cell: object) -> str:
     """Neutralize spreadsheet formulas. Looks at the text after Unicode normalization, so that
-    full-width '＝' or a leading no-break space do not get through."""
+    full-width '＝', leading control characters, or a leading no-break space do not get through."""
     val = "" if cell is None else str(cell)
     if not val:
         return val
-    probe = unicodedata.normalize("NFKC", val).lstrip()
-    if probe.startswith(("=", "+", "-", "@")) or val.startswith(("\t", "\r", "\n", " ")):
+    probe = unicodedata.normalize("NFKC", val)
+    idx = 0
+    while idx < len(probe) and (probe[idx].isspace() or unicodedata.category(probe[idx]).startswith("C") or probe[idx] in "\ufeff\u200b\u200c\u200d\u2060\u00a0"):
+        idx += 1
+    probe_stripped = probe[idx:]
+    if probe_stripped.startswith(("=", "+", "-", "@")) or val.startswith(("\t", "\r", "\n", " ", "\ufeff")):
         return f"'{val}"
     return val
 
@@ -132,6 +150,16 @@ class ScanfuseEngine:
         elif format_hint == "trivy":
             from scanfuse.parsers.trivy import TrivyParser
             parser = TrivyParser()
+        elif format_hint == "sarif":
+            parser = SarifParser()
+        elif format_hint == "semgrep":
+            parser = SemgrepParser()
+        elif format_hint == "grype":
+            parser = GrypeParser()
+        elif format_hint == "nikto":
+            parser = NiktoParser()
+        elif format_hint == "testssl":
+            parser = TestsslParser()
         else:
             raise ValueError(f"Unknown format: {format_hint}")
 
@@ -162,10 +190,25 @@ class ScanfuseEngine:
     @staticmethod
     def _detect_format(file_path: str) -> str:
         try:
-            with open(file_path, encoding="utf-8-sig") as f:
-                header = f.read(ScanfuseEngine._DETECT_BYTES)
-        except (OSError, UnicodeDecodeError) as e:
+            with open(file_path, "rb") as bf:
+                raw_bytes = bf.read(ScanfuseEngine._DETECT_BYTES)
+        except OSError as e:
             raise ValueError(f"Could not read {file_path}: {e}")
+
+        header = ""
+        if raw_bytes.startswith((b"\xff\xfe", b"\xfe\xff")):
+            try:
+                header = raw_bytes.decode("utf-16")
+            except UnicodeDecodeError:
+                pass
+        if not header:
+            try:
+                header = raw_bytes.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                try:
+                    header = raw_bytes.decode("utf-16")
+                except UnicodeDecodeError:
+                    header = raw_bytes.decode("latin-1", errors="replace")
         start = header.lstrip()
         if start.startswith("<"):
             for tag, name in ScanfuseEngine._XML_ROOTS:
@@ -175,13 +218,20 @@ class ScanfuseEngine:
                 f"Could not detect the format of {file_path}: unknown XML root element. Use --format."
             )
         if start.startswith(("{", "[")):
+            # Only the stable formats are detected automatically. The experimental formats
+            # (sarif, semgrep, grype, nikto, testssl) need --format, so a Nuclei or Trivy file
+            # can never be read by one of them by mistake.
             # Trivy writes either an object with SchemaVersion/ArtifactName (current versions) or,
             # in older versions, a list of results that have a Target.
             is_trivy_object = start.startswith("{") and '"SchemaVersion"' in header and '"ArtifactName"' in header
             is_trivy_list = start.startswith("[") and '"Target"' in header and any(
                 f'"{key}"' in header for key in ("Vulnerabilities", "Misconfigurations", "Secrets", "Class")
             )
-            return "trivy" if is_trivy_object or is_trivy_list else "nuclei"
+            if is_trivy_object or is_trivy_list:
+                return "trivy"
+            if start.startswith("{") and '"version"' in header and '"runs"' in header and "2.1.0" in header:
+                raise ValueError(f"{file_path} looks like SARIF. SARIF import is experimental: use --format sarif.")
+            return "nuclei"
         raise ValueError(f"Could not detect the format of {file_path}. Use --format.")
 
     # ---------------------------------------------------------------- filters
@@ -192,11 +242,12 @@ class ScanfuseEngine:
         if ignore_rules:
             if isinstance(ignore_rules, str):
                 ignore_rules = [ignore_rules]
-            ignore_lower = [str(r).lower() for r in ignore_rules]
-            def is_ignored(title: str) -> bool:
-                t_lower = title.lower()
-                return any(rule in t_lower for rule in ignore_lower)
-            filtered = [f for f in filtered if not is_ignored(f.title)]
+            ignore_lower = [str(r).strip().lower() for r in ignore_rules if str(r).strip()]
+            if ignore_lower:
+                def is_ignored(title: str) -> bool:
+                    t_lower = title.lower()
+                    return any(rule in t_lower for rule in ignore_lower)
+                filtered = [f for f in filtered if not is_ignored(f.title)]
 
         if min_severity:
             wanted = {s.lower(): s for s in SEVERITIES}.get(min_severity.lower())
@@ -210,10 +261,16 @@ class ScanfuseEngine:
         if host_filter:
             # Exact match on IP or host name (ignoring case). '*' and '?' are wildcards.
             pattern = host_filter.lower()
+            norm_pattern = pattern.strip("[]")
+
             def match_host(h: Host) -> bool:
-                if fnmatch.fnmatchcase(h.ip.lower(), pattern):
+                h_ip = h.ip.lower()
+                norm_ip = h_ip.strip("[]")
+                if fnmatch.fnmatchcase(h_ip, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_ip, norm_pattern)):
                     return True
-                return bool(h.hostname and fnmatch.fnmatchcase(h.hostname.lower(), pattern))
+                h_name = (h.hostname or "").lower()
+                norm_name = h_name.strip("[]")
+                return bool(h.hostname and (fnmatch.fnmatchcase(h_name, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_name, norm_pattern))))
 
             # Filter out findings that don't affect the host.
             # Also, filter the hosts list inside the finding so we don't report other hosts.
@@ -385,11 +442,17 @@ class ScanfuseEngine:
         out += "<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
         out += "<meta name='color-scheme' content='light dark'>\n"
         out += "<title>Pentest Report</title>\n"
-        # Colours follow the reader's system setting (light or dark).
+        # The report stays usable without JavaScript and follows the system by default.
         out += """<style>
 :root { --fg: #24292f; --bg: #ffffff; --muted-bg: #f6f8fa; --border: #d0d7de; --head-bg: #eaeef2; --link: #0969da; }
 @media (prefers-color-scheme: dark) {
-  :root { --fg: #e6edf3; --bg: #0d1117; --muted-bg: #161b22; --border: #30363d; --head-bg: #21262d; --link: #4493f8; }
+  :root:not([data-theme="light"]) { --fg: #e6edf3; --bg: #0d1117; --muted-bg: #161b22; --border: #30363d; --head-bg: #21262d; --link: #4493f8; }
+}
+:root[data-theme="dark"] { --fg: #e6edf3; --bg: #0d1117; --muted-bg: #161b22; --border: #30363d; --head-bg: #21262d; --link: #4493f8; color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+@media print {
+  :root { --fg: #24292f !important; --bg: #ffffff !important; --muted-bg: #f6f8fa !important; --border: #d0d7de !important; --head-bg: #eaeef2 !important; --link: #0969da !important; color-scheme: light !important; }
+  .filter-bar { display: none !important; }
 }
 body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); }
 a { color: var(--link); }
@@ -416,8 +479,32 @@ hr { margin: 40px 0; border: 0; border-top: 2px solid var(--border); }
     <option value="Low">Low</option>
     <option value="Info">Info</option>
   </select>
+  <label for="reportTheme">Theme</label>
+  <select id="reportTheme">
+    <option value="system">System</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
 </div>
 <script>
+const themeSelector = document.getElementById('reportTheme');
+const themeKey = 'scanfuse.report.theme';
+function applyTheme(value) {
+  if (value === 'light' || value === 'dark') document.documentElement.dataset.theme = value;
+  else delete document.documentElement.dataset.theme;
+}
+try {
+  const savedTheme = localStorage.getItem(themeKey);
+  if (savedTheme === 'light' || savedTheme === 'dark') themeSelector.value = savedTheme;
+} catch (_) { /* Storage may be unavailable for local files. */ }
+applyTheme(themeSelector.value);
+themeSelector.addEventListener('change', () => {
+  applyTheme(themeSelector.value);
+  try {
+    if (themeSelector.value === 'system') localStorage.removeItem(themeKey);
+    else localStorage.setItem(themeKey, themeSelector.value);
+  } catch (_) { /* The selection still works for this report. */ }
+});
 document.getElementById('searchTitle').addEventListener('input', filterFindings);
 document.getElementById('filterSeverity').addEventListener('change', filterFindings);
 function filterFindings() {
@@ -501,3 +588,82 @@ function filterFindings() {
             return ["report.csv"]
 
         return self._publish("csv", produce, replace)
+
+    def export_sarif(self, findings: list[Finding], errors: list[dict[str, str]] | None = None,
+                     replace: bool = False) -> list[str]:
+        """Export findings as a SARIF 2.1.0 log."""
+        errors = errors or []
+
+        def produce(staging: Path) -> list[str]:
+            rules: dict[str, dict[str, object]] = {}
+            results: list[dict[str, object]] = []
+            used_rule_ids: set[str] = set()
+            for finding in findings:
+                if finding.identifiers:
+                    base_rule_id = finding.identifiers[0]
+                    rule_id = base_rule_id
+                    suffix = 1
+                    while rule_id in used_rule_ids:
+                        rule_id = f"{base_rule_id}-{suffix}"
+                        suffix += 1
+                    used_rule_ids.add(rule_id)
+                else:
+                    rule_id = unique_slug(finding.title, used_rule_ids)
+                rule_properties: dict[str, object] = {
+                    "identifiers": finding.identifiers,
+                    "references": finding.references,
+                    "remediation": finding.remediation,
+                    "scanfuse-severity": finding.severity,
+                }
+                if finding.cvss_score is not None:
+                    rule_properties["security-severity"] = str(finding.cvss_score)
+                rule: dict[str, object] = {
+                    "id": rule_id,
+                    "name": finding.title,
+                    "shortDescription": {"text": finding.title},
+                    "fullDescription": {"text": finding.description},
+                    "properties": rule_properties,
+                }
+                if finding.references:
+                    rule["helpUri"] = finding.references[0]
+                rules.setdefault(rule_id, rule)
+                result_properties: dict[str, object] = {
+                    "identifiers": finding.identifiers,
+                    "references": finding.references,
+                    "remediation": finding.remediation,
+                    "scanfuse-severity": finding.severity,
+                    "port": finding.port,
+                    "evidence": [e.model_dump() for e in finding.evidence],
+                }
+                if finding.cvss_score is not None:
+                    result_properties["security-severity"] = str(finding.cvss_score)
+                result: dict[str, object] = {
+                    "ruleId": rule_id,
+                    "level": {"Critical": "error", "High": "error", "Medium": "warning",
+                              "Low": "note", "Info": "note"}.get(finding.severity, "warning"),
+                    "message": {"text": finding.title},
+                    "properties": result_properties,
+                }
+                if finding.hosts:
+                    result["locations"] = [{
+                        "physicalLocation": {"artifactLocation": {"uri": host.ip}}
+                    } for host in finding.hosts]
+                results.append(result)
+            data: dict[str, object] = {
+                "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                "version": "2.1.0",
+                "runs": [{
+                    "tool": {"driver": {"name": "scanfuse", "rules": list(rules.values())}},
+                    "results": results,
+                    "invocations": [{"executionSuccessful": not errors}],
+                }],
+            }
+            (staging / "report.sarif").write_text(json.dumps(data, indent=2), encoding="utf-8")
+            return ["report.sarif"]
+
+        return self._publish("sarif", produce, replace)
+
+    def export_pdf(self, findings: list[Finding], errors: list[dict[str, str]] | None = None,
+                   replace: bool = False) -> list[str]:
+        from scanfuse.reporters.pdf import export_pdf
+        return export_pdf(self.output_dir, findings, errors=errors, replace=replace)

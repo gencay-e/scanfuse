@@ -8,7 +8,7 @@
 
 <img alt="Scan files from Nmap, Nuclei, ZAP, Burp, Nessus and Trivy go into scanfuse, which writes index.md, report.html, report.json and report.csv" src="docs/images/scanfuse-flow.svg" width="900">
 
-See [CHANGELOG.md](CHANGELOG.md) for the current release (`0.2.0`).
+See [CHANGELOG.md](CHANGELOG.md) for the current release (`1.0.0`).
 
 ## Example
 
@@ -44,18 +44,37 @@ scanfuse scan.xml --min-severity High --host 192.0.2.1 -o report
 cat scan.json | scanfuse -o report
 ```
 
-`scanfuse` takes one or more files, or `-` for standard input. It finds the format by itself. Use `-f` to choose one: `nmap`, `nuclei`, `zap`, `burp`, `nessus`, `trivy`.
+`scanfuse` takes one or more files, or `-` for standard input. It detects `nmap`, `nuclei`, `zap`, `burp`, `nessus` and `trivy` files by itself. Use `-f` to choose the format. The experimental formats below are never detected automatically and always need `-f`.
 
 | Option | Meaning |
 |---|---|
 | `-o`, `--output` | Output directory. Default `report`. |
-| `--format-out` | `markdown` (default), `json` or `csv`. `markdown` writes one file per finding, `index.md` and `report.html`. |
+| `--format-out` | `markdown` (default), `json`, `csv`, `sarif` or `pdf`. `markdown` writes one file per finding, `index.md` and `report.html`. |
 | `-s`, `--min-severity` | `Critical`, `High`, `Medium`, `Low` or `Info`. Case does not matter. |
 | `--host` | Only findings on this host. Must match the IP or host name exactly, ignoring case. `*` and `?` are wildcards, for example `10.0.0.*`. |
 | `-t`, `--template-dir` | Folder with your own `finding.md.j2` and `index.md.j2`. The folder must exist. Missing files fall back to the built-in templates. |
 | `--replace` | Overwrite an existing report. See below. |
 | `--csv-excel` | CSV with a byte order mark and `;` as separator, which German-language Excel expects. |
 | `--version` | Print the version. |
+
+### Experimental input formats
+
+These formats are new in 1.0.0 and are tested with sample files written from the tools' documented output, not yet with files from real scans. Set the format with `-f`:
+
+| `-f` | Tool and file |
+|---|---|
+| `sarif` | Any SARIF 2.1.0 file (CodeQL, Semgrep `--sarif` and others). The title is the rule's short description or name, the result message goes into the description. |
+| `semgrep` | Semgrep `--json` |
+| `grype` | Grype `-o json`. CVSS score and vector are taken from the highest valid score. |
+| `nikto` | Nikto `-Format json` (a list of hosts) and `-Format xml`. CSV is read, but not tested. |
+| `testssl` | testssl.sh `--jsonfile` and `--jsonfile-pretty`. `OK`, `INFO` and `WARN` lines are skipped; `FATAL` marks the file as unreadable. |
+
+```bash
+scanfuse results.sarif -f sarif -o report
+scanfuse testssl.json -f testssl -o report
+```
+
+Report a file that is read wrongly as an issue, with a cleaned sample.
 
 ### Existing reports
 
@@ -113,7 +132,15 @@ Columns: `Title`, `Severity`, `CVSS`, `Hosts`, `Source Tool`, `Description`, `Re
 
 Cells that start with `=`, `+`, `-` or `@` get a leading `'` to reduce the risk of spreadsheet formulas. This also covers look-alike characters such as a full-width `＝` and a leading no-break space. These cases were tested by reading the files back.
 
-In Excel, import `--csv-excel` output with **Data > From Text/CSV** and use the semicolon delimiter. In a Windows Excel test, this preserved a multiline evidence field; the older Text Import Wizard split it across rows. Formula handling and LibreOffice remain unverified in those applications.
+In Excel, import `--csv-excel` output with **Data > From Text/CSV** and use the semicolon delimiter. Disable automatic data type detection and check the imported values before using them: in one Excel test, automatic detection changed the host `192.0.2.1` to `192021`. Disabling detection can leave numeric values as text. In an earlier Windows Excel test, this import preserved a multiline evidence field; the older Text Import Wizard split it across rows. Formula handling and LibreOffice remain unverified in those applications.
+
+### SARIF
+
+`--format-out sarif` writes `report.sarif` (SARIF 2.1.0) with one rule per finding, for tools that read SARIF, such as GitHub code scanning.
+
+### PDF
+
+`--format-out pdf` writes `report.pdf` with a summary page and one page per finding. It uses a Unicode font of the system (Arial or Segoe UI on Windows, DejaVu, FreeSans or Liberation on Linux, Arial on macOS). Without one, characters outside Latin-1 are replaced by `?`. The PDF is slow for large scans: 5,000 findings took 40 seconds and made a 3.6 MB file. Use Markdown, JSON or CSV for very large reports.
 
 ### Scanner text in the report
 
@@ -136,6 +163,23 @@ ignore_titles:
 ```
 
 Findings whose title contains one of these texts (ignoring case) are left out. `ignore_titles` must be a list of strings. A single string is read as a list with one entry. Anything else, a file that is not a mapping, or a YAML syntax error is reported as an error and the rules are not applied.
+
+`overrides` change the severity of matching findings or add tags, `exclusions` leave matching findings out:
+
+```yaml
+overrides:
+  - cve: CVE-2024-1234          # matches any id of the finding (CVE, GHSA, tool id)
+    severity: High               # Critical, High, Medium, Low or Info
+    tags: [confirmed]
+  - host: "10.0.0.*"
+    port: "443/tcp"
+    severity: Low
+exclusions:
+  - tool_id: "10202"
+  - host: "test-*.example.test"
+```
+
+A rule matches when all of its keys match: `cve` and `tool_id` against the finding's ids (ignoring case), `port` exactly, `host` against IP or host name with `*` and `?`. A rule without any of these keys matches nothing. Overrides are applied in order, so a later rule wins. Overrides and exclusions are applied after merging and before `--min-severity` and `--host`, so a raised severity is not filtered out. `overrides` or `exclusions` that are not lists are reported as an error.
 
 ## Build a standalone program
 
@@ -165,11 +209,12 @@ uv run pytest tests/
 ## Limits
 
 * scanfuse was tested with real output from nmap (7.94, 7.12, 6.40), ZAP 1.4, Burp, Nessus and Trivy (three file layouts), taken from the public [DefectDojo sample-scan-files](https://github.com/DefectDojo/sample-scan-files). Those files are old. Newer versions of the tools may add fields that scanfuse does not read yet. Nuclei has no real sample file in the tests. Open an issue with a cleaned sample if a file fails.
-* Format detection looks at the start of the file. Use `-f` if it guesses wrong.
+* Format detection looks at the start of the file and only knows the six stable formats. Use `-f` if it guesses wrong.
+* The experimental formats (SARIF, Semgrep, Grype, Nikto, testssl.sh) have no real scan files in the tests yet.
 * The HTML page and the CSV file were checked by reading the files. They were not opened by hand in a browser, Excel or LibreOffice.
 * 100,000 results were processed completely in all three output formats on one Linux machine (4 CPUs, 16 GB). JSON took 14 seconds, CSV 10 seconds, Markdown with HTML 124 seconds, and the peak memory was between 0.7 and 1.0 GB. The HTML page for that many findings is large. You can repeat the check with `python tools/large_check.py 100000`.
 * Standalone programs are built and tested in CI on Ubuntu 22.04 (x86_64), Windows (x86_64) and macOS (arm64). Other Linux distributions, Linux on ARM and macOS on Intel were not tested.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). The standalone programs include third-party packages, among them fpdf2 (LGPL-3.0). Their licenses are in `THIRD_PARTY_LICENSES.txt` in each release archive.

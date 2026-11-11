@@ -1,4 +1,7 @@
 import json
+import math
+
+from pydantic import ValidationError
 
 from scanfuse.models import Evidence, Finding, Host
 from scanfuse.parsers.base import (
@@ -16,7 +19,7 @@ class NucleiParser(BaseParser):
         findings = []
         invalid_lines: list[int] = []
 
-        with open(file_path, encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             for line_idx, line in enumerate(f, start=1):
                 line = line.strip()
                 if not line:
@@ -27,26 +30,38 @@ class NucleiParser(BaseParser):
                     if not self._looks_like_nuclei(data):
                         continue
                     findings.append(self._parse_dict(data))
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, ValidationError, ValueError, TypeError, AttributeError):
                     invalid_lines.append(line_idx)
 
         if not findings or invalid_lines:
             # Fallback: maybe it's a JSON array instead of JSONL
-            with open(file_path, encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8-sig") as f:
                 try:
                     data = json.load(f)
                     if isinstance(data, list):
                         findings = []
-                        for item in data:
+                        invalid_items = []
+                        for index, item in enumerate(data, start=1):
                             if self._looks_like_nuclei(item):
-                                findings.append(self._parse_dict(item))
+                                try:
+                                    findings.append(self._parse_dict(item))
+                                except (ValidationError, ValueError, TypeError, AttributeError):
+                                    invalid_items.append(index)
+                        if findings and invalid_items:
+                            raise PartialImportError(
+                                f"Invalid Nuclei finding at array position {invalid_items[0]}",
+                                findings,
+                            )
                     elif self._looks_like_nuclei(data):
-                        findings = [self._parse_dict(data)]
+                        try:
+                            findings = [self._parse_dict(data)]
+                        except (ValidationError, ValueError, TypeError, AttributeError):
+                            pass
                     invalid_lines = []
                 except json.JSONDecodeError:
                     pass
             if not findings:
-                raise ValueError("Not a valid Nuclei JSON/JSONL file.")
+                raise ValueError("Not a valid Nuclei JSON/JSONL file. If this is another tool's output, set --format.")
 
         if invalid_lines:
             raise PartialImportError(f"Invalid JSON on line {invalid_lines[0]}", findings)
@@ -64,8 +79,8 @@ class NucleiParser(BaseParser):
         info = data.get("info")
         if not isinstance(info, dict):
             info = {}
-        template_id = data.get("template-id", "unknown")
-        name = info.get("name") or template_id
+        template_id = str(data.get("template-id") or "unknown")
+        name = str(info.get("name") or template_id or "unknown")
 
         severity_raw = info.get("severity") or "info"
         if not isinstance(severity_raw, str):
@@ -85,6 +100,10 @@ class NucleiParser(BaseParser):
 
         description = info.get("description") or f"Nuclei template {template_id} matched."
         remediation = info.get("remediation")
+        if not isinstance(description, str):
+            description = str(description)
+        if remediation is not None and not isinstance(remediation, str):
+            remediation = str(remediation)
 
         classification = info.get("classification")
         if not isinstance(classification, dict):
@@ -92,6 +111,8 @@ class NucleiParser(BaseParser):
         cvss_score_raw = classification.get("cvss-score")
         try:
             cvss_score = float(cvss_score_raw) if cvss_score_raw is not None else None
+            if cvss_score is not None and (not math.isfinite(cvss_score) or cvss_score < 0.0 or cvss_score > 10.0):
+                cvss_score = None
         except (ValueError, TypeError):
             cvss_score = None
 

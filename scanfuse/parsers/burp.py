@@ -1,5 +1,6 @@
 import base64
 import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
 
 import defusedxml.ElementTree as defused_et
 
@@ -35,6 +36,7 @@ class BurpParser(BaseParser):
 
                     # Map Burp severity to Finding severity model
                     severity_map = {
+                        "Critical": "Critical",
                         "High": "High",
                         "Medium": "Medium",
                         "Low": "Low",
@@ -46,6 +48,18 @@ class BurpParser(BaseParser):
                     host_elem = issue_elem.find("host")
                     ip = host_elem.get("ip", "unknown") if host_elem is not None else "unknown"
                     hostname = host_elem.text if host_elem is not None else None
+                    port = None
+                    if hostname:
+                        try:
+                            u = urlsplit(hostname)
+                            if u.port:
+                                port = f"{u.port}/tcp"
+                            elif u.scheme == "https":
+                                port = "443/tcp"
+                            elif u.scheme == "http":
+                                port = "80/tcp"
+                        except (ValueError, TypeError):
+                            port = None
                     host_model = Host(ip=ip, hostname=hostname)
 
                     # Burp writes HTML into these fields. scanfuse keeps the text.
@@ -116,6 +130,7 @@ class BurpParser(BaseParser):
                         severity=severity,
                         description=desc,
                         remediation=remediation if remediation else None,
+                        port=port,
                         hosts=[host_model],
                         evidence=evidence_list,
                         identifiers=identifiers,

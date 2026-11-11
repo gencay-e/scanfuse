@@ -1,3 +1,4 @@
+import ipaddress
 import xml.etree.ElementTree as ET
 
 import defusedxml.ElementTree as defused_et
@@ -11,6 +12,14 @@ from scanfuse.parsers.base import (
     extract_urls,
     html_to_text,
 )
+
+
+def _is_ip(value: str) -> bool:
+    try:
+        ipaddress.ip_address(value.strip())
+        return True
+    except (ValueError, AttributeError):
+        return False
 
 
 def _instance_text(elem: ET.Element) -> str:
@@ -55,7 +64,14 @@ class ZapParser(BaseParser):
             for event, site_elem in context:
                 if event == "end" and site_elem.tag == "site":
                     host_val = site_elem.get("host", "unknown")
-                    host_model = Host(ip=host_val)
+                    port_raw = site_elem.get("port")
+                    port = f"{port_raw}/tcp" if port_raw and port_raw != "0" else None
+                    if _is_ip(host_val):
+                        host_model = Host(ip=host_val)
+                    elif host_val and host_val != "unknown":
+                        host_model = Host(ip="unknown", hostname=host_val)
+                    else:
+                        host_model = Host(ip="unknown")
 
                     alerts_elem = site_elem.find("alerts")
                     if alerts_elem is None:
@@ -105,6 +121,7 @@ class ZapParser(BaseParser):
                             severity=severity,
                             description=desc,
                             remediation=solution if solution else None,
+                            port=port,
                             hosts=[host_model],
                             evidence=evidence_list,
                             identifiers=identifiers,

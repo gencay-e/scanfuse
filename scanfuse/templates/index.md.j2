@@ -31,14 +31,21 @@ Total Findings: {{ findings|length }}
 {% set hosts = {} %}
 {% for finding in findings %}
   {% for host in finding.hosts %}
-    {% if host.ip not in hosts %}
-      {% set _ = hosts.update({host.ip: 1}) %}
+    {% if host.ip == "unknown" and host.hostname %}
+      {% set label = host.hostname %}
+    {% elif host.hostname and host.hostname != host.ip %}
+      {% set label = host.ip ~ " (" ~ host.hostname ~ ")" %}
+    {% else %}
+      {% set label = host.ip %}
+    {% endif %}
+    {% if label not in hosts %}
+      {% set _ = hosts.update({label: 1}) %}
     {% endif %}
   {% endfor %}
 {% endfor %}
 
-{% for ip in hosts %}
-- {{ ip | md }}
+{% for host_label in hosts %}
+- {{ host_label | md }}
 {% else %}
 No host data extracted.
 {% endfor %}

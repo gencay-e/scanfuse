@@ -53,13 +53,22 @@ def _local_ids(f: Finding) -> dict[str, frozenset[str]]:
     return {k: frozenset(v) for k, v in grouped.items()}
 
 
-def _identity(f: Finding) -> tuple[str, frozenset[str], str | None]:
-    return (f.title.strip().casefold(), _global_ids(f), f.port)
+def _nonlocal_ids(f: Finding) -> frozenset[str]:
+    return frozenset(i.casefold() for i in f.identifiers if ":" not in i)
 
 
-def _compatible(group_ids: dict[str, frozenset[str]], f: Finding) -> bool:
+def _identity(f: Finding) -> tuple[str, frozenset[str], frozenset[str], str | None]:
+    return (f.title.strip().casefold(), _global_ids(f), _nonlocal_ids(f), f.port)
+
+
+def _compatible(
+    group_ids: dict[str, frozenset[str]], group_tools: set[str], f: Finding
+) -> bool:
     """Two findings of the same tool with different tool ids are different findings."""
-    for prefix, values in _local_ids(f).items():
+    local_ids = _local_ids(f)
+    if f.source_tool in group_tools and local_ids != group_ids:
+        return False
+    for prefix, values in local_ids.items():
         if prefix in group_ids and group_ids[prefix] != values:
             return False
     return True
@@ -96,25 +105,26 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     """
     # Each group: [merged finding, tool ids, originals]
     groups: list[list] = []
-    by_identity: dict[tuple[str, frozenset[str], str | None], list[int]] = {}
+    by_identity: dict[tuple[str, frozenset[str], frozenset[str], str | None], list[int]] = {}
 
     for f in findings:
         key = _identity(f)
         target = None
         for idx in by_identity.get(key, ()):
-            if _compatible(groups[idx][1], f):
+            if _compatible(groups[idx][1], groups[idx][3], f):
                 target = groups[idx]
                 break
         if target is None:
             by_identity.setdefault(key, []).append(len(groups))
-            groups.append([f, dict(_local_ids(f)), [f]])
+            groups.append([f, dict(_local_ids(f)), [f], {f.source_tool}])
         else:
             target[2].append(f)
+            target[3].add(f.source_tool)
             for prefix, values in _local_ids(f).items():
                 target[1].setdefault(prefix, values)
 
     result: list[Finding] = []
-    for first, _ids, originals in groups:
+    for first, _ids, originals, _tools in groups:
         if len(originals) == 1:
             result.append(first)
         else:
@@ -124,7 +134,16 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
 
 def _merge_group(originals: list[Finding]) -> Finding:
     base = originals[0].model_copy(deep=True)
-    base.sources = [_record(f) for f in originals]
+
+    unique_sources = []
+    seen_sources = set()
+    for f in originals:
+        rec = _record(f)
+        s_key = (rec.source_tool, rec.description, rec.remediation, rec.severity, rec.cvss_score, rec.cvss_vector)
+        if s_key not in seen_sources:
+            seen_sources.add(s_key)
+            unique_sources.append(rec)
+    base.sources = unique_sources
 
     tools: list[str] = []
     for f in originals:
@@ -134,7 +153,6 @@ def _merge_group(originals: list[Finding]) -> Finding:
                 tools.append(tool)
     base.source_tool = ", ".join(tools)
 
-    host_index: dict[tuple[str, str | None], Host] = {}
     base.hosts = []
     evidence_index: dict[tuple[str, str], Evidence] = {}
     base.evidence = []
@@ -142,14 +160,38 @@ def _merge_group(originals: list[Finding]) -> Finding:
 
     for f in originals:
         for host in f.hosts:
-            key = (host.ip, host.hostname)
-            known = host_index.get(key)
-            if known is None:
+            norm_ip = (host.ip or "unknown").strip().lower()
+            norm_hn = (host.hostname or "").strip().lower() or None
+
+            match: Host | None = None
+            for existing in base.hosts:
+                ex_ip = (existing.ip or "unknown").strip().lower()
+                ex_hn = (existing.hostname or "").strip().lower() or None
+
+                # 1. Exact match on both IP and hostname
+                if ex_ip == norm_ip and ex_hn == norm_hn:
+                    match = existing
+                    break
+
+                # 2. Same IP, one has no hostname and the other has one -> enrich hostname
+                if ex_ip != "unknown" and ex_ip == norm_ip and (ex_hn is None or norm_hn is None):
+                    match = existing
+                    break
+
+                # 3. Same hostname, one has unknown IP and the other has known IP -> enrich IP
+                if norm_hn and ex_hn == norm_hn and (ex_ip == "unknown" or norm_ip == "unknown"):
+                    match = existing
+                    break
+
+            if match is None:
                 copy = host.model_copy()
-                host_index[key] = copy
                 base.hosts.append(copy)
             else:
-                known.os = _merge_os(known.os, host.os)
+                if not match.hostname and host.hostname:
+                    match.hostname = host.hostname
+                if (match.ip or "unknown").strip().lower() == "unknown" and norm_ip != "unknown":
+                    match.ip = host.ip
+                match.os = _merge_os(match.os, host.os)
         for ev in f.evidence:
             known_ev = evidence_index.get((ev.type, ev.data))
             tool = ev.source or f.source_tool
@@ -178,6 +220,27 @@ def _merge_group(originals: list[Finding]) -> Finding:
     else:
         base.cvss_score = None
         base.cvss_vector = next((f.cvss_vector for f in originals if f.cvss_vector), None)
+
+    # Mark CVSS vector conflict if merged findings had different base metrics.
+    _CVSS_BASE_KEYS = frozenset({'AV', 'AC', 'PR', 'UI', 'S', 'C', 'I', 'A'})
+
+    def _cvss_base_metrics(vec: str | None) -> frozenset[tuple[str, str]]:
+        if not vec:
+            return frozenset()
+        metrics = set()
+        for part in vec.split("/"):
+            if ":" in part:
+                key, value = part.split(":", 1)
+                if key in _CVSS_BASE_KEYS:
+                    metrics.add((key, value))
+        return frozenset(metrics)
+
+    vectors = [f.cvss_vector for f in originals if f.cvss_vector]
+    if len(vectors) > 1:
+        base_metrics_sets = [_cvss_base_metrics(v) for v in vectors]
+        if len(set(base_metrics_sets)) > 1:
+            base.cvss_merge_conflict = True
+
     # Text: first non-empty value; every original text stays in `sources`.
     base.description = next((f.description for f in originals if f.description), base.description)
     base.remediation = next((f.remediation for f in originals if f.remediation), None)

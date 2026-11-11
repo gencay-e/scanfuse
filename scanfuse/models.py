@@ -6,10 +6,12 @@ class Host(BaseModel):
     ip: str
     hostname: str | None = None
     os: str | None = None
+    port: int | None = None
 
 class Evidence(BaseModel):
     type: str = Field(..., description="e.g., 'http-request', 'port-scan'")
     data: str = Field(..., description="The raw evidence payload or output")
+    code: str | None = Field(default=None, description="Code snippet or source line")
     source: str | None = Field(
         default=None,
         description="Tool that reported this evidence. Set when findings of several tools are merged.",
@@ -20,7 +22,7 @@ class SourceRecord(BaseModel):
     source_tool: str
     title: str
     severity: str = Field(..., pattern="^(Critical|High|Medium|Low|Info)$")
-    cvss_score: float | None = None
+    cvss_score: float | None = Field(default=None, ge=0.0, le=10.0)
     cvss_vector: str | None = None
     description: str
     remediation: str | None = None
@@ -30,7 +32,7 @@ class SourceRecord(BaseModel):
 class Finding(BaseModel):
     title: str
     severity: str = Field(..., pattern="^(Critical|High|Medium|Low|Info)$")
-    cvss_score: float | None = None
+    cvss_score: float | None = Field(default=None, ge=0.0, le=10.0)
     cvss_vector: str | None = None
     description: str
     remediation: str | None = None
@@ -47,6 +49,11 @@ class Finding(BaseModel):
     sources: list[SourceRecord] = Field(
         default_factory=list,
         description="One record per merged finding. Empty if the finding was not merged.",
+    )
+    tags: list[str] = Field(default_factory=list)
+    cvss_merge_conflict: bool = Field(
+        default=False,
+        description="True when merged findings had incompatible CVSS vectors (different base metrics)",
     )
 
 class Report(BaseModel):

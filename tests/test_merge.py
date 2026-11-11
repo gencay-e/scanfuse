@@ -53,6 +53,12 @@ def test_same_title_and_same_cve_from_two_tools_merges():
     assert len(deduplicate_findings([a, b])) == 1
 
 
+def test_same_title_with_different_cwe_ids_stays_separate():
+    a = finding(title="Input validation", identifiers=["CWE-79"])
+    b = finding(title="Input validation", identifiers=["CWE-89"])
+    assert len(deduplicate_findings([a, b])) == 2
+
+
 def test_same_plugin_name_on_different_ports_stays_separate():
     a = finding(title="TLS weak cipher", tool="nessus", port="443/tcp")
     b = finding(title="TLS weak cipher", tool="nessus", port="8443/tcp")
@@ -65,6 +71,12 @@ def test_different_tool_ids_of_the_same_tool_stay_separate():
     c = finding(title="Plugin", tool="zap", identifiers=["zap-plugin:9"])
     result = deduplicate_findings([a, b, c])
     assert len(result) == 2  # a and c merge, b is separate
+
+
+def test_different_identifier_prefixes_of_same_tool_stay_separate():
+    a = finding(title="Plugin", tool="nessus", identifiers=["nessus-plugin:1"])
+    b = finding(title="Plugin", tool="nessus", identifiers=["nessus-cve:2"])
+    assert len(deduplicate_findings([a, b])) == 2
 
 
 def test_similar_non_numeric_identifiers_stay_separate():

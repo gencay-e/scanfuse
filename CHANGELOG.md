@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.0.0 (2026-11-11)
+
+First stable release. The command line, `.scanfuse.yaml` and the JSON format (`schema_version` 2) are now kept compatible within 1.x. The new input formats below are experimental and may still change.
+
+### Added
+
+* **SARIF and PDF output.** `--format-out sarif` writes `report.sarif` (SARIF 2.1.0), `--format-out pdf` writes `report.pdf` with one page per finding.
+* **Experimental input formats:** SARIF 2.1.0, Semgrep JSON, Grype JSON, Nikto JSON and XML, testssl.sh JSON (`--jsonfile` and `--jsonfile-pretty`). They are not detected automatically; set them with `-f`.
+* **`overrides` and `exclusions` in `.scanfuse.yaml`.** Overrides change the severity of matching findings or add tags; exclusions leave them out. Rules match on `cve`, `tool_id`, `port` and `host` (wildcards).
+* **Report themes.** `report.html` has a System, Light and Dark switch and remembers the choice.
+* New JSON fields: `tags` and `cvss_merge_conflict` (true when merged findings had CVSS vectors with different base metrics) on findings, `port` on hosts, `code` on evidence.
+* Release archives contain `THIRD_PARTY_LICENSES.txt`.
+
+### Changed
+
+* Findings are merged first, then `.scanfuse.yaml` rules, `--min-severity` and `--host` are applied. Before, filters ran before merging, so a merged finding could lose the evidence of another tool or end up with a lower severity.
+* `cvss_score` must be between 0 and 10. Values outside are dropped instead of written to the report.
+* New dependency: `fpdf2` (LGPL-3.0) for the PDF output.
+
+### Fixed
+
+* 28 edge cases from an audit of the parsers (Burp, Nessus, Nmap, Nuclei, Trivy, ZAP), merging and formula escaping.
+* Nessus keeps both the IPv4 and the IPv6 address of a host.
+* Nmap keeps OS guesses without an accuracy value.
+* Trivy files with invalid CVSS fields are read; the invalid values are skipped.
+* A Nuclei JSON array with some invalid entries reports the import as partial instead of failing.
+* Lines starting with `#` in titles and descriptions can no longer create Markdown headings.
+* Indentation inside fenced code blocks in scanner descriptions is kept.
+* CSV formula escaping also catches leading control characters and zero-width characters.
+* Empty entries in `ignore_titles` no longer hide every finding.
+
 ## 0.2.0 (2026-11-07)
 
 The project is renamed from `repx` to `scanfuse` (the name `repx` is taken on PyPI). The command, the Python package, the configuration file (`.repx.yaml` is now `.scanfuse.yaml`) and the environment variable for the packaged-program tests (`REPX_EXE` is now `SCANFUSE_EXE`) changed. repx 0.1 was never published.

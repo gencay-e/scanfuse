@@ -4,6 +4,7 @@ import tempfile
 from enum import StrEnum
 from pathlib import Path
 
+import jinja2
 import typer
 from rich.console import Console
 from rich.markup import escape
@@ -27,12 +28,19 @@ class InputFormat(StrEnum):
     burp = "burp"
     nessus = "nessus"
     trivy = "trivy"
+    sarif = "sarif"
+    semgrep = "semgrep"
+    grype = "grype"
+    nikto = "nikto"
+    testssl = "testssl"
 
 
 class OutputFormat(StrEnum):
     markdown = "markdown"
     json = "json"
     csv = "csv"
+    sarif = "sarif"
+    pdf = "pdf"
 
 
 class Severity(StrEnum):
@@ -70,9 +78,11 @@ def parse_config(config_data: object) -> tuple[list[str], str | None]:
     if value is None:
         return [], None
     if isinstance(value, str):
-        return [value], None
+        cleaned = value.strip()
+        return ([cleaned] if cleaned else []), None
     if isinstance(value, list) and all(isinstance(item, str) for item in value):
-        return list(value), None
+        cleaned_list = [item.strip() for item in value if item.strip()]
+        return cleaned_list, None
     return [], "ignore_titles must be a list of strings."
 
 
@@ -96,7 +106,7 @@ def _load_ignore_rules(config_path: Path) -> tuple[list[str], str | None]:
 def parse(
     file_paths: list[str] = typer.Argument(None, help="Paths to the scan files (or '-' for stdin)"),
     format: InputFormat = typer.Option(
-        InputFormat.auto, "--format", "-f", case_sensitive=False, help="Input format",
+        InputFormat.auto, "--format", "-f", case_sensitive=False, help="Input format. auto detects nmap, nuclei, zap, burp, nessus and trivy. sarif, semgrep, grype, nikto and testssl are experimental and must be set explicitly.",
     ),
     output: str = typer.Option("report", "--output", "-o", help="Output directory"),
     format_out: OutputFormat = typer.Option(
@@ -194,18 +204,25 @@ def parse(
             else:
                 console.print(f"[bold blue]scanfuse[/bold blue] > Loaded {len(ignore_rules)} ignore rules from .scanfuse.yaml")
 
-        all_findings = engine.filter_findings(all_findings, min_severity=min_severity_name, host_filter=host_filter, ignore_rules=ignore_rules)
-
-        if not all_findings:
-            console.print("[yellow]No findings left after applying filters.[/yellow]")
-            raise typer.Exit(code=EXIT_INCOMPLETE if errors else 0)
-
-        # Deduplicate
+        # Deduplicate first so that multi-tool evidence and consolidated max severity are preserved
         from scanfuse.utils import deduplicate_findings
         original_count = len(all_findings)
         all_findings = deduplicate_findings(all_findings)
         if len(all_findings) < original_count:
             console.print(f"[bold yellow]scanfuse[/bold yellow] > Merged {original_count} findings into {len(all_findings)}.")
+
+        try:
+            from scanfuse.config import apply_overrides, load_config
+            if config_path.exists():
+                all_findings = apply_overrides(all_findings, load_config(config_path))
+        except (OSError, UnicodeDecodeError, ValueError) as e:
+            console.print(f"[red]Error: .scanfuse.yaml overrides: {escape(str(e))}[/red]")
+            errors.append({"file": ".scanfuse.yaml", "message": str(e)})
+
+        all_findings = engine.filter_findings(all_findings, min_severity=min_severity_name, host_filter=host_filter, ignore_rules=ignore_rules)
+        if not all_findings:
+            console.print("[yellow]No findings left after applying filters.[/yellow]")
+            raise typer.Exit(code=EXIT_INCOMPLETE if errors else 0)
 
         console.print(f"[bold blue]scanfuse[/bold blue] > Exporting {len(all_findings)} findings to {escape(output)}/")
 
@@ -214,11 +231,18 @@ def parse(
                 engine.export_json(all_findings, errors=errors, replace=replace)
             elif output_format == "csv":
                 engine.export_csv(all_findings, errors=errors, replace=replace, excel=csv_excel)
+            elif output_format == "sarif":
+                engine.export_sarif(all_findings, errors=errors, replace=replace)
+            elif output_format == "pdf":
+                engine.export_pdf(all_findings, errors=errors, replace=replace)
             else:
                 engine.export_findings(all_findings, errors=errors, replace=replace)
         except OutputExistsError as e:
             console.print(f"[red]Error: {escape(str(e))}[/red]")
             raise typer.Exit(code=EXIT_USAGE)
+        except jinja2.exceptions.TemplateError as e:
+            console.print(f"[red]Error: template rendering failed: {escape(str(e))}[/red]")
+            raise typer.Exit(code=EXIT_INCOMPLETE)
         except OSError as e:
             console.print(f"[red]Error: could not write the report: {escape(str(e))}[/red]")
             raise typer.Exit(code=EXIT_INCOMPLETE)

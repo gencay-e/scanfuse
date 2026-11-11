@@ -1,0 +1,9 @@
+[
+  {"id": "engine_problem", "ip": "/", "port": "443", "severity": "WARN", "finding": "No engine or GOST support via engine with your /usr/bin/openssl"},
+  {"id": "service", "ip": "web.test/192.0.2.20", "port": "443", "severity": "INFO", "finding": "HTTP"},
+  {"id": "SSLv3", "ip": "web.test/192.0.2.20", "port": "443", "severity": "HIGH", "cve": "CVE-2014-3566", "cwe": "CWE-310", "finding": "offered (NOT ok)"},
+  {"id": "TLS1", "ip": "web.test/192.0.2.20", "port": "443", "severity": "LOW", "finding": "offered (deprecated)"},
+  {"id": "cipherlist_NULL", "ip": "web.test/192.0.2.20", "port": "443", "severity": "OK", "cwe": "CWE-327", "finding": "not offered"},
+  {"id": "heartbleed", "ip": "web.test/192.0.2.20", "port": "443", "severity": "CRITICAL", "cve": "CVE-2014-0160", "cwe": "CWE-119", "finding": "VULNERABLE (NOT ok)"},
+  {"id": "BREACH", "ip": "web.test/192.0.2.20", "port": "443", "severity": "MEDIUM", "cve": "CVE-2013-3587", "cwe": "CWE-310", "finding": "potentially NOT ok, \"gzip\" HTTP compression detected."}
+]

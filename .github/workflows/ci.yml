@@ -115,6 +115,7 @@ jobs:
         run: |
           mkdir pkg
           cp "dist/${{ matrix.exe }}" LICENSE README.md pkg/
+          uv run python tools/third_party_licenses.py > pkg/THIRD_PARTY_LICENSES.txt
           if [ "${{ runner.os }}" = "Windows" ]; then
             (cd pkg && 7z a -tzip "../${{ matrix.archive }}" . > /dev/null)
           else

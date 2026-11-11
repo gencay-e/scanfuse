@@ -156,6 +156,20 @@ def test_nuclei_broken_jsonl_keeps_valid_findings_and_marks_incomplete(tmp_path)
     assert "line 2" in report["errors"][0]["message"]
 
 
+def test_nuclei_broken_array_keeps_valid_findings_and_marks_incomplete(tmp_path):
+    source = tmp_path / "mixed.json"
+    source.write_text(json.dumps([
+        {"template-id": "t", "info": {"name": "Valid"}},
+        {"template-id": "bad", "host": {"unexpected": "object"}},
+    ]), encoding="utf-8")
+    result = runner.invoke(app, [str(source), "-o", "out", "--format", "nuclei", "--format-out", "json"])
+    assert result.exit_code == 1
+    report = json.loads((tmp_path / "out" / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False
+    assert [finding["title"] for finding in report["findings"]] == ["Valid"]
+    assert "array position 2" in report["errors"][0]["message"]
+
+
 def test_partial_failure_is_marked_in_every_format(tmp_path):
     good = nuclei_file(tmp_path / "good.json", ["Alpha"])
     bad = tmp_path / "bad.json"

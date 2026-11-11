@@ -1,8 +1,34 @@
+import json
 import os
 
+import pytest
+
+from scanfuse.parsers.base import PartialImportError
 from scanfuse.parsers.nmap import NmapParser
 from scanfuse.parsers.nuclei import NucleiParser
 from scanfuse.parsers.zap import ZapParser
+
+
+def test_nuclei_array_reports_invalid_finding_as_partial(tmp_path):
+    path = tmp_path / "nuclei.json"
+    path.write_text(json.dumps([
+        {"template-id": "good", "info": {"name": "good"}},
+        {"template-id": "bad", "host": {"unexpected": "object"}},
+    ]), encoding="utf-8")
+    with pytest.raises(PartialImportError) as exc:
+        NucleiParser().parse(str(path))
+    assert [finding.title for finding in exc.value.findings] == ["good"]
+
+
+def test_nuclei_keeps_findings_with_non_string_optional_text(tmp_path):
+    path = tmp_path / "nuclei.json"
+    path.write_text(json.dumps([{
+        "template-id": "item", "info": {"description": [1, 2], "remediation": 123},
+    }]), encoding="utf-8")
+    finding = NucleiParser().parse(str(path))[0]
+    assert finding.title == "item"
+    assert finding.description == "[1, 2]"
+    assert finding.remediation == "123"
 
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 NMAP_CLEAN_XML = os.path.join(FIXTURES_DIR, "dummy_nmap_clean.xml")

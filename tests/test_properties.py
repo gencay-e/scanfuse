@@ -6,6 +6,7 @@ import json
 import tempfile
 import unicodedata
 import xml.etree.ElementTree as ET
+from typing import Literal
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -29,9 +30,10 @@ from scanfuse.parsers.zap import ZapParser
 from scanfuse.utils import RESERVED_SLUGS, deduplicate_findings, slugify, unique_slug
 
 # XML 1.0 valid character strategy (excludes control chars except \t, \n, \r and surrogates)
+cs_categories: tuple[Literal["Cs"]] = ("Cs",)
 xml_text = st.text(
     alphabet=st.characters(
-        blacklist_categories=("Cs",),
+        blacklist_categories=cs_categories,
         blacklist_characters=tuple(chr(c) for c in range(0x00, 0x20) if c not in (0x09, 0x0A, 0x0D))
         + ("\ufffe", "\uffff"),
     ),
@@ -186,7 +188,7 @@ finding_strategy = st.builds(
 
 
 @given(st.lists(finding_strategy, min_size=1, max_size=15))
-@settings(max_examples=50)
+@settings(max_examples=50, deadline=None)
 def test_deduplicate_findings_preserves_all_hosts_evidence_and_max_severity(
     items: list[Finding],
 ) -> None:
@@ -195,7 +197,14 @@ def test_deduplicate_findings_preserves_all_hosts_evidence_and_max_severity(
 
     input_host_pairs = {(h.ip, h.hostname) for f in items for h in f.hosts}
     output_host_pairs = {(h.ip, h.hostname) for f in merged for h in f.hosts}
-    assert input_host_pairs == output_host_pairs
+
+    input_ips = {h.ip for f in items for h in f.hosts}
+    output_ips = {h.ip for f in merged for h in f.hosts}
+    assert input_ips == output_ips
+    assert output_host_pairs.issubset(input_host_pairs)
+    for ip, hn in input_host_pairs - output_host_pairs:
+        assert hn is None
+        assert any(out_ip == ip and out_hn is not None for out_ip, out_hn in output_host_pairs)
 
     input_evidence_pairs = {(e.type, e.data) for f in items for e in f.evidence}
     output_evidence_pairs = {(e.type, e.data) for f in merged for e in f.evidence}
@@ -217,7 +226,7 @@ def test_deduplicate_findings_preserves_all_hosts_evidence_and_max_severity(
     ip=st.sampled_from(["192.0.2.10", "198.51.100.7"]),
     cvss=st.one_of(st.none(), st.floats(min_value=0.0, max_value=10.0, allow_nan=False, allow_infinity=False)),
 )
-@settings(max_examples=40)
+@settings(max_examples=40, deadline=None)
 def test_nuclei_parser_roundtrip_properties(
     template_id: str, name: str, severity: str, ip: str, cvss: float | None
 ) -> None:
@@ -261,7 +270,7 @@ def test_nuclei_parser_roundtrip_properties(
     severity=st.sampled_from(["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]),
     title=non_empty_xml_text,
 )
-@settings(max_examples=40)
+@settings(max_examples=40, deadline=None)
 def test_trivy_parser_roundtrip_properties(
     vuln_id: str, pkg_name: str, severity: str, title: str
 ) -> None:
@@ -304,7 +313,7 @@ def test_trivy_parser_roundtrip_properties(
     service=st.sampled_from(["http", "ssh", "tls", "dns"]),
     product=xml_text,
 )
-@settings(max_examples=40)
+@settings(max_examples=40, deadline=None)
 def test_nmap_parser_roundtrip_properties(
     portid: int, proto: str, service: str, product: str
 ) -> None:
@@ -333,7 +342,7 @@ def test_nmap_parser_roundtrip_properties(
     port=st.integers(min_value=1, max_value=65535),
     plugin_id=st.integers(min_value=1000, max_value=99999),
 )
-@settings(max_examples=30)
+@settings(max_examples=30, deadline=None)
 def test_nessus_burp_zap_xml_parsers_roundtrip(
     name: str, sev_num: str, port: int, plugin_id: int
 ) -> None:

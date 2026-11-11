@@ -35,12 +35,16 @@ class _TextExtractor(HTMLParser):
             self.parts.append("\n")
         elif tag == "li":
             self.parts.append("\n- ")
+        elif tag in ("td", "th"):
+            self.parts.append(" ")
         elif tag in self._BLOCK:
             self.parts.append("\n\n")
 
     def handle_endtag(self, tag: str) -> None:
         if tag in ("script", "style") and self._skip:
             self._skip -= 1
+        elif tag in ("td", "th"):
+            self.parts.append(" ")
         elif tag in self._BLOCK or tag == "li":
             self.parts.append("\n")
 

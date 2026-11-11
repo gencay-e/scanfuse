@@ -1,3 +1,4 @@
+import math
 import xml.etree.ElementTree as ET
 
 import defusedxml.ElementTree as defused_et
@@ -31,7 +32,7 @@ class NessusParser(BaseParser):
             for event, report_host in context:
                 if event == "end" and report_host.tag == "ReportHost":
                     # Extract Host Properties
-                    host_ip = "unknown"
+                    host_ips: list[str] = []
                     host_fqdn = None
                     host_os = None
 
@@ -39,18 +40,20 @@ class NessusParser(BaseParser):
                     if host_props is not None:
                         for tag in host_props.findall("tag"):
                             name = tag.get("name")
-                            if name == "host-ip":
-                                host_ip = tag.text or "unknown"
+                            if name in ("host-ip", "host-ipv6"):
+                                value = (tag.text or "").strip()
+                                if value and value != "unknown" and value not in host_ips:
+                                    host_ips.append(value)
                             elif name == "host-fqdn":
                                 host_fqdn = tag.text
                             elif name == "operating-system":
                                 host_os = tag.text
 
                     # Fallback if host-ip is missing but ReportHost name is an IP
-                    if host_ip == "unknown":
-                        host_ip = report_host.get("name", "unknown")
+                    if not host_ips:
+                        host_ips.append(report_host.get("name", "unknown"))
 
-                    host_model = Host(ip=host_ip, hostname=host_fqdn, os=host_os)
+                    hosts = [Host(ip=ip, hostname=host_fqdn, os=host_os) for ip in host_ips]
 
                     # Extract Report Items (Findings)
                     for item in report_host.findall("ReportItem"):
@@ -89,7 +92,9 @@ class NessusParser(BaseParser):
 
                         try:
                             cvss_val = float(cvss) if cvss else None
-                        except ValueError:
+                            if cvss_val is not None and (not math.isfinite(cvss_val) or cvss_val < 0.0 or cvss_val > 10.0):
+                                cvss_val = None
+                        except (ValueError, TypeError):
                             cvss_val = None
 
                         plugin_id = item.get("pluginID")
@@ -106,7 +111,7 @@ class NessusParser(BaseParser):
                             remediation=solution if solution else None,
                             cvss_score=cvss_val,
                             cvss_vector=cvss_vector if cvss_vector else None,
-                            hosts=[host_model],
+                            hosts=hosts,
                             evidence=evidence_list,
                             source_tool="nessus",
                             identifiers=identifiers,

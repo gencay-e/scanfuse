@@ -12,8 +12,15 @@ REPORT_TAGS = {
 }
 
 
+def _rewrite_internal_md_link(match: re.Match) -> str:
+    target = match.group(1)
+    if "://" in target or target.startswith(("//", "/", "mailto:", "javascript:")):
+        return match.group(0)
+    return f"](#{target})"
+
+
 def render_report_fragment(content: str) -> str:
-    content = re.sub(r'\]\(([^)]+)\.md\)', r'](#\1)', content)
+    content = re.sub(r'\]\(([^)]+)\.md\)', _rewrite_internal_md_link, content)
     rendered = markdown.markdown(content, extensions=["tables", "fenced_code"])
     return nh3.clean(
         rendered,
