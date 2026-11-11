@@ -1,4 +1,4 @@
-"""Regression tests for issues identified and resolved during the 1.0.0 audit loop."""
+"""Edge cases in the parsers, merging, escaping and format detection."""
 
 import json
 from pathlib import Path

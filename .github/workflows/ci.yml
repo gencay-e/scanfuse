@@ -178,6 +178,17 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Release notes from CHANGELOG.md
+        id: notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          awk -v v="$version" 'index($0, "## " v " ") == 1 {f=1; next} /^## / {if (f) exit} f' CHANGELOG.md > release-notes.md
+          cat release-notes.md
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then test -s release-notes.md; fi
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: artifacts
@@ -192,6 +203,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
+          name: scanfuse ${{ steps.notes.outputs.version }}
+          body_path: release-notes.md
           files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
