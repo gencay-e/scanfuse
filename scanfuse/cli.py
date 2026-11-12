@@ -206,7 +206,12 @@ def parse(
             else:
                 console.print(f"[bold blue]scanfuse[/bold blue] > Loaded {len(ignore_rules)} ignore rules from .scanfuse.yaml")
 
-        # Deduplicate first so that multi-tool evidence and consolidated max severity are preserved
+        # The host filter runs before merging, so that severity, CVSS and sources of a merged
+        # finding come only from the selected hosts.
+        if host_filter:
+            all_findings = engine.filter_by_host(all_findings, host_filter)
+
+        # Deduplicate next so that multi-tool evidence and consolidated max severity are preserved
         from scanfuse.utils import deduplicate_findings
         original_count = len(all_findings)
         all_findings = deduplicate_findings(all_findings)
@@ -221,7 +226,7 @@ def parse(
             console.print(f"[red]Error: .scanfuse.yaml overrides: {escape(str(e))}[/red]")
             errors.append({"file": ".scanfuse.yaml", "message": str(e)})
 
-        all_findings = engine.filter_findings(all_findings, min_severity=min_severity_name, host_filter=host_filter, ignore_rules=ignore_rules)
+        all_findings = engine.filter_findings(all_findings, min_severity=min_severity_name, ignore_rules=ignore_rules)
         if not all_findings:
             console.print("[yellow]No findings left after applying filters.[/yellow]")
             raise typer.Exit(code=EXIT_INCOMPLETE if errors else 0)

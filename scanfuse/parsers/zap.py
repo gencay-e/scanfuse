@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 
 import defusedxml.ElementTree as defused_et
 
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, Observation, host_key
 from scanfuse.parsers.base import (
     BaseParser,
     clean_ids,
@@ -32,6 +32,11 @@ def _instance_location(elem: ET.Element) -> str | None:
     location = parts.path or "/"
     param = html_to_text(elem.findtext("param", default=""))
     return f"{location} [{param} parameter]" if param else location
+
+
+def _instance_method(elem: ET.Element) -> str | None:
+    """HTTP method of one alert instance, upper case, or None."""
+    return elem.findtext("method", default="").strip().upper() or None
 
 
 def _instance_text(elem: ET.Element) -> str:
@@ -104,18 +109,20 @@ class ZapParser(BaseParser):
                         reference_text = alert_elem.findtext("reference", default="")
 
                         evidence_list = []
-                        locations: set[str | None] = set()
+                        observations: list[Observation] = []
+                        site = host_key(host_model)
                         instances_elem = alert_elem.find("instances")
                         if instances_elem is not None:
-                            for inst in instances_elem.findall("instance"):
-                                locations.add(_instance_location(inst))
-                                text = _instance_text(inst)
-                                if text:
-                                    evidence_list.append(Evidence(type="http-request", data=text))
+                            instances = instances_elem.findall("instance")
                         else:
                             # ZAP 1.x: uri, param and attack are children of the alert itself.
-                            locations.add(_instance_location(alert_elem))
-                            text = _instance_text(alert_elem)
+                            instances = [alert_elem]
+                        for inst in instances:
+                            observations.append(Observation(
+                                host=site, method=_instance_method(inst),
+                                location=_instance_location(inst), source_tool="zap",
+                            ))
+                            text = _instance_text(inst)
                             if text:
                                 evidence_list.append(Evidence(type="http-request", data=text))
                         other_info = html_to_text(alert_elem.findtext("otherinfo", default=""))
@@ -137,9 +144,7 @@ class ZapParser(BaseParser):
                             description=desc,
                             remediation=solution if solution else None,
                             port=port,
-                            # Several instances stay one finding; the location is kept
-                            # only when all of them are at the same place.
-                            location=next(iter(locations)) if len(locations) == 1 else None,
+                            observations=observations,
                             hosts=[host_model],
                             evidence=evidence_list,
                             identifiers=identifiers,

@@ -1,9 +1,10 @@
 import json
 import math
+from urllib.parse import urlsplit
 
 from pydantic import ValidationError
 
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, Observation, host_key
 from scanfuse.parsers.base import (
     BaseParser,
     PartialImportError,
@@ -163,6 +164,14 @@ class NucleiParser(BaseParser):
             cwes,
         )
 
+        # Web templates match at a URL; network templates match at host:port, which has no path.
+        location = None
+        if isinstance(matched_at, str) and matched_at.lower().startswith(("http://", "https://")):
+            try:
+                location = urlsplit(matched_at.strip()).path or "/"
+            except ValueError:
+                location = None
+
         return Finding(
             title=name,
             severity=severity,
@@ -171,6 +180,7 @@ class NucleiParser(BaseParser):
             description=description,
             remediation=remediation,
             hosts=[host_model],
+            observations=[Observation(host=host_key(host_model), location=location, source_tool="nuclei")],
             evidence=evidence_list,
             identifiers=identifiers,
             references=extract_urls(info.get("reference")),

@@ -25,7 +25,7 @@ from scanfuse.parsers.sarif import SarifParser
 from scanfuse.parsers.semgrep import SemgrepParser
 from scanfuse.parsers.testssl import TestsslParser
 from scanfuse.parsers.zap import ZapParser
-from scanfuse.utils import unique_slug
+from scanfuse.utils import unique_slug, with_host_observations
 
 SEVERITIES = ("Critical", "High", "Medium", "Low", "Info")
 SEVERITY_RANK = {name: len(SEVERITIES) - i for i, name in enumerate(SEVERITIES)}
@@ -58,10 +58,19 @@ def _matches_digest(path: Path, expected: object) -> bool:
         return False
 
 
+# Every character that str.splitlines() and Markdown renderers (a lone CR) treat as a line break.
+_LINE_BREAKS = re.compile(r"\r\n|[\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]")
+
+
+def _unify_line_breaks(text: str) -> str:
+    """Turn every kind of line break into '\\n', so that the line-start rules below see them."""
+    return _LINE_BREAKS.sub("\n", text)
+
+
 def md_escape(value: object) -> str:
     """Make untrusted text safe for Markdown: it shows as plain text and cannot add HTML,
     links, headings, lists or emphasis."""
-    text = "" if value is None else str(value)
+    text = _unify_line_breaks("" if value is None else str(value))
     text = html.escape(text, quote=False)
     text = _MD_SPECIAL.sub(r"\\\1", text)
     text = re.sub(r"^(\s*)(#+)", r"\1\\\2", text, flags=re.MULTILINE)
@@ -92,7 +101,7 @@ def md_text(value: object) -> str:
     """For longer scanner text (description, remediation): raw HTML is escaped, Markdown
     formatting such as emphasis, code and links is kept, but the text cannot start a heading,
     so it cannot fake a section of the report."""
-    text = html.escape("" if value is None else str(value), quote=False)
+    text = html.escape(_unify_line_breaks("" if value is None else str(value)), quote=False)
     # Split text by fenced code blocks (```...```) to preserve code indentation.
     parts = re.split(r"(```[^\n]*\n[\s\S]*?\n```)", text)
     result = []
@@ -130,6 +139,14 @@ def csv_safe(cell: object) -> str:
     if probe_stripped.startswith(("=", "+", "-", "@")) or val.startswith(("\t", "\r", "\n", " ", "\ufeff")):
         return f"'{val}"
     return val
+
+
+def _host_label(host: Host) -> str:
+    """Host as one name: 'ip (hostname)', the IP, or the host name if the IP is not known."""
+    ip = "" if host.ip.lower() == "unknown" else host.ip
+    if ip and host.hostname and host.hostname != ip:
+        return f"{ip} ({host.hostname})"
+    return ip or host.hostname or ""
 
 
 class ScanfuseEngine:
@@ -185,7 +202,7 @@ class ScanfuseEngine:
         from defusedxml.common import DefusedXmlException
         from pydantic import ValidationError
         try:
-            return parser.parse(file_path)
+            return [with_host_observations(f) for f in parser.parse(file_path)]
         except DefusedXmlException as e:
             raise ValueError(
                 f"{file_path}: the XML uses entity or DTD declarations, which scanfuse does not "
@@ -255,7 +272,47 @@ class ScanfuseEngine:
 
     # ---------------------------------------------------------------- filters
 
-    def filter_findings(self, findings: list[Finding], min_severity: str | None = None, host_filter: str | None = None, ignore_rules: list[str] | None = None) -> list[Finding]:
+    def filter_by_host(self, findings: list[Finding], host_filter: str) -> list[Finding]:
+        """Keep the findings that affect the host. Run this on the parsed findings, before they are
+        merged, so that severity, CVSS and sources of a merged finding come only from the selected hosts."""
+        # Exact match on IP or host name (ignoring case). '*' and '?' are wildcards.
+        pattern = host_filter.lower()
+        norm_pattern = pattern.strip("[]")
+
+        def match_host(h: Host) -> bool:
+            h_ip = h.ip.lower()
+            norm_ip = h_ip.strip("[]")
+            if fnmatch.fnmatchcase(h_ip, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_ip, norm_pattern)):
+                return True
+            h_name = (h.hostname or "").lower()
+            norm_name = h_name.strip("[]")
+            return bool(h.hostname and (fnmatch.fnmatchcase(h_name, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_name, norm_pattern))))
+
+        # Filter out findings that don't affect the host. Inside the others, keep only the
+        # matching hosts and the observations and evidence that belong to them. Evidence
+        # that names no host (a finding that was not merged and has several hosts) stays.
+        new_filtered = []
+        for f in findings:
+            matching_hosts = [h for h in f.hosts if match_host(h)]
+            if matching_hosts:
+                names = {
+                    name.strip().lower()
+                    for h in matching_hosts for name in (h.ip, h.hostname) if name
+                }
+                f_copy = f.model_copy()
+                f_copy.hosts = matching_hosts
+                f_copy.observations = [
+                    o for o in f.observations if o.host is None or o.host.lower() in names
+                ]
+                f_copy.evidence = [
+                    e.model_copy(update={"hosts": [x for x in e.hosts if x.strip().lower() in names]})
+                    for e in f.evidence
+                    if not e.hosts or any(x.strip().lower() in names for x in e.hosts)
+                ]
+                new_filtered.append(f_copy)
+        return new_filtered
+
+    def filter_findings(self, findings: list[Finding], min_severity: str | None = None, ignore_rules: list[str] | None = None) -> list[Finding]:
         filtered = findings
 
         if ignore_rules:
@@ -277,31 +334,6 @@ class ScanfuseEngine:
             min_level = SEVERITY_RANK[wanted]
             filtered = [f for f in filtered if SEVERITY_RANK.get(f.severity, 1) >= min_level]
 
-        if host_filter:
-            # Exact match on IP or host name (ignoring case). '*' and '?' are wildcards.
-            pattern = host_filter.lower()
-            norm_pattern = pattern.strip("[]")
-
-            def match_host(h: Host) -> bool:
-                h_ip = h.ip.lower()
-                norm_ip = h_ip.strip("[]")
-                if fnmatch.fnmatchcase(h_ip, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_ip, norm_pattern)):
-                    return True
-                h_name = (h.hostname or "").lower()
-                norm_name = h_name.strip("[]")
-                return bool(h.hostname and (fnmatch.fnmatchcase(h_name, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_name, norm_pattern))))
-
-            # Filter out findings that don't affect the host.
-            # Also, filter the hosts list inside the finding so we don't report other hosts.
-            new_filtered = []
-            for f in filtered:
-                matching_hosts = [h for h in f.hosts if match_host(h)]
-                if matching_hosts:
-                    f_copy = f.model_copy()
-                    f_copy.hosts = matching_hosts
-                    new_filtered.append(f_copy)
-            filtered = new_filtered
-
         return filtered
 
     # ----------------------------------------------------------------- output
@@ -314,7 +346,9 @@ class ScanfuseEngine:
         their names. Only after that succeeded, the files are moved into the output directory.
         Without `replace`, existing files with the same names abort the export. With `replace`,
         they are overwritten and files of an earlier export of the same kind that are no longer
-        part of the report are removed. Files that scanfuse did not write are never removed.
+        part of the report are removed. A stale file is removed only if its SHA-256 still matches
+        the digest in the manifest. The manifest is not authenticated, so this is a check against
+        changed files, not proof that scanfuse wrote a file.
         """
         if self.output_dir.exists() and not self.output_dir.is_dir():
             raise OSError(f"Output path exists and is not a directory: {self.output_dir}")
@@ -348,8 +382,8 @@ class ScanfuseEngine:
             staged_manifest.write_text(
                 json.dumps({"files": sorted(names), "sha256": digests}, indent=2), encoding="utf-8"
             )
-            # A stale file is removed only if it is still the file scanfuse wrote. Entries
-            # without a digest (manifest of scanfuse 1.0.2 or earlier) are left in place.
+            # A stale file is removed only if its digest still matches the manifest (which is
+            # not authenticated). Entries without a digest (manifest of scanfuse 1.0.2 or earlier) are left in place.
             stale_names = sorted(
                 name for name in set(old_names) - set(names)
                 if replace and isinstance(name, str) and name
@@ -461,7 +495,9 @@ class ScanfuseEngine:
         finding_htmls = []
         for finding, content in zip(findings, rendered):
             html_c = render_report_fragment(content)
-            clean_title = html.escape(f"{finding.title} {finding.location or ''}".strip().lower(), quote=True)
+            clean_title = html.escape(
+                " ".join([finding.title, *finding.affected()]).strip().lower(), quote=True
+            )
             # Add an id corresponding to the slug for the anchor links
             finding_htmls.append(f'<div id="{finding.slug}" class="finding-block" data-severity="{finding.severity}" data-title="{clean_title}"><hr>\n{html_c}</div>')
 
@@ -557,6 +593,8 @@ function filterFindings() {
 
         Format (schema_version 2): an object with `schema_version`, `complete` (false if an input
         could not be read), `errors` and `findings`. Version 1 was a bare list of findings.
+        Each finding has `observations`: host, method, location and source tool per place where
+        a tool saw it.
         """
         errors = errors or []
 
@@ -590,7 +628,7 @@ function filterFindings() {
                 # The first eight columns keep the order of scanfuse 0.1. New columns come last.
                 writer.writerow(["Title", "Severity", "CVSS", "Hosts", "Source Tool", "Description",
                                  "Remediation", "Evidence", "CVSS Vector", "Port", "Identifiers",
-                                 "References", "Other Reports", "Import Status", "Location"])
+                                 "References", "Other Reports", "Import Status", "Affected"])
                 for finding in findings:
                     hosts_str = ", ".join(
                         f"{h.ip} ({h.hostname})" if h.hostname else h.ip for h in finding.hosts
@@ -612,7 +650,8 @@ function filterFindings() {
                         finding.title, finding.severity, cvss_str, hosts_str, finding.source_tool,
                         finding.description, finding.remediation, evidence_str,
                         finding.cvss_vector, finding.port, ", ".join(finding.identifiers),
-                        "\n".join(finding.references), others, status, finding.location,
+                        "\n".join(finding.references), others, status,
+                        "\n".join(finding.affected()),
                     ]])
             return ["report.csv"]
 
@@ -662,6 +701,8 @@ function filterFindings() {
                     "remediation": finding.remediation,
                     "scanfuse-severity": finding.severity,
                     "port": finding.port,
+                    "hosts": [h.model_dump(exclude_none=True) for h in finding.hosts],
+                    "observations": [o.model_dump() for o in finding.observations],
                     "evidence": [e.model_dump() for e in finding.evidence],
                 }
                 if finding.cvss_score is not None:
@@ -673,10 +714,14 @@ function filterFindings() {
                     "message": {"text": finding.title},
                     "properties": result_properties,
                 }
-                if finding.hosts:
-                    result["locations"] = [{
-                        "physicalLocation": {"artifactLocation": {"uri": host.ip}}
-                    } for host in finding.hosts]
+                # A host is not a file, so there is no physicalLocation. Hosts are logical locations.
+                logical = [
+                    {"name": label, "kind": "resource"}
+                    for label in dict.fromkeys(_host_label(host) for host in finding.hosts)
+                    if label
+                ]
+                if logical:
+                    result["locations"] = [{"logicalLocations": [item]} for item in logical]
                 results.append(result)
             data: dict[str, object] = {
                 "$schema": "https://json.schemastore.org/sarif-2.1.0.json",

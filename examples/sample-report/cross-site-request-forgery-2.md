@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/EvalInjection.php
+**Affected**:
+
+- 10.2.100.1 /demo/EvalInjection.php
+
 
 
 

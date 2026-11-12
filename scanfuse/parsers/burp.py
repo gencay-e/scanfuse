@@ -1,10 +1,11 @@
 import base64
+import re
 import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
 
 import defusedxml.ElementTree as defused_et
 
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, Observation, host_key
 from scanfuse.parsers.base import (
     BaseParser,
     clean_ids,
@@ -13,6 +14,14 @@ from scanfuse.parsers.base import (
     extract_urls,
     html_to_text,
 )
+
+
+def _request_method(attribute: str | None, request: str) -> str | None:
+    """HTTP method of a request: the `method` attribute, else the first word of the request line."""
+    if attribute and attribute.strip():
+        return attribute.strip().upper()
+    match = re.match(r"\s*([A-Za-z]+) \S+ HTTP/", request)
+    return match.group(1).upper() if match else None
 
 
 class BurpParser(BaseParser):
@@ -90,6 +99,7 @@ class BurpParser(BaseParser):
                         evidence_list.append(Evidence(type="burp-details", data="\n".join(meta)))
 
                     req_resps = issue_elem.findall("requestresponse")
+                    methods: set[str | None] = set()
                     for rr in req_resps:
                         req_elem = rr.find("request")
                         res_elem = rr.find("response")
@@ -103,6 +113,7 @@ class BurpParser(BaseParser):
                                 except Exception:  # noqa: S110
                                     pass
                             text += f"Request:\n{req_data}\n\n"
+                            methods.add(_request_method(req_elem.get("method"), req_data))
 
                         if res_elem is not None and res_elem.text:
                             res_data = res_elem.text
@@ -131,7 +142,13 @@ class BurpParser(BaseParser):
                         description=desc,
                         remediation=remediation if remediation else None,
                         port=port,
-                        location=(location or path) or None,
+                        observations=[Observation(
+                            host=host_key(host_model),
+                            # Only if every request of the issue used the same method.
+                            method=next(iter(methods)) if len(methods) == 1 else None,
+                            location=(location or path) or None,
+                            source_tool="burp",
+                        )],
                         hosts=[host_model],
                         evidence=evidence_list,
                         identifiers=identifiers,

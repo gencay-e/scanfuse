@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 import unicodedata
 import xml.etree.ElementTree as ET
 from typing import Literal
 
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from scanfuse.engine import SEVERITY_RANK, code_fence, csv_safe, md_escape, md_text
@@ -136,6 +137,13 @@ def test_code_fence_strictly_longer_than_internal_backticks(data: str) -> None:
     assert fence not in data
 
 
+_FENCE = re.compile(r"```[^\n]*\n[\s\S]*?\n```")
+
+
+@example(text="a\r#x")
+@example(text="a\x0b#x")
+@example(text="a\x85#x")
+@example(text="a\u2028#x")
 @given(st.text(max_size=200))
 def test_md_escape_and_md_text_neutralize_raw_tags_and_headings(text: str) -> None:
     escaped = md_escape(text)
@@ -144,8 +152,22 @@ def test_md_escape_and_md_text_neutralize_raw_tags_and_headings(text: str) -> No
     body = md_text(text)
     assert "<" not in body
     assert ">" not in body
-    for line in body.splitlines():
+    # Inside a complete code fence the text is literal code and cannot form a heading.
+    for line in _FENCE.sub("", body).splitlines():
         assert not line.lstrip().startswith("#")
+    for line in escaped.splitlines():
+        assert not line.lstrip().startswith("#")
+
+
+def test_every_line_break_variant_is_neutralized_before_a_heading_marker() -> None:
+    for brk in ("\r", "\r\n", "\x0b", "\x0c", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"):
+        for func in (md_escape, md_text):
+            out = func(f"a{brk}# h{brk}- i{brk}1. j{brk}===")
+            for line in out.splitlines():
+                stripped = line.lstrip()
+                assert not stripped.startswith(("#", "===")), (repr(brk), func.__name__, line)
+                if func is md_escape:  # md_text keeps lists on purpose
+                    assert not stripped.startswith(("- ", "1. ")), (repr(brk), line)
 
 
 finding_strategy = st.builds(

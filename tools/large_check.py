@@ -32,7 +32,7 @@ def generate(path: Path, n: int) -> int:
                 "template-id": f"template-{t}",
                 "host": f"host-{i}.example.test",
                 "ip": f"10.{(i >> 16) & 255}.{(i >> 8) & 255}.{i & 255}",
-                "matched-at": f"http://host-{i}.example.test/p{i}",
+                "matched-at": f"http://host-{i}.example.test/p{t}",
                 "info": {"name": f"Finding number {t}", "severity": ["info", "low", "medium", "high", "critical"][t % 5],
                          "description": f"Description of template {t}"},
                 "request": f"GET /p{i} HTTP/1.1",

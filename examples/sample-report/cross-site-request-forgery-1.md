@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/LDAPInjection.php
+**Affected**:
+
+- 10.2.100.1 /demo/LDAPInjection.php
+
 
 
 

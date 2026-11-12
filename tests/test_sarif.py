@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 
 from scanfuse.cli import app
 from scanfuse.engine import ScanfuseEngine
-from scanfuse.models import Finding
+from scanfuse.models import Finding, Host, Observation
 from scanfuse.parsers.sarif import SarifParser
 
 
@@ -99,3 +99,24 @@ def test_sarif_export_preserves_description_and_all_references(tmp_path):
     rule = data["runs"][0]["tool"]["driver"]["rules"][0]
     assert rule["fullDescription"]["text"] == "Long description"
     assert rule["properties"]["references"] == finding.references
+
+
+def test_sarif_export_structure_follows_the_2_1_0_schema_for_locations(tmp_path):
+    # The log was also checked against the official sarif-schema-2.1.0.json by hand;
+    # the schema is not part of the package, so this checks the shape that matters.
+    finding = Finding(
+        title="T", severity="High", description="d", source_tool="zap", identifiers=["CWE-79"],
+        hosts=[Host(ip="10.0.0.1", hostname="a.test"), Host(ip="unknown", hostname="b.test")],
+        observations=[Observation(host="10.0.0.1", method="GET", location="/x", source_tool="zap")],
+    )
+    output = tmp_path / "report"
+    ScanfuseEngine(str(output)).export_sarif([finding])
+    data = json.loads((output / "report.sarif").read_text(encoding="utf-8"))
+    assert data["version"] == "2.1.0" and data["$schema"].endswith("sarif-2.1.0.json")
+    (result,) = data["runs"][0]["results"]
+    assert result["ruleId"] == "CWE-79" and result["message"]["text"] == "T"
+    assert result["locations"] == [
+        {"logicalLocations": [{"name": "10.0.0.1 (a.test)", "kind": "resource"}]},
+        {"logicalLocations": [{"name": "b.test", "kind": "resource"}]},
+    ]
+    assert result["properties"]["observations"][0]["location"] == "/x"

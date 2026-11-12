@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/PathTraversal.php \[action parameter\]
+**Affected**:
+
+- 10.2.100.1 /demo/PathTraversal.php \[action parameter\]
+
 
 
 

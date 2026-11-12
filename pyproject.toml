@@ -15,7 +15,7 @@ authors = [
 ]
 keywords = ["pentest", "security", "report", "nmap", "nuclei", "zap", "burp", "nessus", "trivy"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Information Technology",
     "Operating System :: OS Independent",

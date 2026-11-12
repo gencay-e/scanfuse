@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/XPathInjection.php
+**Affected**:
+
+- 10.2.100.1 /demo/XPathInjection.php
+
 
 
 

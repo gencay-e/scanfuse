@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from scanfuse import __version__
 from scanfuse.cli import app
 from scanfuse.engine import ScanfuseEngine
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, Observation
 
 runner = CliRunner(env={"COLUMNS": "400"})
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
@@ -186,7 +186,7 @@ def test_partial_failure_is_marked_in_every_format(tmp_path):
 
     with (tmp_path / "out-csv" / "report.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.reader(stream))
-    assert rows[0][-2:] == ["Import Status", "Location"]
+    assert rows[0][-2:] == ["Import Status", "Affected"]
     assert rows[1][-2].startswith("incomplete")
 
     index = (tmp_path / "out-markdown" / "index.md").read_text(encoding="utf-8")
@@ -241,7 +241,7 @@ def test_host_filter_is_exact_with_optional_wildcards(tmp_path):
                 hosts=[Host(ip="110.0.0.1")]),
     ]
     engine = ScanfuseEngine(str(tmp_path / "x"))
-    titles = lambda **kw: [f.title for f in engine.filter_findings(findings, **kw)]  # noqa: E731
+    titles = lambda **kw: [f.title for f in engine.filter_by_host(findings, **kw)]  # noqa: E731
     assert titles(host_filter="10.0.0.1") == ["One"]
     assert titles(host_filter="web.example.TEST") == ["One"]
     assert titles(host_filter="10.0.0.*") == ["One", "Ten"]
@@ -473,8 +473,10 @@ def test_replace_does_not_delete_files_of_an_old_manifest_without_digests(tmp_pa
 
 def test_location_is_in_index_html_search_and_csv(tmp_path):
     findings = [
-        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap", location="/demo/a_b.php"),
-        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap", location="/other.php"),
+        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap",
+                observations=[Observation(host="10.0.0.1", location="/demo/a_b.php", source_tool="zap")]),
+        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap",
+                observations=[Observation(host="10.0.0.1", location="/other.php", source_tool="zap")]),
         Finding(title="No place", severity="Low", description="d", source_tool="zap"),
     ]
     engine = ScanfuseEngine(str(tmp_path / "out"))
@@ -483,10 +485,10 @@ def test_location_is_in_index_html_search_and_csv(tmp_path):
     assert "(csrf.md) at /demo/a\\_b.php (Source" in index
     assert "(no-place.md) (Source" in index
     page = (tmp_path / "out" / "report.html").read_text(encoding="utf-8")
-    assert 'data-title="csrf /other.php"' in page
+    assert 'data-title="csrf 10.0.0.1 /other.php"' in page
     assert "Search by title or location..." in page
     engine.export_csv(findings, excel=True)
     with (tmp_path / "out" / "report.csv").open(newline="", encoding="utf-8-sig") as stream:
         rows = list(csv.reader(stream, delimiter=";"))
-    assert rows[0][-1] == "Location"
-    assert [r[-1] for r in rows[1:]] == ["/demo/a_b.php", "/other.php", ""]
+    assert rows[0][-1] == "Affected"
+    assert [r[-1] for r in rows[1:]] == ["10.0.0.1 /demo/a_b.php", "10.0.0.1 /other.php", ""]

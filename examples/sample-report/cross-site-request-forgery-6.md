@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/FormatString.php
+**Affected**:
+
+- 10.2.100.1 /demo/FormatString.php
+
 
 
 

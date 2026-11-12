@@ -13,7 +13,7 @@
         <remediationBackground><![CDATA[Use prepared statements.]]></remediationBackground>
         <issueDetail><![CDATA[The parameter <b>id</b> is vulnerable.]]></issueDetail>
         <requestresponse>
-            <request base64="true">R0VUIC92aWV3IA==SFRUUC8xLjENCkhvc3Q6IGV4YW1wbGUuY29tDQoNCg==</request>
+            <request base64="true">R0VUIC92aWV3IEhUVFAvMS4xDQpIb3N0OiBleGFtcGxlLmNvbQ0KDQo=</request>
             <response base64="true">SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LUxlbmd0aDogMA0KDQo=</response>
         </requestresponse>
     </issue>

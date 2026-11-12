@@ -11,9 +11,12 @@
 
 **Port**: {{ finding.port | md }}
 {% endif %}
-{% if finding.location %}
+{% if finding.affected() %}
 
-**Location**: {{ finding.location | md }}
+**Affected**:
+{% for place in finding.affected() %}
+- {{ place | md }}
+{% endfor %}
 {% endif %}
 {% if finding.identifiers %}
 

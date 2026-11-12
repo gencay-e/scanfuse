@@ -282,12 +282,15 @@ function filterFindings() {
 <p>10.31.112.23 (qa3app03)</p>
 </li>
 </ul>
-<div id="cross-site-request-forgery" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/xss-reflected.php"><hr>
+<div id="cross-site-request-forgery" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/xss-reflected.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XSS-reflected.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XSS-reflected.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -331,12 +334,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XSS-reflected.php
 </code></pre></div>
-<div id="cross-site-request-forgery-1" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/ldapinjection.php"><hr>
+<div id="cross-site-request-forgery-1" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/ldapinjection.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/LDAPInjection.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/LDAPInjection.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -380,12 +386,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/LDAPInjection.php
 </code></pre></div>
-<div id="cross-site-request-forgery-2" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/evalinjection.php"><hr>
+<div id="cross-site-request-forgery-2" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/evalinjection.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/EvalInjection.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/EvalInjection.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -429,12 +438,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/EvalInjection.php
 </code></pre></div>
-<div id="cross-site-request-forgery-3" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/sqli.php"><hr>
+<div id="cross-site-request-forgery-3" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/sqli.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/SQLI.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/SQLI.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -478,12 +490,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/SQLI.php
 </code></pre></div>
-<div id="cross-site-request-forgery-4" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/xss-cookie.php"><hr>
+<div id="cross-site-request-forgery-4" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/xss-cookie.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XSS-cookie.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XSS-cookie.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -527,12 +542,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XSS-cookie.php
 </code></pre></div>
-<div id="cross-site-request-forgery-5" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/xpathinjection.php"><hr>
+<div id="cross-site-request-forgery-5" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/xpathinjection.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XPathInjection.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XPathInjection.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -576,12 +594,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XPathInjection.php
 </code></pre></div>
-<div id="cross-site-request-forgery-6" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/formatstring.php"><hr>
+<div id="cross-site-request-forgery-6" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/formatstring.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/FormatString.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/FormatString.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -625,12 +646,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/FormatString.php
 </code></pre></div>
-<div id="cross-site-request-forgery-7" class="finding-block" data-severity="Medium" data-title="cross site request forgery /demo/oscommandinjection.php"><hr>
+<div id="cross-site-request-forgery-7" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/oscommandinjection.php"><hr>
 <h1>Cross Site Request Forgery</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/OSCommandInjection.php</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/OSCommandInjection.php</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:10014</p>
 <h2>Description</h2>
 <p>A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.</p>
@@ -674,12 +698,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/OSCommandInjection.php
 </code></pre></div>
-<div id="directory-browsing" class="finding-block" data-severity="Medium" data-title="directory browsing /demo/directoryindexing/"><hr>
+<div id="directory-browsing" class="finding-block" data-severity="Medium" data-title="directory browsing 10.2.100.1 /demo/directoryindexing/"><hr>
 <h1>Directory browsing</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/DirectoryIndexing/</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/DirectoryIndexing/</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:0</p>
 <h2>Description</h2>
 <p>It is possible to view the directory listing.  Directory listing may reveal hidden scripts, include files , backup source files etc which be accessed to read sensitive information.</p>
@@ -702,12 +729,15 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/DirectoryIndexing/
 </code></pre></div>
-<div id="path-traversal" class="finding-block" data-severity="High" data-title="path traversal /demo/pathtraversal.php [action parameter]"><hr>
+<div id="path-traversal" class="finding-block" data-severity="High" data-title="path traversal 10.2.100.1 /demo/pathtraversal.php [action parameter]"><hr>
 <h1>Path Traversal</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/PathTraversal.php [action parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/PathTraversal.php [action parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:6</p>
 <h2>Description</h2>
 <p>The Path Traversal attack technique allows an attacker access to files, directories, and commands that potentially reside outside the web document root directory. An attacker may manipulate a URL in such a way that the web site will execute or reveal the contents of arbitrary files anywhere on the web server. Any device that exposes an HTTP-based interface is potentially vulnerable to Path Traversal.</p>
@@ -748,12 +778,15 @@ Attack: null
 <h3>other-info</h3>
 <pre><code>%5cWindows%5csystem.ini
 </code></pre></div>
-<div id="sql-injection-fingerprinting" class="finding-block" data-severity="High" data-title="sql injection fingerprinting /demo/sqli2.php [username parameter]"><hr>
+<div id="sql-injection-fingerprinting" class="finding-block" data-severity="High" data-title="sql injection fingerprinting 10.2.100.1 /demo/sqli2.php [username parameter]"><hr>
 <h1>SQL Injection Fingerprinting</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/SQLI2.php [username parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/SQLI2.php [username parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40004</p>
 <h2>Description</h2>
 <p>SQL injection may be possible.</p>
@@ -792,12 +825,15 @@ Attack: 1'INJECTED_PARAM
 <h3>other-info</h3>
 <pre><code>SQL
 </code></pre></div>
-<div id="sql-injection" class="finding-block" data-severity="High" data-title="sql injection /demo/sqli2.php [username parameter]"><hr>
+<div id="sql-injection" class="finding-block" data-severity="High" data-title="sql injection 10.2.100.1 /demo/sqli2.php [username parameter]"><hr>
 <h1>SQL Injection</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/SQLI2.php [username parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/SQLI2.php [username parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40005</p>
 <h2>Description</h2>
 <p>SQL injection is possible.  User parameters submitted will be formulated into a SQL query for database processing.  If the query is built by simple 'string concatenation', it is possible to modify the meaning of the query by carefully crafting the parameters.  Depending on the access right and type of database used, tampered query can be used to retrieve sensitive information from the database or execute arbitrary code.  MS SQL and PostGreSQL, which supports multiple statements, may be exploited if the database access right is more powerful.
@@ -837,12 +873,15 @@ Attack: 1%27INJECTED_PARAM'INJECTED_PARAM
 <h3>other-info</h3>
 <pre><code>SQL
 </code></pre></div>
-<div id="cross-site-scripting" class="finding-block" data-severity="High" data-title="cross site scripting /demo/evalinjection2.php [command parameter]"><hr>
+<div id="cross-site-scripting" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/evalinjection2.php [command parameter]"><hr>
 <h1>Cross Site Scripting</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/EvalInjection2.php [command parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/EvalInjection2.php [command parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40012</p>
 <h2>Description</h2>
 <p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
@@ -885,12 +924,15 @@ For every web page that is generated, use and specify a character encoding such 
 <pre><code>Request: http://10.2.100.1/demo/EvalInjection2.php
 Parameter: command
 </code></pre></div>
-<div id="cross-site-scripting-1" class="finding-block" data-severity="High" data-title="cross site scripting /demo/xss-reflected2.php [username parameter]"><hr>
+<div id="cross-site-scripting-1" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xss-reflected2.php [username parameter]"><hr>
 <h1>Cross Site Scripting</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XSS-reflected2.php [username parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XSS-reflected2.php [username parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40012</p>
 <h2>Description</h2>
 <p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
@@ -933,12 +975,15 @@ For every web page that is generated, use and specify a character encoding such 
 <pre><code>Request: http://10.2.100.1/demo/XSS-reflected2.php
 Parameter: username
 </code></pre></div>
-<div id="cross-site-scripting-2" class="finding-block" data-severity="High" data-title="cross site scripting /demo/xpathinjection2.php [username parameter]"><hr>
+<div id="cross-site-scripting-2" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xpathinjection2.php [username parameter]"><hr>
 <h1>Cross Site Scripting</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XPathInjection2.php [username parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XPathInjection2.php [username parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40012</p>
 <h2>Description</h2>
 <p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
@@ -982,12 +1027,15 @@ For every web page that is generated, use and specify a character encoding such 
 Parameter: username
 Attack: '"
 </code></pre></div>
-<div id="cross-site-scripting-3" class="finding-block" data-severity="High" data-title="cross site scripting /demo/xpathinjection2.php [password parameter]"><hr>
+<div id="cross-site-scripting-3" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xpathinjection2.php [password parameter]"><hr>
 <h1>Cross Site Scripting</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
-<p><strong>Location</strong>: /demo/XPathInjection2.php [password parameter]</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>10.2.100.1 /demo/XPathInjection2.php [password parameter]</li>
+</ul>
 <p><strong>Identifiers</strong>: zap-plugin:40012</p>
 <h2>Description</h2>
 <p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance. A browser instance can be a standard web browser client, or a browser object embedded in a software product such as the browser within WinAmp, an RSS reader, or an email client. The code itself is usually written in HTML/JavaScript, but may also extend to VBScript, ActiveX, Java, Flash, or any other browser-supported technology.
@@ -2417,12 +2465,15 @@ Installed: 2.2.2
 <pre><code>Package: golang.org/x/net
 Installed: 0.22.0
 </code></pre></div>
-<div id="strict-transport-security-misconfiguration" class="finding-block" data-severity="Medium" data-title="strict transport security misconfiguration /"><hr>
+<div id="strict-transport-security-misconfiguration" class="finding-block" data-severity="Medium" data-title="strict transport security misconfiguration 127.0.0.1 /"><hr>
 <h1>Strict Transport Security Misconfiguration</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:134217728</p>
 <h2>Description</h2>
 <p>There was no "Strict-Transport-Security" header in the server response.</p>
@@ -2451,12 +2502,15 @@ Installed: 0.22.0
 <h3>burp-details</h3>
 <pre><code>Confidence: Certain
 </code></pre></div>
-<div id="ssl-certificate" class="finding-block" data-severity="Medium" data-title="ssl certificate /"><hr>
+<div id="ssl-certificate" class="finding-block" data-severity="Medium" data-title="ssl certificate 127.0.0.1 /"><hr>
 <h1>SSL certificate</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:16777472, CWE-295, CWE-326, CWE-327</p>
 <h2>Description</h2>
 <p>The following problem was identified with the server's SSL certificate:</p>
@@ -2512,12 +2566,15 @@ Installed: 0.22.0
 <h3>burp-details</h3>
 <pre><code>Confidence: Certain
 </code></pre></div>
-<div id="external-service-interaction-dns" class="finding-block" data-severity="High" data-title="external service interaction (dns) /"><hr>
+<div id="external-service-interaction-dns" class="finding-block" data-severity="High" data-title="external service interaction (dns) 127.0.0.1 /"><hr>
 <h1>External service interaction (DNS)</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:3146240, CWE-918, CWE-406</p>
 <h2>Description</h2>
 <p>It is possible to induce the application to perform server-side DNS lookups of arbitrary domain names.</p>
@@ -2561,12 +2618,15 @@ These measures might include blocking network access from the application server
 <h3>burp-details</h3>
 <pre><code>Confidence: Certain
 </code></pre></div>
-<div id="ssl-scanner-offer-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] offer sslv3 /"><hr>
+<div id="ssl-scanner-offer-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] offer sslv3 127.0.0.1 /"><hr>
 <h1>[SSL Scanner] Offer SSLv3</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:134217728</p>
 <h2>Description</h2>
 <p>The host uses SSLv3, which is a weak encryption scheme broken by the POODLE attack. (CWE-326)</p>
@@ -2583,12 +2643,15 @@ These measures might include blocking network access from the application server
 <h3>burp-details</h3>
 <pre><code>Confidence: Certain
 </code></pre></div>
-<div id="ssl-scanner-poodle-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] poodle (sslv3) /"><hr>
+<div id="ssl-scanner-poodle-sslv3" class="finding-block" data-severity="High" data-title="[ssl scanner] poodle (sslv3) 127.0.0.1 /"><hr>
 <h1>[SSL Scanner] POODLE (SSLv3)</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:134217728</p>
 <h2>Description</h2>
 <p>The host is vulnerable to the POODLE attack which affects every website that supports SSLv3. The POODLE attack allows an attacker to extract the plaintext message of a targeted part of a request. There is also a variant of the attack that affects more recent versions of TLS. (Requires external tools) (CVE-2014-3566)</p>
@@ -2608,12 +2671,15 @@ These measures might include blocking network access from the application server
 <h3>burp-details</h3>
 <pre><code>Confidence: Tentative
 </code></pre></div>
-<div id="ssl-scanner-breach" class="finding-block" data-severity="Medium" data-title="[ssl scanner] breach /"><hr>
+<div id="ssl-scanner-breach" class="finding-block" data-severity="Medium" data-title="[ssl scanner] breach 127.0.0.1 /"><hr>
 <h1>[SSL Scanner] BREACH</h1>
 <p><strong>Severity</strong>: Medium</p>
 <p><strong>Source</strong>: burp</p>
 <p><strong>Port</strong>: 443/tcp</p>
-<p><strong>Location</strong>: /</p>
+<p><strong>Affected</strong>:</p>
+<ul>
+<li>127.0.0.1 /</li>
+</ul>
 <p><strong>Identifiers</strong>: burp-type:134217728</p>
 <h2>Description</h2>
 <p>This server offers HTTP compression which can lead to chosen plaintext attack similar to CRIME where the attack can recover secret cookie such as authentication cookie using the size of compressed request/response. This issue can be ignored if there is no secret in the page or static pages.</p>

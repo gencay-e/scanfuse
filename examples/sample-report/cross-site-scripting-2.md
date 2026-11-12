@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/XPathInjection2.php \[username parameter\]
+**Affected**:
+
+- 10.2.100.1 /demo/XPathInjection2.php \[username parameter\]
+
 
 
 

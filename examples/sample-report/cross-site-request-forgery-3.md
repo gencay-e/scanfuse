@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/SQLI.php
+**Affected**:
+
+- 10.2.100.1 /demo/SQLI.php
+
 
 
 

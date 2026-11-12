@@ -1,13 +1,22 @@
 # Changelog
 
-## 1.0.3 (2026-11-13)
+## 1.1.0 (2026-11-13)
 
-* Merge rule: findings with the same title and port at different locations (URL path and parameter) are no longer merged. ZAP and Burp fill the new `location` field; the same title at the same location, on several hosts or from several tools, is still one finding. Findings without a location merge as before. `location` is shown in the Markdown and in the JSON. A report can now contain more findings than with 1.0.2, because the same ZAP or Burp title at different paths used to be one finding and is now several. The example report grew from 104 to 162 findings (39 to 49 at Medium or higher).
-* The location is visible: the index and the HTML overview list it after the title, the HTML search matches it, and the CSV has a new last column `Location`. SARIF is unchanged.
-* `--format-out pdf` now exits with code 2, not 1, when `report.pdf` exists and `--replace` is not given.
-* `--replace` removes a stale file listed in the manifest only if its SHA-256 matches the digest stored in the manifest. Manifests now contain the digests. Entries of older manifests have none and are never removed.
-* README and SECURITY: the Excel notes no longer contradict each other. The import observations are manual tests in Windows Excel; formula handling in Excel and LibreOffice and opening the HTML page in a browser are unverified.
-* README: each finding starts on a new page in the PDF; long findings continue on further pages.
+Reports can contain more findings than with 1.0.2. The merge identity changed, so this is a minor release. Findings are now merged only if the HTTP method and the location (URL path and parameter) are also the same, and paths are compared case-sensitively. Before, the same ZAP or Burp title at different paths, with different methods, or at `/Admin` and `/admin` was one finding and is now several. The example report grew from 104 to 162 findings (39 to 49 at Medium or higher).
+
+* Observations: every finding has `observations`, one per place where a tool saw it: `host`, `method`, `location` (URL path, with the parameter if named) and `source_tool`. ZAP gives one per alert instance, Burp one per issue, Nuclei one per result (the URL path of a web match), the other tools one per host. There are no `location`, `method` or `locations` fields on a finding.
+* Merge rule: findings with the same title, ids and port are merged only if they have the same set of (method, location) pairs. Locations and parameter names are compared exactly: URL paths are case-sensitive, so `/login` and `/Login` are two findings; only surrounding spaces and the case of the method are ignored. Two ZAP alerts with different sets of locations stay two findings, also on different hosts. The same title on several hosts or from several tools with the same set is still one finding. Findings without a location merge as before. Nuclei findings of one template at different URL paths are now several findings.
+* `--host` removes the observations and the evidence of other hosts, so a merged finding no longer shows paths seen only on another host. Evidence gets `hosts` when findings are merged. Evidence of an unmerged finding with several hosts names no host and is kept; README says so.
+* Filter order: `--host` runs on the parsed findings before merging, so severity, CVSS and sources of a merged finding come only from the selected hosts. Then come merging, overrides and exclusions, `ignore_titles` and `--min-severity`. Before, `--host A --min-severity High` kept a finding that was Low on A and Critical on B.
+* "Affected" (host, method and location per line) is shown in the Markdown, the HTML search, the PDF and the CSV (last column `Affected`); the index shows the method and location. The JSON has `observations`; `schema_version` stays 2 because the fields are additions.
+* SARIF: results no longer put a host in `artifactLocation`. Each host is a logical location (kind `resource`); hosts and observations are in the result `properties`. The output validates against the SARIF 2.1.0 schema. It has no `physicalLocation`, so it is not for GitHub code scanning upload; README says so.
+* Markdown escaping treats every line break that Python or a renderer recognises (`\r`, `\x0b`, `\x0c`, `\x1c`-`\x1e`, `\x85`, U+2028, U+2029) as a newline, so scanner text cannot start a heading, list or underline after one of them.
+* `--format-out pdf` exits with code 2, not 1, when `report.pdf` exists and `--replace` is not given.
+* `--replace` removes a stale file listed in the manifest only if its SHA-256 matches the digest in the manifest. Manifests now contain the digests; entries of older manifests have none and are never removed. When the manifest is trusted, the digest check prevents cleanup of files that changed since scanfuse wrote them. The manifest is not authenticated and does not prove that scanfuse created a file; anyone who can edit the report folder can also delete files in it. README and `docs/security-model.md` say so.
+* File names: the `-N` suffix that makes a slug unique no longer pushes it past 100 characters.
+* README and SECURITY: the Excel notes no longer contradict each other. The import observations are manual tests in Windows Excel; formula handling in Excel and LibreOffice and opening the HTML page in a browser are unverified. Each finding starts on a new page in the PDF; long findings continue on further pages.
+* A German comment in `.gitignore` is now English.
+* Package classifier is "Development Status :: 4 - Beta" again.
 
 ## 1.0.2 (2026-11-12)
 

@@ -1,6 +1,6 @@
 import re
 
-from scanfuse.models import Evidence, Finding, Host, SourceRecord
+from scanfuse.models import Evidence, Finding, Host, Observation, SourceRecord, host_key
 
 # Names that must not be used as a file name on Windows, plus the files scanfuse writes itself.
 RESERVED_SLUGS = frozenset(
@@ -16,6 +16,9 @@ SEVERITY_ORDER = {"Info": 0, "Low": 1, "Medium": 2, "High": 3, "Critical": 4}
 _GLOBAL_ID = re.compile(r"^(CVE-\d{4}-\d{4,}|GHSA(-[0-9a-z]{4}){3})$", re.IGNORECASE)
 
 
+MAX_SLUG = 100
+
+
 def slugify(text: str) -> str:
     """
     Convert text to a safe, lower-cased filename slug.
@@ -23,7 +26,7 @@ def slugify(text: str) -> str:
     """
     text = text.lower()
     text = re.sub(r'[^a-z0-9]+', '-', text)
-    result = text[:100].strip('-')
+    result = text[:MAX_SLUG].strip('-')
     return result if result else "unknown-finding"
 
 
@@ -33,7 +36,9 @@ def unique_slug(title: str, seen: set[str]) -> str:
     slug = base
     counter = 1
     while slug in seen or slug in RESERVED_SLUGS:
-        slug = f"{base}-{counter}"
+        # Cut the base so that the suffix still fits into the 100 characters.
+        suffix = f"-{counter}"
+        slug = base[: MAX_SLUG - len(suffix)].strip("-") + suffix
         counter += 1
     seen.add(slug)
     return slug
@@ -57,12 +62,23 @@ def _nonlocal_ids(f: Finding) -> frozenset[str]:
     return frozenset(i.casefold() for i in f.identifiers if ":" not in i)
 
 
-_Identity = tuple[str, frozenset[str], frozenset[str], str | None, str | None]
+_Place = frozenset[tuple[str | None, str | None]]
+_Identity = tuple[str, frozenset[str], frozenset[str], str | None, _Place]
 
 
 def _identity(f: Finding) -> _Identity:
-    location = (f.location or "").strip().casefold() or None
-    return (f.title.strip().casefold(), _global_ids(f), _nonlocal_ids(f), f.port, location)
+    return (f.title.strip().casefold(), _global_ids(f), _nonlocal_ids(f), f.port, f.places())
+
+
+def with_host_observations(f: Finding) -> Finding:
+    """Give every host that has no observation one without method and location, so that each
+    host of a finding is also named by an observation. Returns `f` itself if nothing is missing."""
+    named = {o.host for o in f.observations}
+    missing = [key for h in f.hosts if (key := host_key(h)) and key not in named]
+    if not missing:
+        return f
+    extra = [Observation(host=key, source_tool=f.source_tool) for key in dict.fromkeys(missing)]
+    return f.model_copy(update={"observations": [*f.observations, *extra]})
 
 
 def _compatible(
@@ -99,11 +115,13 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     Merge findings that are the same finding reported more than once.
 
     Two findings are the same if their titles are equal (ignoring case and surrounding space),
-    they carry the same CVE/GHSA ids, they have the same port, they have the same location
-    (URL path and parameter, if the tool gives one), and they do not carry different ids of the
-    same tool. Findings without a location only merge with findings without a location.
-    Similar but not equal titles are never merged. The same title on different hosts is merged,
-    and so are the instances of one scanner alert. The same title at different locations is not.
+    they carry the same CVE/GHSA ids, they have the same port, they have the same HTTP method
+    and location (URL path and parameter, compared exactly because both are case-sensitive;
+    only if the tool gives them), and they do not carry different ids of the same tool.
+    Findings without a location only merge with findings without a location, and the same holds
+    for the method. Similar but not equal titles are never merged. The same title on different
+    hosts is merged, and so are the instances of one scanner alert. The same title at different
+    locations or with different methods is not.
 
     A merged finding keeps every host and every piece of evidence. Evidence is tagged with the
     tool that reported it. The description, remediation, severity and CVSS data of every
@@ -114,7 +132,7 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     groups: list[list] = []
     by_identity: dict[_Identity, list[int]] = {}
 
-    for f in findings:
+    for f in (with_host_observations(f) for f in findings):
         key = _identity(f)
         target = None
         for idx in by_identity.get(key, ()):
@@ -199,22 +217,35 @@ def _merge_group(originals: list[Finding]) -> Finding:
                 if (match.ip or "unknown").strip().lower() == "unknown" and norm_ip != "unknown":
                     match.ip = host.ip
                 match.os = _merge_os(match.os, host.os)
+        only_host = host_key(f.hosts[0]) if len(f.hosts) == 1 else None
         for ev in f.evidence:
+            # Evidence of a finding with one host belongs to that host. This is what lets
+            # --host drop the evidence of other hosts after a merge.
+            ev_hosts = ev.hosts or ([only_host] if only_host else [])
             known_ev = evidence_index.get((ev.type, ev.data))
             tool = ev.source or f.source_tool
             if known_ev is None:
-                tagged = ev.model_copy(update={"source": tool})
+                tagged = ev.model_copy(update={"source": tool, "hosts": list(ev_hosts)})
                 evidence_index[(ev.type, ev.data)] = tagged
                 base.evidence.append(tagged)
             else:
-                # Same evidence from another tool: keep one copy and list every tool.
+                # Same evidence from another tool or host: keep one copy and list every tool and host.
                 tools_seen = (known_ev.source or "").split(", ")
                 if tool not in tools_seen:
                     known_ev.source = ", ".join([t for t in tools_seen if t] + [tool])
+                if ev_hosts and known_ev.hosts:
+                    known_ev.hosts = list(dict.fromkeys([*known_ev.hosts, *ev_hosts]))
+                elif not ev_hosts:
+                    # One copy cannot be attributed to a host, so the merged copy cannot either.
+                    known_ev.hosts = []
         for ident in f.identifiers:
             if ident not in identifiers:
                 identifiers.append(ident)
     base.identifiers = identifiers
+    unique_obs = {
+        (o.host, o.method, o.location, o.source_tool): o for f in originals for o in f.observations
+    }
+    base.observations = [o.model_copy() for o in unique_obs.values()]
     base.references = list(dict.fromkeys(url for f in originals for url in f.references))
 
     # Summary values: highest severity, highest CVSS score with its own vector.

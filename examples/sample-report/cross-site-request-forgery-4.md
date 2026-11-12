@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/XSS-cookie.php
+**Affected**:
+
+- 10.2.100.1 /demo/XSS-cookie.php
+
 
 
 

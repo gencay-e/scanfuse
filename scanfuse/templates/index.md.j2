@@ -24,7 +24,7 @@ Total Findings: {{ findings|length }}
 
 ## Findings Overview
 {% for finding in findings_sorted %}
-- [{{ finding.severity | md }}] [{{ finding.title | md }}]({{ finding.slug }}.md){% if finding.location %} at {{ finding.location | md }}{% endif %} (Source: {{ finding.source_tool | md }}, {{ finding.hosts | length }} host{{ "" if finding.hosts | length == 1 else "s" }})
+- [{{ finding.severity | md }}] [{{ finding.title | md }}]({{ finding.slug }}.md){% set places = finding.place_labels() %}{% if places | length == 1 %} at {{ places[0] | md }}{% elif places %} at {{ places | length }} locations{% endif %} (Source: {{ finding.source_tool | md }}, {{ finding.hosts | length }} host{{ "" if finding.hosts | length == 1 else "s" }})
 {% endfor %}
 
 ## Affected Hosts

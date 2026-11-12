@@ -99,10 +99,10 @@ def test_old_zap_format_without_name_and_instances_is_understood(tmp_path):
     with_url = [f for f in findings if f.evidence and f.evidence[0].data.startswith("Request:")]
     assert len(with_url) == len(findings), "the affected URL of an old-format alert must be kept as evidence"
     # Every ZAP 1.x alertitem names one URL. The same alert at another path stays a separate finding.
-    assert all(f.location for f in findings)
+    assert all(f.places() for f in findings)
     merged = deduplicate_findings(findings)
     assert len(merged) <= len(findings)
-    assert len({(f.title, f.location) for f in findings}) == len(merged)
+    assert len({(f.title, f.places()) for f in findings}) == len(merged)
 
 
 def test_burp_file_with_a_long_dtd_is_detected_and_keeps_text_cwe_and_links(tmp_path):

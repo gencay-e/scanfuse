@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/OSCommandInjection.php
+**Affected**:
+
+- 10.2.100.1 /demo/OSCommandInjection.php
+
 
 
 

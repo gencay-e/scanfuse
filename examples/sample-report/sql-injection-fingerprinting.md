@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/SQLI2.php \[username parameter\]
+**Affected**:
+
+- 10.2.100.1 /demo/SQLI2.php \[username parameter\]
+
 
 
 

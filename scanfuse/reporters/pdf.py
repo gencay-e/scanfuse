@@ -74,6 +74,11 @@ def export_pdf(
                 new_x="LMARGIN",
                 new_y="NEXT",
             )
+        places = finding.affected()
+        if places:
+            pdf.multi_cell(
+                0, 6, s("Affected:\n" + "\n".join(places)), new_x="LMARGIN", new_y="NEXT"
+            )
         if finding.remediation:
             pdf.multi_cell(
                 0,

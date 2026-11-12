@@ -10,7 +10,10 @@
 
 
 
-**Location**: /demo/DirectoryIndexing/
+**Affected**:
+
+- 10.2.100.1 /demo/DirectoryIndexing/
+
 
 
 
