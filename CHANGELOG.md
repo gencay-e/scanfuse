@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 (2026-11-12)
+
+* README and SECURITY list SARIF and PDF output.
+* Package metadata links the homepage, documentation and issues, and marks the project as stable.
+* `scanfuse --help` shows the exit codes in clean lines.
+
 ## 1.0.1 (2026-11-11)
 
 Documentation and release fixes, no change to how reports are made.
@@ -114,6 +120,6 @@ Not a reference system: one Linux machine in the cloud (Ubuntu glibc 2.39, 4 CPU
 * Standalone programs on other Linux distributions (Debian, Kali, Fedora, Arch, Alpine), Linux on ARM and macOS on Intel.
 * Whether the Windows program starts on a clean Windows 11 machine without developer tools. CI builds and tests it on a Windows runner.
 
-## 0.1.0 (named repx)
+## 0.1.0
 
-First version. Not published.
+First version, then called repx. Not published.

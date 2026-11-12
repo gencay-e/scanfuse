@@ -138,8 +138,10 @@ def parse(
     """
     Parse scan files and extract findings.
 
-    Exit codes: 0 = complete, 1 = incomplete (an input could not be read, or .scanfuse.yaml is
-    invalid) or failed, 2 = invalid options or the output files already exist.
+    Exit codes:
+    0 = complete.
+    1 = incomplete or failed (an input could not be read, or .scanfuse.yaml is invalid).
+    2 = invalid options, or the output files already exist.
     """
     input_format = format.value
     output_format = format_out.value

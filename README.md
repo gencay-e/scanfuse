@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/gencay-e/scanfuse/blob/main/LICENSE)
 [![CI](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml/badge.svg)](https://github.com/gencay-e/scanfuse/actions/workflows/ci.yml)
 
-`scanfuse` parses output from Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus and Trivy, merges duplicate findings across scanners, and writes a single report as Markdown (with an index and a standalone HTML page), JSON or CSV. It runs offline and makes no network calls.
+`scanfuse` parses output from Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus and Trivy, merges duplicate findings across scanners, and writes a single report as Markdown (with an index and a standalone HTML page), JSON, CSV, SARIF or PDF. It runs offline and makes no network calls.
 
 <img alt="Scan files from Nmap, Nuclei, ZAP, Burp, Nessus and Trivy go into scanfuse, which writes index.md, report.html, report.json, report.csv, report.sarif or report.pdf" src="https://raw.githubusercontent.com/gencay-e/scanfuse/main/docs/images/scanfuse-flow.svg" width="900">
 
@@ -18,7 +18,7 @@ Release notes are in [CHANGELOG.md](https://github.com/gencay-e/scanfuse/blob/ma
 
 `report.html` follows the light or dark setting of your system by default. The Theme menu switches between System, Light and Dark and remembers the choice in the browser. The screenshots show the dark theme.
 
-The report above was made from six real scan files (Nmap, ZAP, Trivy, Burp, Nessus). The input files, the
+The report above was made from six real scan files from five tools (Nmap, ZAP, Trivy, Burp, Nessus). The input files, the
 command and the full report are in [examples/](https://github.com/gencay-e/scanfuse/tree/main/examples).
 
 ## Install
@@ -48,6 +48,7 @@ cat scan.json | scanfuse -o report
 
 | Option | Meaning |
 |---|---|
+| `-f`, `--format` | Input format. `auto` (default) detects `nmap`, `nuclei`, `zap`, `burp`, `nessus` and `trivy`. `sarif`, `semgrep`, `grype`, `nikto` and `testssl` are experimental and must be set explicitly. |
 | `-o`, `--output` | Output directory. Default `report`. |
 | `--format-out` | `markdown` (default), `json`, `csv`, `sarif` or `pdf`. `markdown` writes one file per finding, `index.md` and `report.html`. |
 | `-s`, `--min-severity` | `Critical`, `High`, `Medium`, `Low` or `Info`. Case does not matter. |
@@ -74,7 +75,7 @@ scanfuse results.sarif -f sarif -o report
 scanfuse testssl.json -f testssl -o report
 ```
 
-Report a file that is read wrongly as an issue, with a cleaned sample.
+If a file is read wrongly, open an issue with a cleaned sample.
 
 ### Existing reports
 

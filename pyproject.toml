@@ -15,7 +15,7 @@ authors = [
 ]
 keywords = ["pentest", "security", "report", "nmap", "nuclei", "zap", "burp", "nessus", "trivy"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Information Technology",
     "Operating System :: OS Independent",
@@ -37,7 +37,10 @@ dependencies = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/gencay-e/scanfuse"
+Documentation = "https://github.com/gencay-e/scanfuse#readme"
 Repository = "https://github.com/gencay-e/scanfuse"
+Issues = "https://github.com/gencay-e/scanfuse/issues"
 Changelog = "https://github.com/gencay-e/scanfuse/blob/main/CHANGELOG.md"
 
 [project.scripts]
@@ -53,7 +56,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/_project", "/AGENTS.md", "/renovate.json", "/.github", "/.forgejo", "/.hypothesis", "/.venv", "/.pytest_cache", "/.mypy_cache", "/.ruff_cache", "/build", "/dist", "/out", "/report", "/repx", "/tests"]
+exclude = ["/.github", "/.hypothesis", "/.venv", "/.pytest_cache", "/.mypy_cache", "/.ruff_cache", "/build", "/dist", "/out", "/report", "/tests"]
 
 [tool.hatch.version]
 path = "scanfuse/__init__.py"
