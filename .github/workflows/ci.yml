@@ -60,7 +60,7 @@ jobs:
           mkdir "$RUNNER_TEMP/smoke-run"
           cd "$RUNNER_TEMP/smoke-run"
           "$bin/scanfuse" --version
-          "$bin/scanfuse" "$GITHUB_WORKSPACE"/tests/fixtures/dummy_zap.xml "$GITHUB_WORKSPACE"/tests/fixtures/dummy_burp.xml -o report
+          "$bin/scanfuse" "$GITHUB_WORKSPACE"/tests/fixtures/dummy_zap.xml "$GITHUB_WORKSPACE"/tests/fixtures/dummy_burp_view.xml -o report
           test -f report/index.md
           test -f report/report.html
           grep -q "Reported by" report/sql-injection.md
