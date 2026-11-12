@@ -20,6 +20,6 @@ The threat model and trust boundaries are described in [docs/security-model.md](
 ## Known limits
 
 * Descriptions and remediation text keep Markdown, including links. Links are shown as the scanner wrote them.
-* The HTML page and CSV output were checked by reading the files, not by opening them in a browser, Excel or LibreOffice.
+* The HTML page and CSV output were checked by reading the files. The HTML page was not opened by hand in a browser. The CSV import was tested by hand only in Windows Excel; formula and injection handling in Excel and LibreOffice is unverified.
 * Format detection looks at the start of the file.
 * Release programs are not signed. Releases come with a `SHA256SUMS` file.

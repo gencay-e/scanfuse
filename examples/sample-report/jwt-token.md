@@ -7,6 +7,7 @@
 
 
 
+
 **Identifiers**: trivy-rule:jwt-token
 
 

@@ -4,7 +4,15 @@ from pathlib import Path
 
 from fpdf import FPDF
 
+from scanfuse.engine import OutputExistsError
 from scanfuse.models import Finding
+
+
+def _exists_message(target: Path) -> str:
+    return (
+        f"1 file(s) already exist in {target.parent} ({target.name}). "
+        "Use --replace to overwrite them, or choose another output directory."
+    )
 
 
 def export_pdf(
@@ -15,7 +23,7 @@ def export_pdf(
 ) -> list[str]:
     target = output_dir / "report.pdf"
     if target.exists() and not replace:
-        raise FileExistsError(str(target))
+        raise OutputExistsError(_exists_message(target))
     pdf = FPDF()
     font_path = _unicode_font_path()
     if font_path:
@@ -122,7 +130,7 @@ def export_pdf(
     try:
         pdf.output(temporary)
         if target.exists() and not replace:
-            raise FileExistsError(str(target))
+            raise OutputExistsError(_exists_message(target))
         os.replace(temporary, target)
     except Exception:
         try:

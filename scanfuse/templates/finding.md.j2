@@ -11,6 +11,10 @@
 
 **Port**: {{ finding.port | md }}
 {% endif %}
+{% if finding.location %}
+
+**Location**: {{ finding.location | md }}
+{% endif %}
 {% if finding.identifiers %}
 
 **Identifiers**: {% for ident in finding.identifiers %}{{ ident | md }}{% if not loop.last %}, {% endif %}{% endfor %}

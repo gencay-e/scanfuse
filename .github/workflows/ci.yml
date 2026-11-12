@@ -189,6 +189,7 @@ jobs:
           awk -v v="$version" 'index($0, "## " v " ") == 1 {f=1; next} /^## / {if (f) exit} f' CHANGELOG.md > release-notes.md
           cat release-notes.md
           if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then test -s release-notes.md; fi
+          printf '\n### Install\n\n```bash\npipx install scanfuse==%s\n```\n\nStandalone programs for Linux, Windows and macOS are attached below. Check them against `SHA256SUMS`.\n' "$version" >> release-notes.md
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: artifacts

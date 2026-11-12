@@ -1,8 +1,10 @@
+import os
+import re
 from unittest.mock import patch
 
 import pytest
 
-from scanfuse.engine import ScanfuseEngine
+from scanfuse.engine import OutputExistsError, ScanfuseEngine
 from scanfuse.models import Evidence, Finding, Host
 
 
@@ -51,7 +53,7 @@ def test_pdf_export_replace_guard(tmp_path):
     )
     engine = ScanfuseEngine(str(tmp_path))
     engine.export_pdf([finding])
-    with pytest.raises(FileExistsError):
+    with pytest.raises(OutputExistsError):
         engine.export_pdf([finding], replace=False)
     # With replace=True it succeeds
     engine.export_pdf([finding], replace=True)
@@ -68,3 +70,33 @@ def test_pdf_export_helvetica_fallback_without_unicode_font(tmp_path):
         ScanfuseEngine(str(tmp_path)).export_pdf([finding], replace=True)
     content = (tmp_path / "report.pdf").read_bytes()
     assert content.startswith(b"%PDF")
+
+
+def test_pdf_cli_exits_with_2_when_report_exists_and_0_with_replace(tmp_path):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+
+    source = os.path.join(os.path.dirname(__file__), "fixtures", "dummy_nmap_clean.xml")
+    out = str(tmp_path / "out")
+    runner = CliRunner()
+    first = runner.invoke(app, [source, "-o", out, "--format-out", "pdf"])
+    assert first.exit_code == 0, first.stdout
+    second = runner.invoke(app, [source, "-o", out, "--format-out", "pdf"])
+    assert second.exit_code == 2, second.stdout
+    assert "--replace" in second.stdout
+    third = runner.invoke(app, [source, "-o", out, "--format-out", "pdf", "--replace"])
+    assert third.exit_code == 0, third.stdout
+
+
+def test_a_finding_with_long_evidence_continues_on_further_pages(tmp_path):
+    findings = [
+        Finding(title=f"Finding {i}", severity="Low", description="d", source_tool="t",
+                evidence=[Evidence(type="log", data="\n".join(f"line {n}" for n in range(400)))] if i == 0 else [])
+        for i in range(2)
+    ]
+    ScanfuseEngine(str(tmp_path)).export_pdf(findings)
+    # fpdf2 writes one uncompressed "/Type /Page" object per page, so no PDF reader is needed.
+    data = (tmp_path / "report.pdf").read_bytes()
+    pages = len(re.findall(rb"/Type\s*/Page(?![a-z])", data))
+    assert pages > len(findings) + 1

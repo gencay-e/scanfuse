@@ -186,8 +186,8 @@ def test_partial_failure_is_marked_in_every_format(tmp_path):
 
     with (tmp_path / "out-csv" / "report.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.reader(stream))
-    assert rows[0][-1] == "Import Status"
-    assert rows[1][-1].startswith("incomplete")
+    assert rows[0][-2:] == ["Import Status", "Location"]
+    assert rows[1][-2].startswith("incomplete")
 
     index = (tmp_path / "out-markdown" / "index.md").read_text(encoding="utf-8")
     assert "INCOMPLETE" in index
@@ -397,13 +397,13 @@ def test_csv_keeps_the_first_eight_columns_of_version_0_1(tmp_path):
 
 def test_exports_show_what_each_tool_reported(tmp_path):
     result = runner.invoke(app, [os.path.join(FIXTURES, "dummy_zap.xml"),
-                                 os.path.join(FIXTURES, "dummy_burp.xml"), "-o", "out"])
+                                 os.path.join(FIXTURES, "dummy_burp_view.xml"), "-o", "out"])
     assert result.exit_code == 0, result.stdout
     text = (tmp_path / "out" / "sql-injection.md").read_text(encoding="utf-8")
     assert "## Reported by" in text
     assert "Use prepared statements." in text
     jsn = runner.invoke(app, [os.path.join(FIXTURES, "dummy_zap.xml"),
-                              os.path.join(FIXTURES, "dummy_burp.xml"), "-o", "outj",
+                              os.path.join(FIXTURES, "dummy_burp_view.xml"), "-o", "outj",
                               "--format-out", "json"])
     assert jsn.exit_code == 0
     findings = json.loads((tmp_path / "outj" / "report.json").read_text(encoding="utf-8"))["findings"]
@@ -428,3 +428,65 @@ def test_a_list_in_scanner_text_stays_a_list(tmp_path):
     ScanfuseEngine(str(tmp_path / "out")).export_findings([finding])
     html_text = (tmp_path / "out" / "report.html").read_text(encoding="utf-8")
     assert html_text.count("<li>the victim") == 2
+
+
+def test_replace_keeps_a_file_that_a_tampered_manifest_names(tmp_path):
+    out = tmp_path / "out"
+    engine = ScanfuseEngine(str(out))
+    findings = [Finding(title="One", severity="High", description="d", source_tool="t")]
+    engine.export_json(findings)
+    (out / "important.txt").write_text("keep me", encoding="utf-8")
+    manifest = out / ".scanfuse-manifest-json.json"
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    assert set(data["sha256"]) == set(data["files"])
+    data["files"].append("important.txt")
+    manifest.write_text(json.dumps(data), encoding="utf-8")
+    engine.export_json(findings, replace=True)
+    assert (out / "important.txt").read_text(encoding="utf-8") == "keep me"
+
+
+def test_replace_keeps_a_stale_file_changed_after_the_export(tmp_path):
+    out = tmp_path / "out"
+    engine = ScanfuseEngine(str(out))
+    engine.export_findings([Finding(title="One", severity="High", description="d", source_tool="t")])
+    engine.export_findings([Finding(title="Two", severity="High", description="d", source_tool="t")],
+                           replace=True)
+    assert not (out / "one.md").exists(), "unchanged stale file is removed"
+    (out / "two.md").write_text("edited by hand", encoding="utf-8")
+    engine.export_findings([Finding(title="Three", severity="High", description="d", source_tool="t")],
+                           replace=True)
+    assert (out / "two.md").read_text(encoding="utf-8") == "edited by hand"
+    assert not (out / "one.md").exists()
+
+
+def test_replace_does_not_delete_files_of_an_old_manifest_without_digests(tmp_path):
+    out = tmp_path / "out"
+    engine = ScanfuseEngine(str(out))
+    engine.export_findings([Finding(title="One", severity="High", description="d", source_tool="t")])
+    manifest = out / ".scanfuse-manifest-markdown.json"
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    manifest.write_text(json.dumps({"files": data["files"]}), encoding="utf-8")
+    engine.export_findings([Finding(title="Two", severity="High", description="d", source_tool="t")],
+                           replace=True)
+    assert (out / "one.md").exists()
+
+
+def test_location_is_in_index_html_search_and_csv(tmp_path):
+    findings = [
+        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap", location="/demo/a_b.php"),
+        Finding(title="CSRF", severity="Medium", description="d", source_tool="zap", location="/other.php"),
+        Finding(title="No place", severity="Low", description="d", source_tool="zap"),
+    ]
+    engine = ScanfuseEngine(str(tmp_path / "out"))
+    engine.export_findings(findings)
+    index = (tmp_path / "out" / "index.md").read_text(encoding="utf-8")
+    assert "(csrf.md) at /demo/a\\_b.php (Source" in index
+    assert "(no-place.md) (Source" in index
+    page = (tmp_path / "out" / "report.html").read_text(encoding="utf-8")
+    assert 'data-title="csrf /other.php"' in page
+    assert "Search by title or location..." in page
+    engine.export_csv(findings, excel=True)
+    with (tmp_path / "out" / "report.csv").open(newline="", encoding="utf-8-sig") as stream:
+        rows = list(csv.reader(stream, delimiter=";"))
+    assert rows[0][-1] == "Location"
+    assert [r[-1] for r in rows[1:]] == ["/demo/a_b.php", "/other.php", ""]

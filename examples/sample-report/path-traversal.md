@@ -10,6 +10,10 @@
 
 
 
+**Location**: /demo/PathTraversal.php \[action parameter\]
+
+
+
 **Identifiers**: zap-plugin:6
 
 

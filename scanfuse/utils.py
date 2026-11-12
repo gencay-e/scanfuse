@@ -57,8 +57,12 @@ def _nonlocal_ids(f: Finding) -> frozenset[str]:
     return frozenset(i.casefold() for i in f.identifiers if ":" not in i)
 
 
-def _identity(f: Finding) -> tuple[str, frozenset[str], frozenset[str], str | None]:
-    return (f.title.strip().casefold(), _global_ids(f), _nonlocal_ids(f), f.port)
+_Identity = tuple[str, frozenset[str], frozenset[str], str | None, str | None]
+
+
+def _identity(f: Finding) -> _Identity:
+    location = (f.location or "").strip().casefold() or None
+    return (f.title.strip().casefold(), _global_ids(f), _nonlocal_ids(f), f.port, location)
 
 
 def _compatible(
@@ -95,8 +99,11 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     Merge findings that are the same finding reported more than once.
 
     Two findings are the same if their titles are equal (ignoring case and surrounding space),
-    they carry the same CVE/GHSA ids, they have the same port, and they do not carry different
-    ids of the same tool. Similar but not equal titles are never merged.
+    they carry the same CVE/GHSA ids, they have the same port, they have the same location
+    (URL path and parameter, if the tool gives one), and they do not carry different ids of the
+    same tool. Findings without a location only merge with findings without a location.
+    Similar but not equal titles are never merged. The same title on different hosts is merged,
+    and so are the instances of one scanner alert. The same title at different locations is not.
 
     A merged finding keeps every host and every piece of evidence. Evidence is tagged with the
     tool that reported it. The description, remediation, severity and CVSS data of every
@@ -105,7 +112,7 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     """
     # Each group: [merged finding, tool ids, originals]
     groups: list[list] = []
-    by_identity: dict[tuple[str, frozenset[str], frozenset[str], str | None], list[int]] = {}
+    by_identity: dict[_Identity, list[int]] = {}
 
     for f in findings:
         key = _identity(f)

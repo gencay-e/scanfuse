@@ -6,14 +6,14 @@ Complete. All inputs were read.
 
 
 ## Executive Summary
-Total Findings: 39
+Total Findings: 49
 
 ### Risk Matrix
 | Severity | Count |
 |----------|-------|
 | Critical | 1 |
-| High     | 13 |
-| Medium   | 25 |
+| High     | 16 |
+| Medium   | 32 |
 | Low      | 0 |
 | Info     | 0 |
 
@@ -21,9 +21,9 @@ Total Findings: 39
 
 - [Critical] [moby: Authz zero length regression](moby-authz-zero-length-regression.md) (Source: trivy, 1 host)
 
-- [High] [\[SSL Scanner\] Offer SSLv3](ssl-scanner-offer-sslv3.md) (Source: burp, 1 host)
+- [High] [\[SSL Scanner\] Offer SSLv3](ssl-scanner-offer-sslv3.md) at / (Source: burp, 1 host)
 
-- [High] [\[SSL Scanner\] POODLE (SSLv3)](ssl-scanner-poodle-sslv3.md) (Source: burp, 1 host)
+- [High] [\[SSL Scanner\] POODLE (SSLv3)](ssl-scanner-poodle-sslv3.md) at / (Source: burp, 1 host)
 
 - [High] [Asymmetric Private Key](asymmetric-private-key.md) (Source: trivy, 1 host)
 
@@ -33,21 +33,27 @@ Total Findings: 39
 
 - [High] [Cilium leaks sensitive information in cilium-bugtool](cilium-leaks-sensitive-information-in-cilium-bugtool.md) (Source: trivy, 1 host)
 
-- [High] [Cross Site Scripting](cross-site-scripting.md) (Source: zap, 1 host)
+- [High] [Cross Site Scripting](cross-site-scripting.md) at /demo/EvalInjection2.php \[command parameter\] (Source: zap, 1 host)
 
-- [High] [External service interaction (DNS)](external-service-interaction-dns.md) (Source: burp, 1 host)
+- [High] [Cross Site Scripting](cross-site-scripting-1.md) at /demo/XSS-reflected2.php \[username parameter\] (Source: zap, 1 host)
+
+- [High] [Cross Site Scripting](cross-site-scripting-2.md) at /demo/XPathInjection2.php \[username parameter\] (Source: zap, 1 host)
+
+- [High] [Cross Site Scripting](cross-site-scripting-3.md) at /demo/XPathInjection2.php \[password parameter\] (Source: zap, 1 host)
+
+- [High] [External service interaction (DNS)](external-service-interaction-dns.md) at / (Source: burp, 1 host)
 
 - [High] [Intermittent HTTP policy bypass](intermittent-http-policy-bypass.md) (Source: trivy, 1 host)
 
 - [High] [Kyverno's PolicyException objects can be created in any namespace by default](kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default.md) (Source: trivy, 1 host)
 
-- [High] [Path Traversal](path-traversal.md) (Source: zap, 1 host)
+- [High] [Path Traversal](path-traversal.md) at /demo/PathTraversal.php \[action parameter\] (Source: zap, 1 host)
 
-- [High] [SQL Injection](sql-injection.md) (Source: zap, 1 host)
+- [High] [SQL Injection](sql-injection.md) at /demo/SQLI2.php \[username parameter\] (Source: zap, 1 host)
 
-- [High] [SQL Injection Fingerprinting](sql-injection-fingerprinting.md) (Source: zap, 1 host)
+- [High] [SQL Injection Fingerprinting](sql-injection-fingerprinting.md) at /demo/SQLI2.php \[username parameter\] (Source: zap, 1 host)
 
-- [Medium] [\[SSL Scanner\] BREACH](ssl-scanner-breach.md) (Source: burp, 1 host)
+- [Medium] [\[SSL Scanner\] BREACH](ssl-scanner-breach.md) at / (Source: burp, 1 host)
 
 - [Medium] [Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present](cilium-s-cidr-deny-policies-may-not-take-effect-when-a-more-narrow-cidr-allow-is-present.md) (Source: trivy, 1 host)
 
@@ -55,9 +61,23 @@ Total Findings: 39
 
 - [Medium] [cosign: Malicious attachments can cause system-wide denial of service](cosign-malicious-attachments-can-cause-system-wide-denial-of-service.md) (Source: trivy, 1 host)
 
-- [Medium] [Cross Site Request Forgery](cross-site-request-forgery.md) (Source: zap, 1 host)
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery.md) at /demo/XSS-reflected.php (Source: zap, 1 host)
 
-- [Medium] [Directory browsing](directory-browsing.md) (Source: zap, 1 host)
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-1.md) at /demo/LDAPInjection.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-2.md) at /demo/EvalInjection.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-3.md) at /demo/SQLI.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-4.md) at /demo/XSS-cookie.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-5.md) at /demo/XPathInjection.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-6.md) at /demo/FormatString.php (Source: zap, 1 host)
+
+- [Medium] [Cross Site Request Forgery](cross-site-request-forgery-7.md) at /demo/OSCommandInjection.php (Source: zap, 1 host)
+
+- [Medium] [Directory browsing](directory-browsing.md) at /demo/DirectoryIndexing/ (Source: zap, 1 host)
 
 - [Medium] [go-retryablehttp: url might write sensitive information to log file](go-retryablehttp-url-might-write-sensitive-information-to-log-file.md) (Source: trivy, 1 host)
 
@@ -83,9 +103,9 @@ Total Findings: 39
 
 - [Medium] [SMB Signing Disabled](smb-signing-disabled.md) (Source: nessus, 2 hosts)
 
-- [Medium] [SSL certificate](ssl-certificate.md) (Source: burp, 1 host)
+- [Medium] [SSL certificate](ssl-certificate.md) at / (Source: burp, 1 host)
 
-- [Medium] [Strict Transport Security Misconfiguration](strict-transport-security-misconfiguration.md) (Source: burp, 1 host)
+- [Medium] [Strict Transport Security Misconfiguration](strict-transport-security-misconfiguration.md) at / (Source: burp, 1 host)
 
 - [Medium] [Terminal Services Encryption Level is Medium or Low](terminal-services-encryption-level-is-medium-or-low.md) (Source: nessus, 2 hosts)
 
@@ -107,6 +127,76 @@ Total Findings: 39
     
     
       
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
+    
+  
+
+  
+    
+      
+    
     
   
 

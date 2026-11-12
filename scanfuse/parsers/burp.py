@@ -131,6 +131,7 @@ class BurpParser(BaseParser):
                         description=desc,
                         remediation=remediation if remediation else None,
                         port=port,
+                        location=(location or path) or None,
                         hosts=[host_model],
                         evidence=evidence_list,
                         identifiers=identifiers,

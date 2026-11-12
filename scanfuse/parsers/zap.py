@@ -1,5 +1,6 @@
 import ipaddress
 import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
 
 import defusedxml.ElementTree as defused_et
 
@@ -20,6 +21,17 @@ def _is_ip(value: str) -> bool:
         return True
     except (ValueError, AttributeError):
         return False
+
+
+def _instance_location(elem: ET.Element) -> str | None:
+    """URL path of one alert instance, with the parameter if there is one."""
+    uri = elem.findtext("uri", default="").strip()
+    if not uri:
+        return None
+    parts = urlsplit(uri)
+    location = parts.path or "/"
+    param = html_to_text(elem.findtext("param", default=""))
+    return f"{location} [{param} parameter]" if param else location
 
 
 def _instance_text(elem: ET.Element) -> str:
@@ -92,14 +104,17 @@ class ZapParser(BaseParser):
                         reference_text = alert_elem.findtext("reference", default="")
 
                         evidence_list = []
+                        locations: set[str | None] = set()
                         instances_elem = alert_elem.find("instances")
                         if instances_elem is not None:
                             for inst in instances_elem.findall("instance"):
+                                locations.add(_instance_location(inst))
                                 text = _instance_text(inst)
                                 if text:
                                     evidence_list.append(Evidence(type="http-request", data=text))
                         else:
                             # ZAP 1.x: uri, param and attack are children of the alert itself.
+                            locations.add(_instance_location(alert_elem))
                             text = _instance_text(alert_elem)
                             if text:
                                 evidence_list.append(Evidence(type="http-request", data=text))
@@ -122,6 +137,9 @@ class ZapParser(BaseParser):
                             description=desc,
                             remediation=solution if solution else None,
                             port=port,
+                            # Several instances stay one finding; the location is kept
+                            # only when all of them are at the same place.
+                            location=next(iter(locations)) if len(locations) == 1 else None,
                             hosts=[host_model],
                             evidence=evidence_list,
                             identifiers=identifiers,

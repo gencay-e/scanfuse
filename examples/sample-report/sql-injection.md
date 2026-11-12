@@ -10,6 +10,10 @@
 
 
 
+**Location**: /demo/SQLI2.php \[username parameter\]
+
+
+
 **Identifiers**: zap-plugin:40005
 
 

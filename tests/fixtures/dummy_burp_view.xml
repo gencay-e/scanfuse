@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<issues burpVersion="2024.1">
+    <issue>
+        <serialNumber>12345</serialNumber>
+        <type>8389632</type>
+        <name>SQL injection</name>
+        <host ip="192.168.1.1">http://example.com</host>
+        <path><![CDATA[/view]]></path>
+        <location><![CDATA[/view]]></location>
+        <severity>High</severity>
+        <confidence>Certain</confidence>
+        <issueBackground><![CDATA[SQL injection is a vulnerability.]]></issueBackground>
+        <remediationBackground><![CDATA[Use prepared statements.]]></remediationBackground>
+        <issueDetail><![CDATA[The parameter <b>id</b> is vulnerable.]]></issueDetail>
+        <requestresponse>
+            <request base64="true">R0VUIC92aWV3IA==SFRUUC8xLjENCkhvc3Q6IGV4YW1wbGUuY29tDQoNCg==</request>
+            <response base64="true">SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LUxlbmd0aDogMA0KDQo=</response>
+        </requestresponse>
+    </issue>
+</issues>

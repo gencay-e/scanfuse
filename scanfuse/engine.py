@@ -1,5 +1,6 @@
 import csv
 import fnmatch
+import hashlib
 import html
 import json
 import os
@@ -37,6 +38,24 @@ _MD_SPECIAL = re.compile(r"([\\`*_\[\]])")
 
 class OutputExistsError(Exception):
     """The output directory already contains files that would be overwritten."""
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _matches_digest(path: Path, expected: object) -> bool:
+    """True if `path` is a regular file whose SHA-256 equals `expected`."""
+    if not isinstance(expected, str) or path.is_symlink() or not path.is_file():
+        return False
+    try:
+        return _sha256(path) == expected.lower()
+    except OSError:
+        return False
 
 
 def md_escape(value: object) -> str:
@@ -314,18 +333,28 @@ class ScanfuseEngine:
 
             manifest = self.output_dir / f".scanfuse-manifest-{kind}.json"
             old_names: list[str] = []
+            old_digests: dict[str, Any] = {}
             if manifest.exists():
                 try:
-                    old_names = list(json.loads(manifest.read_text(encoding="utf-8")).get("files", []))
-                except (OSError, ValueError):
+                    old = json.loads(manifest.read_text(encoding="utf-8"))
+                    old_names = list(old.get("files", []))
+                    if isinstance(old.get("sha256"), dict):
+                        old_digests = old["sha256"]
+                except (OSError, ValueError, AttributeError, TypeError):
                     old_names = []
 
             staged_manifest = staging / manifest.name
-            staged_manifest.write_text(json.dumps({"files": sorted(names)}, indent=2), encoding="utf-8")
+            digests = {name: _sha256(staging / name) for name in sorted(names)}
+            staged_manifest.write_text(
+                json.dumps({"files": sorted(names), "sha256": digests}, indent=2), encoding="utf-8"
+            )
+            # A stale file is removed only if it is still the file scanfuse wrote. Entries
+            # without a digest (manifest of scanfuse 1.0.2 or earlier) are left in place.
             stale_names = sorted(
                 name for name in set(old_names) - set(names)
                 if replace and isinstance(name, str) and name
                 and Path(name).name == name and not name.startswith(".")
+                and _matches_digest(self.output_dir / name, old_digests.get(name))
             )
             affected = list(dict.fromkeys([*names, manifest.name, *stale_names]))
             backup = staging / "backup"
@@ -432,7 +461,7 @@ class ScanfuseEngine:
         finding_htmls = []
         for finding, content in zip(findings, rendered):
             html_c = render_report_fragment(content)
-            clean_title = html.escape(finding.title.lower(), quote=True)
+            clean_title = html.escape(f"{finding.title} {finding.location or ''}".strip().lower(), quote=True)
             # Add an id corresponding to the slug for the anchor links
             finding_htmls.append(f'<div id="{finding.slug}" class="finding-block" data-severity="{finding.severity}" data-title="{clean_title}"><hr>\n{html_c}</div>')
 
@@ -470,7 +499,7 @@ hr { margin: 40px 0; border: 0; border-top: 2px solid var(--border); }
         # Inject Filter Bar
         out += """
 <div class="filter-bar">
-  <input type="text" id="searchTitle" placeholder="Search by title..." aria-label="Search by title">
+  <input type="text" id="searchTitle" placeholder="Search by title or location..." aria-label="Search by title or location">
   <select id="filterSeverity" aria-label="Filter by severity">
     <option value="All">All Severities</option>
     <option value="Critical">Critical</option>
@@ -561,7 +590,7 @@ function filterFindings() {
                 # The first eight columns keep the order of scanfuse 0.1. New columns come last.
                 writer.writerow(["Title", "Severity", "CVSS", "Hosts", "Source Tool", "Description",
                                  "Remediation", "Evidence", "CVSS Vector", "Port", "Identifiers",
-                                 "References", "Other Reports", "Import Status"])
+                                 "References", "Other Reports", "Import Status", "Location"])
                 for finding in findings:
                     hosts_str = ", ".join(
                         f"{h.ip} ({h.hostname})" if h.hostname else h.ip for h in finding.hosts
@@ -583,7 +612,7 @@ function filterFindings() {
                         finding.title, finding.severity, cvss_str, hosts_str, finding.source_tool,
                         finding.description, finding.remediation, evidence_str,
                         finding.cvss_vector, finding.port, ", ".join(finding.identifiers),
-                        "\n".join(finding.references), others, status,
+                        "\n".join(finding.references), others, status, finding.location,
                     ]])
             return ["report.csv"]
 

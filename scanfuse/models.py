@@ -46,6 +46,10 @@ class Finding(BaseModel):
     )
     references: list[str] = Field(default_factory=list, description="http(s) links the scanner gives for this finding")
     port: str | None = Field(default=None, description="e.g. '443/tcp'")
+    location: str | None = Field(
+        default=None,
+        description="Affected URL path, with the parameter if the tool names one. None if the tool gives none or several.",
+    )
     sources: list[SourceRecord] = Field(
         default_factory=list,
         description="One record per merged finding. Empty if the finding was not merged.",

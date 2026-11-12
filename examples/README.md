@@ -11,11 +11,11 @@ scanfuse nmap_output_v7.12.xml zaproxy-demo-site_1.4.0.1.xml juice_shop-trivy-re
   -o ../../../examples/sample-report --min-severity Medium
 ```
 
-Result: the six files hold 206 findings. Merging the same finding on several hosts leaves 104, and 39 of them are Medium or higher.
+Result: the six files hold 206 findings. Merging the same finding on several hosts leaves 162, and 49 of them are Medium or higher. (With 1.0.2 the same files gave 104 and 39: ZAP and Burp findings with the same title at different URL paths were merged then.)
 
 * `sample-report/report.html`: one HTML file with search and a severity filter. It needs no network.
 * `sample-report/index.md`: the summary with the risk matrix and the list of findings.
 * `sample-report/*.md`: one page per finding.
 
 The merge in this example is small. It combines the same finding on several hosts. A finding reported by two tools is
-merged when the title, the CVE ids and the port are equal; both descriptions are kept under "Reported by".
+merged when the title, the CVE ids, the port and the location (URL path) are equal; both descriptions are kept under "Reported by".

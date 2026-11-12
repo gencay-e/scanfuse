@@ -130,7 +130,8 @@ def test_unmerged_finding_has_no_sources():
 def test_fixtures_zap_and_burp_sql_injection_keep_both_descriptions(tmp_path):
     engine = ScanfuseEngine(str(tmp_path))
     findings = []
-    for name, fmt in (("dummy_zap.xml", "zap"), ("dummy_burp.xml", "burp")):
+    # dummy_burp_view.xml reports the SQL injection at /view, the path ZAP reports it at.
+    for name, fmt in (("dummy_zap.xml", "zap"), ("dummy_burp_view.xml", "burp")):
         findings += engine.process_file(os.path.join(FIXTURES, name), fmt)
     merged = [f for f in deduplicate_findings(findings) if f.sources]
     assert merged, "expected the SQL injection findings of ZAP and Burp to merge"
@@ -138,3 +139,70 @@ def test_fixtures_zap_and_burp_sql_injection_keep_both_descriptions(tmp_path):
         original = [f for f in findings if f.title.strip().casefold() == m.title.strip().casefold()]
         assert {s.description for s in m.sources} == {f.description for f in original}
         assert {s.remediation for s in m.sources} == {f.remediation for f in original}
+
+
+def test_fixtures_zap_and_burp_sql_injection_at_different_paths_stay_separate(tmp_path):
+    # dummy_zap.xml has it at /view, dummy_burp.xml at /api/login. The old test expected one finding.
+    engine = ScanfuseEngine(str(tmp_path))
+    findings = []
+    for name, fmt in (("dummy_zap.xml", "zap"), ("dummy_burp.xml", "burp")):
+        findings += engine.process_file(os.path.join(FIXTURES, name), fmt)
+    sql = [f for f in deduplicate_findings(findings) if f.title.casefold() == "sql injection"]
+    assert len(sql) == 2
+    assert {f.location for f in sql} == {"/view", "/api/login"}
+
+
+def test_same_title_and_port_on_different_urls_are_two_findings():
+    a = finding(tool="burp", port="443/tcp", location="/login", hosts=[Host(ip="10.0.0.1")])
+    b = finding(tool="burp", port="443/tcp", location="/search", hosts=[Host(ip="10.0.0.1")])
+    assert len(deduplicate_findings([a, b])) == 2
+
+
+def test_different_parameter_on_the_same_path_is_a_separate_finding():
+    a = finding(tool="burp", location="/search [q parameter]")
+    b = finding(tool="burp", location="/search [id parameter]")
+    assert len(deduplicate_findings([a, b])) == 2
+
+
+def test_same_title_port_and_url_from_two_tools_is_one_finding():
+    a = finding(tool="zap", port="443/tcp", location="/login")
+    b = finding(title="sql injection", tool="burp", port="443/tcp", location="/Login ")
+    (merged,) = deduplicate_findings([a, b])
+    assert merged.source_tool == "zap, burp"
+    assert merged.location == "/login"
+
+
+def test_same_url_on_several_hosts_is_one_finding_with_all_hosts():
+    a = finding(tool="zap", location="/login", hosts=[Host(ip="10.0.0.1")])
+    b = finding(tool="zap", location="/login", hosts=[Host(ip="10.0.0.2")])
+    (merged,) = deduplicate_findings([a, b])
+    assert {h.ip for h in merged.hosts} == {"10.0.0.1", "10.0.0.2"}
+
+
+def test_findings_without_location_still_merge_as_before():
+    a = finding(tool="nuclei", hosts=[Host(ip="10.0.0.1")])
+    b = finding(tool="nuclei", hosts=[Host(ip="10.0.0.2")])
+    assert len(deduplicate_findings([a, b])) == 1
+
+
+def test_zap_alert_with_several_instances_stays_one_finding(tmp_path):
+    xml = """<?xml version="1.0"?>
+<OWASPZAPReport><site host="10.0.0.5" port="80"><alerts>
+<alertitem><pluginid>1</pluginid><name>XSS</name><riskcode>3</riskcode><desc>d</desc><instances>
+<instance><uri>http://10.0.0.5/a</uri><method>GET</method></instance>
+<instance><uri>http://10.0.0.5/b</uri><method>GET</method></instance>
+</instances></alertitem></alerts></site></OWASPZAPReport>"""
+    path = tmp_path / "zap.xml"
+    path.write_text(xml, encoding="utf-8")
+    findings = ScanfuseEngine(str(tmp_path)).process_file(str(path), "zap")
+    assert len(deduplicate_findings(findings)) == 1
+    assert len(findings[0].evidence) == 2
+    assert findings[0].location is None
+
+
+def test_zap_and_burp_parsers_fill_location():
+    engine = ScanfuseEngine("unused")
+    zap = engine.process_file(os.path.join(FIXTURES, "dummy_zap.xml"), "zap")
+    burp = engine.process_file(os.path.join(FIXTURES, "dummy_burp.xml"), "burp")
+    assert {f.location for f in zap if f.title == "SQL Injection"} == {"/view"}
+    assert burp[0].location == "/api/login"

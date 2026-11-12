@@ -10,6 +10,10 @@
 
 
 
+**Location**: /
+
+
+
 **Identifiers**: burp-type:16777472, CWE-295, CWE-326, CWE-327
 
 

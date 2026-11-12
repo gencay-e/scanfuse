@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3 (2026-11-13)
+
+* Merge rule: findings with the same title and port at different locations (URL path and parameter) are no longer merged. ZAP and Burp fill the new `location` field; the same title at the same location, on several hosts or from several tools, is still one finding. Findings without a location merge as before. `location` is shown in the Markdown and in the JSON. A report can now contain more findings than with 1.0.2, because the same ZAP or Burp title at different paths used to be one finding and is now several. The example report grew from 104 to 162 findings (39 to 49 at Medium or higher).
+* The location is visible: the index and the HTML overview list it after the title, the HTML search matches it, and the CSV has a new last column `Location`. SARIF is unchanged.
+* `--format-out pdf` now exits with code 2, not 1, when `report.pdf` exists and `--replace` is not given.
+* `--replace` removes a stale file listed in the manifest only if its SHA-256 matches the digest stored in the manifest. Manifests now contain the digests. Entries of older manifests have none and are never removed.
+* README and SECURITY: the Excel notes no longer contradict each other. The import observations are manual tests in Windows Excel; formula handling in Excel and LibreOffice and opening the HTML page in a browser are unverified.
+* README: each finding starts on a new page in the PDF; long findings continue on further pages.
+
 ## 1.0.2 (2026-11-12)
 
 * README and SECURITY list SARIF and PDF output.

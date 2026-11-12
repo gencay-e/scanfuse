@@ -79,7 +79,7 @@ If a file is read wrongly, open an issue with a cleaned sample.
 
 ### Existing reports
 
-`scanfuse` never overwrites files by accident. If the output directory already contains a file that the new report would write, it stops with exit code 2 and changes nothing. Add `--replace` to overwrite the report. With `--replace`, files of the earlier report that are no longer part of it are removed. Files that scanfuse did not write are left alone.
+`scanfuse` never overwrites files by accident. If the output directory already contains a file that the new report would write, it stops with exit code 2 and changes nothing. Add `--replace` to overwrite the report. With `--replace`, files of the earlier report that are no longer part of it are removed, but only if they still have the SHA-256 that scanfuse recorded when it wrote them. Changed files, files that scanfuse did not write and files listed in a manifest from scanfuse 1.0.2 or earlier (no digests) are left alone.
 
 The report is built in a temporary folder first. If moving the files fails, scanfuse tries to restore the old report. If restoration also fails, the error gives the location of the retained backup. A process or system crash during replacement can still leave a mixed report.
 
@@ -99,7 +99,7 @@ An invalid `.scanfuse.yaml` counts as an error too. The report is then incomplet
 |---|---|
 | 0 | Complete. |
 | 1 | Incomplete or failed: an input could not be read, `.scanfuse.yaml` is invalid, nothing could be written, or no input was given. |
-| 2 | Invalid option, or the output files already exist (use `--replace`). |
+| 2 | Invalid option, or the output files already exist (use `--replace`). This also applies to PDF output. |
 
 ## Merging duplicates
 
@@ -107,10 +107,13 @@ Findings from several files are merged when they are the same finding:
 
 * the titles are equal, ignoring case and surrounding spaces,
 * they carry the same CVE or GHSA ids,
-* they have the same port, and
+* they have the same port,
+* they have the same location, and
 * the same tool does not give them different tool ids (for example two Nessus plugin ids).
 
-Titles that are only similar are not merged. A merged finding keeps all hosts and all evidence. Evidence shows which tool reported it. What each tool wrote (description, remediation, severity, CVSS score and vector, ids) is listed under **Reported by** in the Markdown and in `sources` in the JSON. The summary severity is the highest of all reports. The summary CVSS score is the highest score, together with its own vector. If the tools give CVSS vectors with different base metrics, `cvss_merge_conflict` is `true` in the JSON.
+The location is the URL path of the affected page, with the parameter if the tool names one. ZAP and Burp give it; the other tools do not, so for them it is empty. A finding without a location is only merged with findings without a location. The same title at two different paths (for example "SQL Injection" at `/login` and at `/search`) stays two findings. ZAP and Burp reports of the same title at the same path are one finding. The same finding on several hosts, and the instances of one ZAP alert, are merged into one finding that lists every host and every piece of evidence. If a ZAP alert has instances at several paths, it has no location and is merged by title, ids and port.
+
+Titles that are only similar are not merged. A merged finding keeps all hosts and all evidence, so each finding lists all affected hosts; the location is shown in the Markdown and as `location` in the JSON. Evidence shows which tool reported it. What each tool wrote (description, remediation, severity, CVSS score and vector, ids) is listed under **Reported by** in the Markdown and in `sources` in the JSON. The summary severity is the highest of all reports. The summary CVSS score is the highest score, together with its own vector. If the tools give CVSS vectors with different base metrics, `cvss_merge_conflict` is `true` in the JSON.
 
 ## Output
 
@@ -129,11 +132,11 @@ Titles that are only similar are not merged. A merged finding keeps all hosts an
 
 ### CSV
 
-Columns: `Title`, `Severity`, `CVSS`, `Hosts`, `Source Tool`, `Description`, `Remediation`, `Evidence`, `CVSS Vector`, `Port`, `Identifiers`, `References`, `Other Reports`, `Import Status`. `Hosts` shows `ip (host name)` when a host name is known.
+Columns: `Title`, `Severity`, `CVSS`, `Hosts`, `Source Tool`, `Description`, `Remediation`, `Evidence`, `CVSS Vector`, `Port`, `Identifiers`, `References`, `Other Reports`, `Import Status`, `Location`. `Hosts` shows `ip (host name)` when a host name is known.
 
 Cells that start with `=`, `+`, `-` or `@` get a leading `'` to reduce the risk of spreadsheet formulas. This also covers look-alike characters such as a full-width `＝` and a leading no-break space. These cases were tested by reading the files back.
 
-In Excel, import `--csv-excel` output with **Data > From Text/CSV** and use the semicolon delimiter. Disable automatic data type detection and check the imported values before using them: in one Excel test, automatic detection changed the host `192.0.2.1` to `192021`. Disabling detection can leave numeric values as text. In an earlier Windows Excel test, this import preserved a multiline evidence field; the older Text Import Wizard split it across rows. Formula handling and LibreOffice remain unverified in those applications.
+In Excel, import `--csv-excel` output with **Data > From Text/CSV** and use the semicolon delimiter. Disable automatic data type detection and check the imported values before using them: in one Excel test, automatic detection changed the host `192.0.2.1` to `192021`. Disabling detection can leave numeric values as text. In an earlier Windows Excel test, this import preserved a multiline evidence field; the older Text Import Wizard split it across rows. These import observations come from manual tests in Windows Excel. How Excel and LibreOffice treat formulas and the `'` prefix is unverified.
 
 ### SARIF
 
@@ -141,7 +144,7 @@ In Excel, import `--csv-excel` output with **Data > From Text/CSV** and use the 
 
 ### PDF
 
-`--format-out pdf` writes `report.pdf` with a summary page and one page per finding. It uses a Unicode font of the system (Arial or Segoe UI on Windows, DejaVu, FreeSans or Liberation on Linux, Arial on macOS). Without one, characters outside Latin-1 are replaced by `?`. The PDF is slow for large scans: 5,000 findings took 40 seconds and made a 3.6 MB file. Use Markdown, JSON or CSV for very large reports.
+`--format-out pdf` writes `report.pdf` with a summary page. Each finding starts on a new page, and long findings continue on further pages. It uses a Unicode font of the system (Arial or Segoe UI on Windows, DejaVu, FreeSans or Liberation on Linux, Arial on macOS). Without one, characters outside Latin-1 are replaced by `?`. The PDF is slow for large scans: 5,000 findings took 40 seconds and made a 3.6 MB file. Use Markdown, JSON or CSV for very large reports.
 
 ### Scanner text in the report
 
@@ -212,7 +215,7 @@ uv run pytest tests/
 * scanfuse was tested with real output from nmap (7.94, 7.12, 6.40), ZAP 1.4, Burp, Nessus and Trivy (three file layouts), taken from the public [DefectDojo sample-scan-files](https://github.com/DefectDojo/sample-scan-files). Those files are old. Newer versions of the tools may add fields that scanfuse does not read yet. Nuclei has no real sample file in the tests. Open an issue with a cleaned sample if a file fails.
 * Format detection looks at the start of the file and only knows the six stable formats. Use `-f` if it guesses wrong.
 * The experimental formats (SARIF, Semgrep, Grype, Nikto, testssl.sh) have no real scan files in the tests yet.
-* The HTML page and the CSV file were checked by reading the files. They were not opened by hand in a browser, Excel or LibreOffice.
+* The HTML page and the CSV file were checked by reading the files. The HTML page was not opened by hand in a browser. The CSV import was tested by hand only in Windows Excel (see CSV above); formula and injection handling in Excel and LibreOffice is unverified.
 * 100,000 results were processed completely in all three output formats on one Linux machine (4 CPUs, 16 GB). JSON took 14 seconds, CSV 10 seconds, Markdown with HTML 124 seconds, and the peak memory was between 0.7 and 1.0 GB. The HTML page for that many findings is large. You can repeat the check with `python tools/large_check.py 100000`.
 * Standalone programs are built and tested in CI on Ubuntu 22.04 (x86_64), Windows (x86_64) and macOS (arm64). Other Linux distributions, Linux on ARM and macOS on Intel were not tested.
 
