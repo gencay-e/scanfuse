@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids
+from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, cwe_ids_from_text
 
 
 class TestsslParser(BaseParser):
@@ -16,8 +16,10 @@ class TestsslParser(BaseParser):
         if isinstance(data, list):
             items: list[Any] = data
         elif isinstance(data, dict):
-            raw_items = data.get("scanResult", data.get("results", data.get("findResults", [])))
-            items = raw_items if isinstance(raw_items, list) else []
+            raw_items = data.get("scanResult", data.get("results", data.get("findResults")))
+            items = raw_items if isinstance(raw_items, list) else ([data] if any(
+                key in data for key in ("id", "finding", "severity", "severityLevel")
+            ) else [])
         else:
             items = []
 
@@ -60,6 +62,9 @@ class TestsslParser(BaseParser):
                 ip = parts[1]
 
             port_val = item.get("port")
+            port_proto = None
+            if isinstance(port_val, str) and "/" in port_val:
+                port_val, port_proto = port_val.split("/", 1)
             try:
                 port = int(port_val) if port_val is not None else None
             except (TypeError, ValueError):
@@ -67,7 +72,7 @@ class TestsslParser(BaseParser):
 
             cve_val = item.get("cve")
             cwe_val = item.get("cwe")
-            identifiers = clean_ids(id_, cve_val, cwe_val)
+            identifiers = clean_ids(id_, cve_ids(cve_val), cwe_ids_from_text(cwe_val))
 
             findings.append(Finding(
                 title=title,
@@ -77,7 +82,9 @@ class TestsslParser(BaseParser):
                 evidence=[Evidence(type="tls", data=json.dumps(item))],
                 source_tool="testssl.sh",
                 identifiers=identifiers,
-                port=str(port) if port is not None else None,
+                port=f"{port}/{port_proto}" if port is not None and port_proto else (
+                    str(port) if port is not None else None
+                ),
             ))
         return findings
 

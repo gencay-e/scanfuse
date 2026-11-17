@@ -1,0 +1,84 @@
+{
+  "matches": [
+    {
+      "vulnerability": {
+        "id": "CVE-2019-13115",
+        "severity": "Medium",
+        "links": [
+          "https://security-tracker.debian.org/tracker/CVE-2019-13115"
+        ],
+        "cvssV2": {
+          "baseScore": 5.8,
+          "vector": "AV:N/AC:M/Au:N/C:P/I:N/A:P"
+        }
+      },
+      "matchDetails": {
+        "matcher": "dpkg-matcher",
+        "searchKey": {
+          "distro": {
+            "type": "debian",
+            "version": "10"
+          }
+        },
+        "matchedOn": {
+          "constraint": "none (deb)"
+        }
+      },
+      "artifact": {
+        "name": "libssh2-1",
+        "version": "1.8.0-2.1",
+        "type": "deb",
+        "locations": [
+          {
+            "path": "/var/lib/dpkg/status",
+            "layerID": "sha256:4cbb728cd30213f3443cb8669a82813818f51410c0f1977184973ab29a085acf"
+          },
+          {
+            "path": "/var/lib/dpkg/info/libssh2-1:amd64.md5sums",
+            "layerID": "sha256:4cbb728cd30213f3443cb8669a82813818f51410c0f1977184973ab29a085acf"
+          },
+          {
+            "path": "/usr/share/doc/libssh2-1/copyright",
+            "layerID": "sha256:4cbb728cd30213f3443cb8669a82813818f51410c0f1977184973ab29a085acf"
+          }
+        ],
+        "language": "",
+        "licenses": [
+          "BSD3"
+        ],
+        "cpes": [
+          {
+            "Part": "a",
+            "Vendor": "libssh2-1",
+            "Product": "libssh2-1",
+            "Version": "1.8.0-2.1",
+            "Update": "",
+            "Edition": "",
+            "SWEdition": "",
+            "TargetSW": "",
+            "TargetHW": "",
+            "Other": "",
+            "Language": ""
+          },
+          {
+            "Part": "a",
+            "Vendor": "",
+            "Product": "libssh2-1",
+            "Version": "1.8.0-2.1",
+            "Update": "",
+            "Edition": "",
+            "SWEdition": "",
+            "TargetSW": "",
+            "TargetHW": "",
+            "Other": "",
+            "Language": ""
+          }
+        ],
+        "purl": "pkg:deb/debian/libssh2-1@1.8.0-2.1?arch=amd64"
+      }
+    }
+  ],
+  "source": {
+    "name": "example-image"
+  }
+}

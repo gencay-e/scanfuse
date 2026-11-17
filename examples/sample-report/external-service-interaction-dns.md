@@ -1,5 +1,7 @@
 # External service interaction (DNS)
 
+
+
 **Severity**: High
 
 
@@ -63,7 +65,7 @@ If the ability to trigger arbitrary external service interactions is not intende
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

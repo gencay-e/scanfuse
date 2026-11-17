@@ -107,7 +107,7 @@ def test_markdown_html_csv_and_json_show_host_method_and_all_places(tmp_path):
     engine.export_csv(findings)
     with (tmp_path / "report.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.reader(stream))
-    assert [r[-1] for r in rows[1:]] == ["10.0.0.1 POST /login", "10.0.0.1 GET /search [q parameter]",
+    assert [r[rows[0].index("Affected")] for r in rows[1:]] == ["10.0.0.1 POST /login", "10.0.0.1 GET /search [q parameter]",
                                          "10.0.0.1 GET /a\n10.0.0.1 POST /b [q parameter]"]
     engine.export_json(findings)
     data = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["findings"]

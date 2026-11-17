@@ -1,5 +1,7 @@
 # Microsoft Windows Remote Desktop Protocol Server Man-in-the-Middle Weakness
 
+
+
 **Severity**: Medium
 
 

@@ -1,5 +1,7 @@
 # Intermittent HTTP policy bypass
 
+
+
 **Severity**: High
 
 

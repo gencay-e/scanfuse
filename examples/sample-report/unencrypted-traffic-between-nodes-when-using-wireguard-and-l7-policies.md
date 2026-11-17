@@ -1,5 +1,7 @@
 # Unencrypted traffic between nodes when using WireGuard and L7 policies
 
+
+
 **Severity**: Medium
 
 

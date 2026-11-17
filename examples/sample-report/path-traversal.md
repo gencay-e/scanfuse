@@ -1,5 +1,7 @@
 # Path Traversal
 
+
+
 **Severity**: High
 
 
@@ -12,7 +14,7 @@
 
 **Affected**:
 
-- 10.2.100.1 /demo/PathTraversal.php \[action parameter\]
+- 10.2.100.1 /demo/PathTraversal.php?action=%5cWindows%5csystem.ini \[action parameter\]
 
 
 

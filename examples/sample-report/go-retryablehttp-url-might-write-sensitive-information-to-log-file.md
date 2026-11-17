@@ -1,5 +1,7 @@
 # go-retryablehttp: url might write sensitive information to log file
 
+
+
 **Severity**: Medium
 
 

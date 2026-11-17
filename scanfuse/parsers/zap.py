@@ -28,9 +28,14 @@ def _instance_location(elem: ET.Element) -> str | None:
     uri = elem.findtext("uri", default="").strip()
     if not uri:
         return None
-    parts = urlsplit(uri)
-    location = parts.path or "/"
-    param = html_to_text(elem.findtext("param", default=""))
+    try:
+        parts = urlsplit(uri)
+        location = parts.path or "/"
+        if parts.query:
+            location += f"?{parts.query}"
+    except ValueError:
+        location = uri
+    param = elem.findtext("param", default="")
     return f"{location} [{param} parameter]" if param else location
 
 
@@ -47,7 +52,7 @@ def _instance_text(elem: ET.Element) -> str:
     if uri or method:
         lines.append(f"Request: {method} {uri}".replace("Request:  ", "Request: ").strip())
     for label, tag in (("Parameter", "param"), ("Attack", "attack"), ("Evidence", "evidence")):
-        value = html_to_text(elem.findtext(tag, default=""))
+        value = elem.findtext(tag, default="")
         if value:
             lines.append(f"{label}: {value}")
     if elem.tag == "instance":

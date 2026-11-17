@@ -23,7 +23,7 @@ def test_nikto_json_host_list():
     assert len(findings) == 2
     assert findings[0].title.startswith("The anti-clickjacking X-Frame-Options header")
     assert findings[0].hosts[0].ip == "192.0.2.10"
-    assert findings[0].port == "80"
+    assert findings[0].port == "80/tcp"
     assert "999986" in findings[0].identifiers
 
 
@@ -31,4 +31,18 @@ def test_nikto_xml_reads_target_from_scandetails():
     finding = NiktoParser().parse(str(FIXTURES / "nikto.xml"))[0]
     assert finding.hosts[0].ip == "192.0.2.10"
     assert finding.hosts[0].hostname == "web.test"
-    assert finding.port == "80"
+    assert finding.port == "80/tcp"
+
+
+def test_absolute_urls_preserve_distinct_queries(tmp_path):
+    from scanfuse.utils import deduplicate_findings
+
+    path = tmp_path / "queries.json"
+    path.write_text(json.dumps({"vulnerabilities": [
+        {"id": "1", "host": "192.0.2.5", "msg": "Same rule", "method": "GET",
+         "url": f"https://example.test/search?{query}"}
+        for query in ("q=one", "q=two")
+    ]}), encoding="utf-8")
+    findings = NiktoParser().parse(str(path))
+    assert {f.observations[0].location for f in findings} == {"/search?q=one", "/search?q=two"}
+    assert len(deduplicate_findings(findings)) == 2

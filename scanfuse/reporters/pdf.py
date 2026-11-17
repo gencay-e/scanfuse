@@ -1,5 +1,6 @@
 import os
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 from fpdf import FPDF
@@ -20,19 +21,29 @@ def export_pdf(
     findings: list[Finding],
     errors: list[dict[str, str]] | None = None,
     replace: bool = False,
+    resolved: list[Finding] | None = None,
 ) -> list[str]:
     target = output_dir / "report.pdf"
     if target.exists() and not replace:
         raise OutputExistsError(_exists_message(target))
-    pdf = FPDF()
     font_path = _unicode_font_path()
     if font_path:
-        pdf.add_font("ReportUnicode", fname=str(font_path))
         font_name = "ReportUnicode"
         is_unicode = True
     else:
         font_name = "helvetica"
         is_unicode = False
+
+    class ReportPDF(FPDF):
+        def footer(self) -> None:
+            self.set_y(-12)
+            self.set_font(font_name, size=8)
+            self.cell(0, 8, s("Page ") + str(self.page_no()) + "/{nb}", align="C")
+
+    pdf = ReportPDF()
+    if font_path:
+        pdf.add_font("ReportUnicode", fname=str(font_path))
+    pdf.alias_nb_pages()
 
     def s(val: object) -> str:
         return _safe(val, is_unicode=is_unicode)
@@ -50,6 +61,28 @@ def export_pdf(
         new_x="LMARGIN",
         new_y="NEXT",
     )
+    counts = Counter(f.severity for f in findings)
+    pdf.set_font(font_name, size=10)
+    pdf.cell(35, 7, s("Severity"), border=1)
+    pdf.cell(35, 7, s("Count"), border=1, new_x="LMARGIN", new_y="NEXT")
+    for severity in ("Critical", "High", "Medium", "Low", "Info"):
+        pdf.cell(35, 7, s(severity), border=1)
+        pdf.cell(35, 7, str(counts.get(severity, 0)), border=1, new_x="LMARGIN", new_y="NEXT")
+    if errors:
+        pdf.ln(3)
+        pdf.set_font(font_name, size=12)
+        pdf.cell(0, 8, s(f"Import errors ({len(errors)})"), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font(font_name, size=9)
+        for error in errors:
+            for key, value in error.items():
+                pdf.multi_cell(0, 5, s(f"{key}: {value}"), new_x="LMARGIN", new_y="NEXT")
+    if resolved:
+        pdf.ln(3)
+        pdf.set_font(font_name, size=11)
+        pdf.multi_cell(0, 7, s(f"Resolved findings: {len(resolved)}"), new_x="LMARGIN", new_y="NEXT")
+        for item in resolved:
+            pdf.multi_cell(0, 5, s(f"- {item.title} ({item.severity})"), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_auto_page_break(auto=True, margin=15)
     for finding in findings:
         pdf.add_page()
         pdf.set_font(font_name, size=16)
@@ -58,7 +91,7 @@ def export_pdf(
         pdf.cell(
             0,
             8,
-            s(f"{finding.severity} | {finding.source_tool}"),
+            s(f"{finding.severity} | {finding.source_tool}" + (f" | Status: {finding.status}" if finding.status else "")),
             new_x="LMARGIN",
             new_y="NEXT",
         )
@@ -70,7 +103,7 @@ def export_pdf(
             pdf.multi_cell(
                 0,
                 6,
-                s("Hosts: " + ", ".join(host.ip for host in finding.hosts)),
+                s("Hosts: " + ", ".join(f"{host.ip}" + (f" ({host.hostname})" if host.hostname else "") for host in finding.hosts)),
                 new_x="LMARGIN",
                 new_y="NEXT",
             )
@@ -119,11 +152,19 @@ def export_pdf(
                 new_x="LMARGIN",
                 new_y="NEXT",
             )
+        if finding.tags:
+            pdf.multi_cell(0, 6, s("Tags: " + ", ".join(finding.tags)), new_x="LMARGIN", new_y="NEXT")
+        for source in finding.sources:
+            pdf.multi_cell(0, 6, s(f"Reported by: {source.source_tool} | {source.title} | {source.severity}"), new_x="LMARGIN", new_y="NEXT")
         for evidence in finding.evidence:
+            max_chars = 12000
+            data = evidence.data
+            if len(data) > max_chars:
+                data = data[:max_chars] + "\n[Evidence shortened; see full text in Markdown/JSON report.]"
             pdf.multi_cell(
                 0,
                 6,
-                s(f"Evidence ({evidence.type}): {evidence.data}"),
+                s(f"Evidence ({evidence.type}): {data}"),
                 new_x="LMARGIN",
                 new_y="NEXT",
             )

@@ -81,17 +81,10 @@ def with_host_observations(f: Finding) -> Finding:
     return f.model_copy(update={"observations": [*f.observations, *extra]})
 
 
-def _compatible(
-    group_ids: dict[str, frozenset[str]], group_tools: set[str], f: Finding
-) -> bool:
+def _compatible(group_ids: dict[str, dict[str, frozenset[str]]], f: Finding) -> bool:
     """Two findings of the same tool with different tool ids are different findings."""
     local_ids = _local_ids(f)
-    if f.source_tool in group_tools and local_ids != group_ids:
-        return False
-    for prefix, values in local_ids.items():
-        if prefix in group_ids and group_ids[prefix] != values:
-            return False
-    return True
+    return f.source_tool not in group_ids or local_ids == group_ids[f.source_tool]
 
 
 def _record(f: Finding) -> SourceRecord:
@@ -128,33 +121,38 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     original finding stay available in `sources`. The input objects are not modified. The order
     follows the first occurrence of each finding.
     """
-    # Each group: [merged finding, tool ids, originals]
-    groups: list[list] = []
-    by_identity: dict[_Identity, list[int]] = {}
+    # Group allocation must not depend on which tool's finding happened to arrive first:
+    # a finding from a second tool can otherwise join either of two same-tool id groups.
+    buckets: dict[_Identity, list[tuple[int, Finding]]] = {}
+    for index, finding in enumerate(findings):
+        f = with_host_observations(finding)
+        buckets.setdefault(_identity(f), []).append((index, f))
 
-    for f in (with_host_observations(f) for f in findings):
-        key = _identity(f)
-        target = None
-        for idx in by_identity.get(key, ()):
-            if _compatible(groups[idx][1], groups[idx][3], f):
-                target = groups[idx]
-                break
-        if target is None:
-            by_identity.setdefault(key, []).append(len(groups))
-            groups.append([f, dict(_local_ids(f)), [f], {f.source_tool}])
-        else:
-            target[2].append(f)
-            target[3].add(f.source_tool)
-            for prefix, values in _local_ids(f).items():
-                target[1].setdefault(prefix, values)
+    groups: list[tuple[int, Finding, list[Finding]]] = []
+    for bucket in buckets.values():
+        ordered = sorted(
+            bucket,
+            key=lambda item: (
+                item[1].source_tool,
+                tuple(sorted((tool, tuple(sorted(ids))) for tool, ids in _local_ids(item[1]).items())),
+            ),
+        )
+        compatible_groups: list[list] = []
+        for index, f in ordered:
+            target = next((group for group in compatible_groups if _compatible(group[2], f)), None)
+            if target is None:
+                compatible_groups.append([index, f, {f.source_tool: _local_ids(f)}, [(index, f)]])
+            else:
+                target[0] = min(target[0], index)
+                target[3].append((index, f))
+                target[2].setdefault(f.source_tool, _local_ids(f))
+        for first_index, _first, _ids, indexed_originals in compatible_groups:
+            originals = [f for _index, f in sorted(indexed_originals, key=lambda item: item[0])]
+            merged = originals[0] if len(originals) == 1 else _merge_group(originals)
+            groups.append((first_index, merged, originals))
 
-    result: list[Finding] = []
-    for first, _ids, originals, _tools in groups:
-        if len(originals) == 1:
-            result.append(first)
-        else:
-            result.append(_merge_group(originals))
-    return result
+    groups.sort(key=lambda group: group[0])
+    return [finding for _index, finding, _originals in groups]
 
 
 def _merge_group(originals: list[Finding]) -> Finding:
@@ -179,7 +177,7 @@ def _merge_group(originals: list[Finding]) -> Finding:
     base.source_tool = ", ".join(tools)
 
     base.hosts = []
-    evidence_index: dict[tuple[str, str], Evidence] = {}
+    evidence_index: dict[tuple[str, str, str | None], Evidence] = {}
     base.evidence = []
     identifiers: list[str] = []
 
@@ -222,11 +220,11 @@ def _merge_group(originals: list[Finding]) -> Finding:
             # Evidence of a finding with one host belongs to that host. This is what lets
             # --host drop the evidence of other hosts after a merge.
             ev_hosts = ev.hosts or ([only_host] if only_host else [])
-            known_ev = evidence_index.get((ev.type, ev.data))
+            known_ev = evidence_index.get((ev.type, ev.data, ev.code))
             tool = ev.source or f.source_tool
             if known_ev is None:
                 tagged = ev.model_copy(update={"source": tool, "hosts": list(ev_hosts)})
-                evidence_index[(ev.type, ev.data)] = tagged
+                evidence_index[(ev.type, ev.data, ev.code)] = tagged
                 base.evidence.append(tagged)
             else:
                 # Same evidence from another tool or host: keep one copy and list every tool and host.
@@ -250,14 +248,19 @@ def _merge_group(originals: list[Finding]) -> Finding:
 
     # Summary values: highest severity, highest CVSS score with its own vector.
     base.severity = max((f.severity for f in originals), key=lambda s: SEVERITY_ORDER.get(s, 0))
-    scored = [f for f in originals if f.cvss_score is not None]
+    summary_order = sorted(originals, key=lambda f: (
+        f.source_tool, f.description, f.remediation or "", f.cvss_vector or "",
+    ))
+    scored = [f for f in summary_order if f.cvss_score is not None]
     if scored:
-        best = max(scored, key=lambda f: f.cvss_score or 0.0)
+        best_score = max(f.cvss_score for f in scored if f.cvss_score is not None)
+        best = next((f for f in scored if f.cvss_score == best_score and f.cvss_vector),
+                    next(f for f in scored if f.cvss_score == best_score))
         base.cvss_score = best.cvss_score
         base.cvss_vector = best.cvss_vector
     else:
         base.cvss_score = None
-        base.cvss_vector = next((f.cvss_vector for f in originals if f.cvss_vector), None)
+        base.cvss_vector = next((f.cvss_vector for f in summary_order if f.cvss_vector), None)
 
     # Mark CVSS vector conflict if merged findings had different base metrics.
     _CVSS_BASE_KEYS = frozenset({'AV', 'AC', 'PR', 'UI', 'S', 'C', 'I', 'A'})
@@ -279,7 +282,7 @@ def _merge_group(originals: list[Finding]) -> Finding:
         if len(set(base_metrics_sets)) > 1:
             base.cvss_merge_conflict = True
 
-    # Text: first non-empty value; every original text stays in `sources`.
-    base.description = next((f.description for f in originals if f.description), base.description)
-    base.remediation = next((f.remediation for f in originals if f.remediation), None)
+    # Stable summary selection; every original text stays in `sources`.
+    base.description = next((f.description for f in summary_order if f.description), base.description)
+    base.remediation = next((f.remediation for f in summary_order if f.remediation), None)
     return base

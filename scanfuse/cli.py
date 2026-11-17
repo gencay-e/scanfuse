@@ -10,6 +10,8 @@ from rich.console import Console
 from rich.markup import escape
 
 from scanfuse import __version__
+from scanfuse.baseline import compare_baseline
+from scanfuse.config import apply_overrides, load_config, validate_config
 from scanfuse.engine import OutputExistsError, ScanfuseEngine
 from scanfuse.parsers.base import PartialImportError
 
@@ -64,51 +66,23 @@ def _version_callback(value: bool) -> None:
 
 
 def parse_config(config_data: object) -> tuple[list[str], str | None]:
-    """Validate the content of .scanfuse.yaml.
-
-    Returns the ignore rules and an error message. If the message is set, the
-    rules are empty. A single string for ignore_titles is accepted as a list
-    with one entry.
-    """
-    if config_data is None:
-        return [], None
-    if not isinstance(config_data, dict):
-        return [], "the file must contain a mapping (key: value)."
-    value = config_data.get("ignore_titles")
-    if value is None:
-        return [], None
-    if isinstance(value, str):
-        cleaned = value.strip()
-        return ([cleaned] if cleaned else []), None
-    if isinstance(value, list) and all(isinstance(item, str) for item in value):
-        cleaned_list = [item.strip() for item in value if item.strip()]
-        return cleaned_list, None
-    return [], "ignore_titles must be a list of strings."
-
-
-def _load_ignore_rules(config_path: Path) -> tuple[list[str], str | None]:
-    """Read .scanfuse.yaml. Returns (rules, error). On any error the rules are empty."""
-    import yaml
+    """Compatibility wrapper around the shared strict configuration validator."""
     try:
-        with open(config_path, encoding="utf-8") as cf:
-            config_data = yaml.safe_load(cf)
-    except yaml.YAMLError as e:
-        problem = getattr(e, "problem", None) or str(e).splitlines()[0]
-        mark = getattr(e, "problem_mark", None)
-        where = f" (line {mark.line + 1})" if mark is not None else ""
-        return [], f"invalid YAML{where}: {problem}"
-    except (OSError, UnicodeDecodeError) as e:
-        return [], f"cannot read the file: {e}"
-    return parse_config(config_data)
+        config = validate_config(config_data)
+    except ValueError as exc:
+        return [], str(exc)
+    return list(config.get("ignore_titles", [])), None
 
 
 @app.command()
 def parse(
     file_paths: list[str] = typer.Argument(None, help="Paths to the scan files (or '-' for stdin)"),
     format: InputFormat = typer.Option(
-        InputFormat.auto, "--format", "-f", case_sensitive=False, help="Input format. auto detects nmap, nuclei, zap, burp, nessus and trivy. sarif, semgrep, grype, nikto and testssl are experimental and must be set explicitly.",
+        InputFormat.auto, "--format", "-f", case_sensitive=False, help="Input format. auto detects all 11 supported scanner formats.",
     ),
     output: str = typer.Option("report", "--output", "-o", help="Output directory"),
+    config_file: Path | None = typer.Option(None, "--config", "-c", exists=True, file_okay=True, dir_okay=False, readable=True, help="Configuration YAML file (default: .scanfuse.yaml)"),
+    baseline: Path | None = typer.Option(None, "--baseline", file_okay=True, dir_okay=False, help="Compare with a complete schema_version 2 report"),
     format_out: OutputFormat = typer.Option(
         OutputFormat.markdown, "--format-out", case_sensitive=False,
         help="Output format. markdown also writes index.md and report.html.",
@@ -154,6 +128,20 @@ def parse(
         console.print("[red]Error: No input files provided.[/red]")
         raise typer.Exit(code=EXIT_INCOMPLETE)
 
+    config_path = config_file or Path(".scanfuse.yaml")
+    config: dict = {}
+    config_error: str | None = None
+    if config_path.exists() or config_file is not None:
+        try:
+            config = load_config(config_path)
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            config_error = str(exc)
+    errors: list[dict[str, str]] = []
+    if config_error:
+        message = f"{config_path}: {config_error}"
+        console.print(f"[red]Error: {escape(message)}[/red]")
+        errors.append({"file": str(config_path), "message": config_error})
+
     out_path = Path(output)
     if out_path.exists() and not out_path.is_dir():
         console.print(f"[red]Error: output path is a file, not a directory: {escape(output)}[/red]")
@@ -162,7 +150,6 @@ def parse(
     engine = ScanfuseEngine(output_dir=output, template_dir=str(template_dir) if template_dir else None)
 
     all_findings = []
-    errors: list[dict[str, str]] = []
 
     for file_path in file_paths:
         is_temp = False
@@ -170,9 +157,17 @@ def parse(
 
         if file_path == "-":
             fd, target_path = tempfile.mkstemp(suffix=".tmp")
-            with open(fd, "wb") as f:
-                f.write(sys.stdin.buffer.read())
             is_temp = True
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    f.write(sys.stdin.buffer.read())
+            except BaseException:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+                os.remove(target_path)
+                raise
 
         display_path = "stdin" if is_temp else target_path
         console.print(f"[bold blue]scanfuse[/bold blue] > Parsing {escape(display_path)} (Format: {input_format})")
@@ -194,17 +189,10 @@ def parse(
             if is_temp:
                 os.remove(target_path)
 
-    if all_findings:
-        ignore_rules: list[str] = []
-        config_path = Path(".scanfuse.yaml")
-        if config_path.exists():
-            ignore_rules, config_error = _load_ignore_rules(config_path)
-            if config_error:
-                console.print(f"[red]Error: .scanfuse.yaml: {escape(config_error)} Ignore rules were not applied.[/red]")
-                errors.append({"file": ".scanfuse.yaml",
-                               "message": f"{config_error} Ignore rules were not applied."})
-            else:
-                console.print(f"[bold blue]scanfuse[/bold blue] > Loaded {len(ignore_rules)} ignore rules from .scanfuse.yaml")
+    if all_findings or baseline is not None or config_error is not None:
+        ignore_rules: list[str] = list(config.get("ignore_titles", []))
+        if config_path.exists() and config_error is None:
+            console.print(f"[bold blue]scanfuse[/bold blue] > Loaded {len(ignore_rules)} ignore rules from {escape(str(config_path))}")
 
         # The host filter runs before merging, so that severity, CVSS and sources of a merged
         # finding come only from the selected hosts.
@@ -218,18 +206,30 @@ def parse(
         if len(all_findings) < original_count:
             console.print(f"[bold yellow]scanfuse[/bold yellow] > Merged {original_count} findings into {len(all_findings)}.")
 
-        try:
-            from scanfuse.config import apply_overrides, load_config
-            if config_path.exists():
-                all_findings = apply_overrides(all_findings, load_config(config_path))
-        except (OSError, UnicodeDecodeError, ValueError) as e:
-            console.print(f"[red]Error: .scanfuse.yaml overrides: {escape(str(e))}[/red]")
-            errors.append({"file": ".scanfuse.yaml", "message": str(e)})
+        if config_error is None:
+            all_findings = apply_overrides(all_findings, config)
+
+
+        if baseline is not None:
+            try:
+                resolved = compare_baseline(all_findings, baseline, complete=not errors)
+                if host_filter:
+                    resolved = engine.filter_by_host(resolved, host_filter)
+                if config_error is None:
+                    resolved = apply_overrides(resolved, config)
+                engine.resolved = engine.filter_findings(
+                    resolved, min_severity=min_severity_name, ignore_rules=ignore_rules,
+                )
+            except (OSError, ValueError) as exc:
+                message = f"{baseline}: {exc}"
+                console.print(f"[red]Error: {escape(message)}[/red]")
+                errors.append({"file": str(baseline), "message": str(exc)})
 
         all_findings = engine.filter_findings(all_findings, min_severity=min_severity_name, ignore_rules=ignore_rules)
         if not all_findings:
             console.print("[yellow]No findings left after applying filters.[/yellow]")
-            raise typer.Exit(code=EXIT_INCOMPLETE if errors else 0)
+            if baseline is None and not errors:
+                raise typer.Exit(code=EXIT_INCOMPLETE if errors else 0)
 
         console.print(f"[bold blue]scanfuse[/bold blue] > Exporting {len(all_findings)} findings to {escape(output)}/")
 
@@ -255,7 +255,7 @@ def parse(
             raise typer.Exit(code=EXIT_INCOMPLETE)
         console.print("[green]OK[/green] Done.")
 
-    if not all_findings and not errors:
+    if not all_findings and not errors and baseline is None:
         console.print("[yellow]The input contains no findings. Nothing was exported.[/yellow]")
 
     if errors:

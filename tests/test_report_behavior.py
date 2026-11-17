@@ -186,8 +186,8 @@ def test_partial_failure_is_marked_in_every_format(tmp_path):
 
     with (tmp_path / "out-csv" / "report.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.reader(stream))
-    assert rows[0][-2:] == ["Import Status", "Affected"]
-    assert rows[1][-2].startswith("incomplete")
+    assert rows[0][-3:] == ["Import Status", "Affected", "Retest Status"]
+    assert rows[1][rows[0].index("Import Status")].startswith("incomplete")
 
     index = (tmp_path / "out-markdown" / "index.md").read_text(encoding="utf-8")
     assert "INCOMPLETE" in index
@@ -490,5 +490,5 @@ def test_location_is_in_index_html_search_and_csv(tmp_path):
     engine.export_csv(findings, excel=True)
     with (tmp_path / "out" / "report.csv").open(newline="", encoding="utf-8-sig") as stream:
         rows = list(csv.reader(stream, delimiter=";"))
-    assert rows[0][-1] == "Affected"
-    assert [r[-1] for r in rows[1:]] == ["10.0.0.1 /demo/a_b.php", "10.0.0.1 /other.php", ""]
+    assert "Affected" in rows[0]
+    assert [r[rows[0].index("Affected")] for r in rows[1:]] == ["10.0.0.1 /demo/a_b.php", "10.0.0.1 /other.php", ""]

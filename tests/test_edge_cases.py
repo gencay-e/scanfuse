@@ -290,7 +290,6 @@ def test_detect_format_utf16(tmp_path: Path) -> None:
 
 
 def test_models_cvss_score_nan_inf_rejected() -> None:
-    import pytest
     from pydantic import ValidationError
 
     with pytest.raises(ValidationError):
@@ -418,33 +417,39 @@ def test_zap_parser_domain_hostname_and_deduplication(tmp_path: Path) -> None:
     assert merged[0].hosts[0].hostname == "example.com"
 
 
-def test_experimental_formats_are_not_auto_detected(tmp_path: Path) -> None:
-    # SARIF, Semgrep, Grype, Nikto and testssl.sh are experimental and need --format.
-    # Auto-detection only returns stable formats, so a Nuclei or Trivy file is never misread.
-    padding = "X" * 80000
-    sarif_file = tmp_path / "large.sarif"
-    sarif_file.write_text(json.dumps({
-        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "version": "2.1.0",
-        "runs": [{"tool": {"driver": {"name": "Semgrep"}}, "results": [{"ruleId": "r1", "message": {"text": padding}}]}],
-    }), encoding="utf-8")
-    with pytest.raises(ValueError, match="--format sarif"):
-        ScanfuseEngine._detect_format(str(sarif_file))
-
-    for name, payload in {
-        "semgrep": {"results": [{"check_id": "rule-1", "path": "app.py", "extra": {"message": padding}}]},
-        "grype": {"matches": [{"vulnerability": {"id": "CVE-2024-1"}, "artifact": {"name": "p"}}]},
-        "testssl": [{"id": "heartbleed", "ip": "192.0.2.1", "port": "443", "severity": "CRITICAL", "finding": "x"}],
-    }.items():
+def test_new_formats_are_auto_detected(tmp_path: Path) -> None:
+    samples = {
+        "sarif": {"version": "2.1.0", "runs": []},
+        "semgrep": {"results": [{"check_id": "rule-1"}]},
+        "grype": {"matches": [{"vulnerability": {"id": "CVE-2024-1"}}]},
+        "nikto": {"host": "example.test", "vulnerabilities": []},
+        "testssl": {"scanResult": []},
+    }
+    for name, payload in samples.items():
         path = tmp_path / f"{name}.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
-        assert ScanfuseEngine._detect_format(str(path)) == "nuclei"
+        assert ScanfuseEngine._detect_format(str(path)) == name
 
-    nikto_xml = tmp_path / "nikto.xml"
-    nikto_xml.write_text('<?xml version="1.0" ?><niktoscan host="example.com"><item id="1">'
-                         '<description>test</description></item></niktoscan>', encoding="utf-8")
-    with pytest.raises(ValueError, match="Use --format"):
-        ScanfuseEngine._detect_format(str(nikto_xml))
+    xml = tmp_path / "nikto.xml"
+    xml.write_text('<niktoscan><item id="1" /></niktoscan>', encoding="utf-8")
+    assert ScanfuseEngine._detect_format(str(xml)) == "nikto"
+
+
+def test_nikto_csv_detection_and_location(tmp_path: Path) -> None:
+    path = tmp_path / "scan.csv"
+    path.write_text('"Nikto - v2.5.0/2.5.0"\n'
+                    '"example.test","192.0.2.1","443","","","","banner"\n'
+                    '"example.test","192.0.2.1","443","123","GET","/admin","Issue"\n',
+                    encoding="utf-8")
+    engine = ScanfuseEngine(str(tmp_path))
+    assert engine._detect_format(str(path)) == "nikto"
+    findings = engine.process_file(str(path), "auto")
+    assert len(findings) == 2
+    assert any(f.title == "banner" for f in findings)
+    findings = [f for f in findings if f.title == "Issue"]
+    assert findings[0].hosts[0].ip == "192.0.2.1"
+    assert findings[0].observations[0].method == "GET"
+    assert findings[0].observations[0].location == "/admin"
 
 
 def test_input_format_excludes_pdf() -> None:
@@ -453,3 +458,16 @@ def test_input_format_excludes_pdf() -> None:
 
 
 
+
+
+def test_detection_uses_top_level_structure(tmp_path: Path) -> None:
+    samples = [
+        ("nikto", [{"host": "example.test", "vulnerabilities": []}]),
+        ("testssl", [{"id": "TLS1", "severity": "HIGH", "finding": "offered"}]),
+        ("nuclei", {"template-id": "x", "info": {"name": "x", "description": "matches vulnerability scanResult"}}),
+        ("nuclei", {"template-id": "x", "matches": [{"text": "not grype"}]}),
+    ]
+    for expected, payload in samples:
+        path = tmp_path / f"{expected}.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        assert ScanfuseEngine._detect_format(str(path)) == expected

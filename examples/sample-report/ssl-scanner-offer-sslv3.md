@@ -1,5 +1,7 @@
 # \[SSL Scanner\] Offer SSLv3
 
+
+
 **Severity**: High
 
 
@@ -33,7 +35,7 @@ SSLv3 should never be enabled on production systems.
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

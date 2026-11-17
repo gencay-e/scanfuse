@@ -1,5 +1,7 @@
 # Terminal Services Encryption Level is Medium or Low
 
+
+
 **Severity**: Medium
 
 

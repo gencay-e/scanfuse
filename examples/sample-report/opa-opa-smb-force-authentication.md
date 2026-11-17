@@ -1,5 +1,7 @@
 # opa: OPA SMB Force-Authentication
 
+
+
 **Severity**: Medium
 
 

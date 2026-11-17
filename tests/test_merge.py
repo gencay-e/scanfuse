@@ -1,4 +1,5 @@
 """Merging findings must not lose information."""
+import json
 import os
 
 from scanfuse.engine import ScanfuseEngine
@@ -173,7 +174,7 @@ def test_fixtures_zap_and_burp_sql_injection_at_different_paths_stay_separate(tm
         findings += engine.process_file(os.path.join(FIXTURES, name), fmt)
     sql = [f for f in deduplicate_findings(findings) if f.title.casefold() == "sql injection"]
     assert len(sql) == 2
-    assert {loc for f in sql for _m, loc in f.places()} == {"/view", "/api/login"}
+    assert {loc for f in sql for _m, loc in f.places()} == {"/view?id=1", "/api/login"}
 
 
 def test_same_title_and_port_on_different_urls_are_two_findings():
@@ -297,7 +298,7 @@ def test_nuclei_observation_has_the_path_of_a_url_match_only(tmp_path):
     path = tmp_path / "n.json"
     path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
     web, network = ScanfuseEngine(str(tmp_path / "out")).process_file(str(path), "nuclei")
-    assert [(o.location, o.source_tool) for o in web.observations] == [("/x/y", "nuclei")]
+    assert [(o.location, o.source_tool) for o in web.observations] == [("/x/y?q=1", "nuclei")]
     assert network.observations[0].location is None
 
 
@@ -363,6 +364,70 @@ def test_zap_and_burp_parsers_fill_observations():
     zap = engine.process_file(os.path.join(FIXTURES, "dummy_zap.xml"), "zap")
     burp = engine.process_file(os.path.join(FIXTURES, "dummy_burp.xml"), "burp")
     sql = [f for f in zap if f.title == "SQL Injection"]
-    assert {loc for f in sql for _m, loc in f.places()} == {"/view"}
+    assert {loc for f in sql for _m, loc in f.places()} == {"/view?id=1"}
     assert burp[0].places() == {(burp[0].observations[0].method, "/api/login")}
     assert burp[0].observations[0].source_tool == "burp"
+
+
+def test_semgrep_and_sarif_locations_control_cross_tool_merge(tmp_path):
+    semgrep = {"results": [{"check_id": "rule", "path": "app.py", "start": {"line": 7},
+                            "extra": {"message": "Unsafe call", "severity": "ERROR"}}]}
+    sarif = {"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "CodeQL", "rules": [{"id": "rule", "name": "Unsafe call"}]}},
+             "results": [{"ruleId": "rule", "message": {"text": "Unsafe call"},
+                          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app.py"},
+                                                               "region": {"startLine": 7}}}]}]}]}
+    semgrep_file = tmp_path / "semgrep.json"
+    sarif_file = tmp_path / "codeql.sarif"
+    semgrep_file.write_text(json.dumps(semgrep), encoding="utf-8")
+    sarif_file.write_text(json.dumps(sarif), encoding="utf-8")
+    engine = ScanfuseEngine(str(tmp_path))
+    first = engine.process_file(str(semgrep_file), "semgrep")[0]
+    second = engine.process_file(str(sarif_file), "sarif")[0]
+    assert first.places() == second.places() == {(None, "app.py:7")}
+    merged = deduplicate_findings([first, second])
+    assert len(merged) == 1
+    assert {o.source_tool for o in merged[0].observations} >= {"semgrep", "CodeQL"}
+    sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"] = 8
+    sarif_file.write_text(json.dumps(sarif), encoding="utf-8")
+    second = engine.process_file(str(sarif_file), "sarif")[0]
+    assert len(deduplicate_findings([first, second])) == 2
+
+
+def test_zap_nikto_merge_requires_same_method_and_path(tmp_path):
+    zap = parse_zap(tmp_path, alert("Shared finding", [("GET", "https://example.test/admin", "")]))[0]
+    engine = ScanfuseEngine(str(tmp_path))
+    path = tmp_path / "nikto.json"
+    def read_nikto(method, uri):
+        path.write_text(json.dumps({"host": "example.test", "port": "443", "vulnerabilities": [
+            {"msg": "Shared finding", "method": method, "url": uri}]}), encoding="utf-8")
+        return engine.process_file(str(path), "auto")[0]
+    matching = read_nikto("GET", "/admin")
+    assert len(deduplicate_findings([zap, matching])) == 1
+    assert len(deduplicate_findings([zap, read_nikto("POST", "/admin")])) == 2
+    assert len(deduplicate_findings([zap, read_nikto("GET", "/other")])) == 2
+
+
+def test_evidence_with_distinct_code_snippets_is_not_collapsed():
+    a = finding(tool="zap", evidence=[Evidence(type="code", data="same", code="first")])
+    b = finding(tool="burp", evidence=[Evidence(type="code", data="same", code="second")])
+    (merged,) = deduplicate_findings([a, b])
+    assert [e.code for e in merged.evidence] == ["first", "second"]
+
+
+def test_cvss_score_tie_skips_missing_vector_in_favor_of_available_vector():
+    a = finding(tool="zap", cvss_score=7.5, cvss_vector=None)
+    b = finding(tool="burp", cvss_score=7.5, cvss_vector="CVSS:3.1/AV:N")
+    (merged,) = deduplicate_findings([a, b])
+    assert merged.cvss_vector == "CVSS:3.1/AV:N"
+
+
+def test_local_identifier_grouping_is_independent_of_cross_tool_order():
+    items = [
+        finding(title="Plugin", tool="nessus", identifiers=["nessus-plugin:1"]),
+        finding(title="Plugin", tool="nessus", identifiers=["nessus-plugin:2"]),
+        finding(title="Plugin", tool="zap", identifiers=["zap-plugin:9"]),
+    ]
+    for ordering in (items, [items[2], items[0], items[1]]):
+        result = deduplicate_findings(ordering)
+        assert len(result) == 2
+        assert sum("nessus" in f.source_tool and "zap" in f.source_tool for f in result) == 1

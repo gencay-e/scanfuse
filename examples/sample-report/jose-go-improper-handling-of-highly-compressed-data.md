@@ -1,5 +1,7 @@
 # jose-go: improper handling of highly compressed data
 
+
+
 **Severity**: Medium
 
 

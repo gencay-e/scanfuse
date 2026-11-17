@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -78,6 +80,7 @@ class SourceRecord(BaseModel):
 
 
 class Finding(BaseModel):
+    status: Literal["new", "unchanged", "resolved"] | None = None
     title: str
     severity: str = Field(..., pattern="^(Critical|High|Medium|Low|Info)$")
     cvss_score: float | None = Field(default=None, ge=0.0, le=10.0)

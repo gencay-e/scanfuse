@@ -1,5 +1,7 @@
 # golang: net/http, x/net/http2: unlimited number of CONTINUATION frames causes DoS
 
+
+
 **Severity**: Medium
 
 

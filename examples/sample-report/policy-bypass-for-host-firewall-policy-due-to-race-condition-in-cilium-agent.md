@@ -1,5 +1,7 @@
 # Policy bypass for Host Firewall policy due to race condition in Cilium agent
 
+
+
 **Severity**: Medium
 
 

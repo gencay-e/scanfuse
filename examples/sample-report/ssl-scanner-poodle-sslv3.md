@@ -1,5 +1,7 @@
 # \[SSL Scanner\] POODLE (SSLv3)
 
+
+
 **Severity**: High
 
 
@@ -35,7 +37,7 @@ If OpenSSL is used, update to version 1.0.1j or higher. Otherwise, update the we
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

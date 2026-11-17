@@ -12,7 +12,7 @@ class TrivyParser(BaseParser):
         with open(file_path, encoding="utf-8-sig") as f:
             try:
                 data = json.load(f)
-            except json.JSONDecodeError as e:
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 raise ValueError(f"Invalid JSON in {file_path}: {e}")
 
         # Older Trivy versions write a bare list of results. Current versions write an object.
@@ -25,7 +25,7 @@ class TrivyParser(BaseParser):
         if not isinstance(data, dict) or ("SchemaVersion" not in data and "ArtifactName" not in data):
             raise ValueError(f"Not a valid Trivy JSON file: {file_path}")
 
-        artifact_name = data.get("ArtifactName", "unknown-artifact")
+        artifact_name = str(data.get("ArtifactName") or "unknown-artifact")
         host_model = Host(ip="unknown", hostname=artifact_name)
 
         severity_map = {

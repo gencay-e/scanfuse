@@ -1,5 +1,7 @@
 # Strict Transport Security Misconfiguration
 
+
+
 **Severity**: Medium
 
 
@@ -45,7 +47,7 @@ The parameter max-age gives the time frame for requirement of HTTPS in seconds a
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

@@ -7,14 +7,19 @@ import re
 import tempfile
 import unicodedata
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from typing import Literal
 
-from hypothesis import example, given, settings
+import defusedxml.ElementTree as safe_et
+from defusedxml.common import DefusedXmlException
+from hypothesis import HealthCheck, example, given, settings
 from hypothesis import strategies as st
+from pydantic import ValidationError
 
 from scanfuse.engine import SEVERITY_RANK, code_fence, csv_safe, md_escape, md_text
 from scanfuse.models import Evidence, Finding, Host
 from scanfuse.parsers.base import (
+    PartialImportError,
     clean_ids,
     cve_ids,
     cwe_id,
@@ -23,9 +28,14 @@ from scanfuse.parsers.base import (
     html_to_text,
 )
 from scanfuse.parsers.burp import BurpParser
+from scanfuse.parsers.grype import GrypeParser
 from scanfuse.parsers.nessus import NessusParser
+from scanfuse.parsers.nikto import NiktoParser
 from scanfuse.parsers.nmap import NmapParser
 from scanfuse.parsers.nuclei import NucleiParser
+from scanfuse.parsers.sarif import SarifParser
+from scanfuse.parsers.semgrep import SemgrepParser
+from scanfuse.parsers.testssl import TestsslParser
 from scanfuse.parsers.trivy import TrivyParser
 from scanfuse.parsers.zap import ZapParser
 from scanfuse.utils import RESERVED_SLUGS, deduplicate_findings, slugify, unique_slug
@@ -427,3 +437,242 @@ def test_extract_urls_deduplicates_and_strips_trailing_punctuation(urls: list[st
     decorated = [f"({u})." for u in urls]
     result = extract_urls(decorated)
     assert result == list(dict.fromkeys(urls))
+
+
+# Each seed is a known successful, small report. Mutations keep the format recognizable while
+# replacing one nested field with JSON's wrong-type/null values or truncating serialized input.
+_FIXTURES = Path(__file__).parent / "fixtures"
+_PARSER_SEEDS = [
+    (NucleiParser, _FIXTURES / "dummy_nuclei.json"),
+    (TrivyParser, _FIXTURES / "dummy_trivy.json"),
+    (GrypeParser, _FIXTURES / "grype.json"),
+    (SemgrepParser, _FIXTURES / "semgrep.json"),
+    (SarifParser, _FIXTURES / "public" / "extended" / "semgrep.sarif"),
+    (TestsslParser, _FIXTURES / "testssl.json"),
+    (NmapParser, _FIXTURES / "dummy_nmap_clean.xml"),
+    (NessusParser, _FIXTURES / "dummy_nessus.xml"),
+    (BurpParser, _FIXTURES / "dummy_burp.xml"),
+    (ZapParser, _FIXTURES / "dummy_zap.xml"),
+    (NiktoParser, _FIXTURES / "nikto.json"),
+    (NiktoParser, _FIXTURES / "nikto.xml"),
+    (NiktoParser, _FIXTURES / "public" / "extended" / "nikto.csv"),
+]
+
+
+def _value_paths(value: object, path: tuple[str | int, ...] = ()) -> list[tuple[str | int, ...]]:
+    paths = [path]
+    if isinstance(value, dict):
+        for key, child in value.items():
+            paths.extend(_value_paths(child, (*path, key)))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            paths.extend(_value_paths(child, (*path, index)))
+    return paths
+
+
+def _replace_at_path(value: object, path: tuple[str | int, ...], replacement: object) -> object:
+    if not path:
+        return replacement
+    parent = value
+    for part in path[:-1]:
+        parent = parent[part]  # type: ignore[index]
+    parent[path[-1]] = replacement  # type: ignore[index]
+    return value
+
+
+def _read_json_documents(path: Path) -> tuple[bool, object]:
+    text = path.read_text(encoding="utf-8-sig")
+    try:
+        return False, json.loads(text)
+    except json.JSONDecodeError:
+        return True, [json.loads(line) for line in text.splitlines() if line.strip()]
+
+
+def _write_json_documents(path: Path, is_jsonl: bool, data: object) -> None:
+    if is_jsonl and isinstance(data, list):
+        path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in data), encoding="utf-8")
+    else:
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def _append_cafe_to_first_string(value: object) -> object:
+    if isinstance(value, dict):
+        text_keys = {"description", "message", "msg", "finding", "title", "name", "text"}
+        for key, child in value.items():
+            if key.lower() not in text_keys:
+                continue
+            if isinstance(child, str):
+                value[key] = child + " Café"
+                return value
+        for key, child in value.items():
+            if isinstance(child, str):
+                value[key] = child + " Café"
+                return value
+            if isinstance(child, (dict, list)):
+                before = repr(child)
+                _append_cafe_to_first_string(child)
+                if repr(child) != before:
+                    return value
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            if isinstance(child, (dict, list)):
+                before = repr(child)
+                _append_cafe_to_first_string(child)
+                if repr(child) != before:
+                    return value
+    return value
+
+
+def _assert_parser_contract(parser_type: type, path: Path, context: str = "") -> None:
+    try:
+        result = parser_type().parse(str(path))
+    except (ValidationError, UnicodeDecodeError, ET.ParseError, DefusedXmlException) as exc:
+        raise AssertionError(f"{context}: unexpected parser exception: {type(exc).__name__}") from exc
+    except PartialImportError:
+        return
+    except ValueError:
+        return
+    assert isinstance(result, list), context
+    assert all(isinstance(item, Finding) for item in result), context
+
+
+@given(
+    replacement=st.recursive(
+        st.one_of(st.none(), st.booleans(), st.integers(), st.text(max_size=20)),
+        lambda children: st.one_of(st.lists(children, max_size=3), st.dictionaries(st.text(max_size=5), children, max_size=3)),
+        max_leaves=8,
+    ),
+    leaf_index=st.integers(min_value=0, max_value=100),
+)
+@settings(max_examples=80, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_structured_parser_seed_mutations_never_leak_internal_exceptions(
+    replacement: object, leaf_index: int, tmp_path: Path
+) -> None:
+    # Exercise every structured parser against a successful seed and one arbitrary nested value.
+    for parser_type, seed_path in _PARSER_SEEDS:
+        raw = seed_path.read_bytes()
+        valid_path = tmp_path / ("valid-" + seed_path.name)
+        valid_path.write_bytes(raw)
+        valid_result = parser_type().parse(str(valid_path))
+        assert valid_result and all(isinstance(item, Finding) for item in valid_result)
+        if seed_path.suffix in {".xml", ".nessus"}:
+            text = raw.decode("utf-8-sig")
+            # XML mutation: append malformed/truncated content after an otherwise valid report.
+            mutated = text + str(replacement)
+            target = tmp_path / (seed_path.stem + ".xml")
+            target.write_text(mutated, encoding="utf-8")
+        elif seed_path.suffix == ".csv":
+            target = tmp_path / seed_path.name
+            target.write_bytes(raw + str(replacement).encode("utf-8"))
+        else:
+            target = tmp_path / seed_path.name
+            is_jsonl, data = _read_json_documents(seed_path)
+            paths = _value_paths(data)
+            data = _replace_at_path(data, paths[leaf_index % len(paths)], replacement)
+            _write_json_documents(target, is_jsonl, data)
+        _assert_parser_contract(parser_type, target)
+
+
+def test_each_json_seed_path_tolerates_common_wrong_types(tmp_path: Path) -> None:
+    replacements: tuple[object, ...] = (None, True, 1, "wrong-type", [], {}, [None])
+    for parser_type, seed_path in _PARSER_SEEDS:
+        if seed_path.suffix not in {".json", ".sarif"}:
+            continue
+        is_jsonl, data = _read_json_documents(seed_path)
+        target = tmp_path / seed_path.name
+        for path in _value_paths(data):
+            for replacement in replacements:
+                mutated = json.loads(json.dumps(data))
+                _write_json_documents(
+                    target,
+                    is_jsonl,
+                    _replace_at_path(mutated, path, replacement),
+                )
+                _assert_parser_contract(
+                    parser_type,
+                    target,
+                    f"seed={seed_path} path={path!r} replacement={replacement!r}",
+                )
+
+
+@example(locations=True)
+@example(locations=[{"physicalLocation": True}])
+@example(locations=[{"physicalLocation": {"artifactLocation": True}}])
+@example(locations=[{"physicalLocation": {"artifactLocation": {"uri": 1}}}])
+@example(locations=[{"physicalLocation": {"artifactLocation": {"uri": True}}}])
+@given(locations=st.recursive(
+    st.one_of(st.none(), st.booleans(), st.integers(), st.text(max_size=20)),
+    lambda children: st.one_of(st.lists(children, max_size=3), st.dictionaries(st.text(max_size=5), children, max_size=3)),
+    max_leaves=8,
+))
+@settings(max_examples=60, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_sarif_wrong_location_types_have_documented_outcomes(locations: object, tmp_path: Path) -> None:
+    target = tmp_path / "sarif.json"
+    target.write_text(json.dumps({
+        "version": "2.1.0",
+        "runs": [{"results": [{"ruleId": "test", "locations": locations}]}],
+    }), encoding="utf-8")
+    _assert_parser_contract(SarifParser, target)
+
+
+def test_json_parsers_accept_or_reject_empty_root_shapes_cleanly(tmp_path: Path) -> None:
+    json_parsers = {NucleiParser, TrivyParser, GrypeParser, SemgrepParser, SarifParser, TestsslParser, NiktoParser}
+    for parser_type in json_parsers:
+        for root in ([], {}):
+            target = tmp_path / "root.json"
+            target.write_text(json.dumps(root), encoding="utf-8")
+            _assert_parser_contract(parser_type, target)
+
+
+def test_trivy_coerces_wrong_typed_artifact_name(tmp_path: Path) -> None:
+    target = tmp_path / "trivy.json"
+    target.write_text('{"SchemaVersion":2,"ArtifactName":[],"Results":[]}', encoding="utf-8")
+    assert TrivyParser().parse(str(target)) == []
+
+
+@example(payload=b"\xff\xfe<")
+@example(payload=b"\xfe\xff<")
+@given(payload=st.binary(max_size=256))
+@settings(max_examples=40, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_arbitrary_bytes_have_documented_parser_outcomes(payload: bytes, tmp_path: Path) -> None:
+    parser_types = {parser_type for parser_type, _ in _PARSER_SEEDS}
+    for parser_type in parser_types:
+        target = tmp_path / f"{parser_type.__name__}.bin"
+        target.write_bytes(payload)
+        _assert_parser_contract(parser_type, target)
+
+
+@given(cut=st.integers(min_value=0, max_value=300))
+@settings(max_examples=25, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_truncated_parser_inputs_have_documented_outcomes(cut: int, tmp_path: Path) -> None:
+    for parser_type, seed_path in _PARSER_SEEDS:
+        raw = seed_path.read_bytes()
+        target = tmp_path / seed_path.name
+        target.write_bytes(raw[:cut])
+        _assert_parser_contract(parser_type, target)
+
+
+@given(encoding=st.sampled_from(["utf-8-sig", "utf-16", "latin-1"]))
+@settings(max_examples=3, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_all_seed_formats_handle_text_encodings(encoding: str, tmp_path: Path) -> None:
+    for parser_type, seed_path in _PARSER_SEEDS:
+        target = tmp_path / seed_path.name
+        if seed_path.suffix in {".json", ".sarif"}:
+            is_jsonl, data = _read_json_documents(seed_path)
+            if is_jsonl:
+                data = [_append_cafe_to_first_string(row) for row in data]
+            else:
+                data = _append_cafe_to_first_string(data)
+            _write_json_documents(target, is_jsonl, data)
+            source = target.read_text(encoding="utf-8")
+        elif seed_path.suffix in {".xml", ".nessus"}:
+            root = safe_et.fromstring(seed_path.read_bytes())
+            first = next(iter(root.iter()))
+            first.text = (first.text or "") + " Café"
+            source = ET.tostring(root, encoding="unicode")
+        else:
+            source = seed_path.read_text(encoding="utf-8-sig") + "\nCafé"
+        target.write_bytes(source.encode(encoding))
+        if encoding == "latin-1":
+            assert b"Caf\xe9" in target.read_bytes(), (seed_path, encoding)
+        _assert_parser_contract(parser_type, target)

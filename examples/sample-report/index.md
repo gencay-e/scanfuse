@@ -47,7 +47,7 @@ Total Findings: 49
 
 - [High] [Kyverno's PolicyException objects can be created in any namespace by default](kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default.md) (Source: trivy, 1 host)
 
-- [High] [Path Traversal](path-traversal.md) at /demo/PathTraversal.php \[action parameter\] (Source: zap, 1 host)
+- [High] [Path Traversal](path-traversal.md) at /demo/PathTraversal.php?action=%5cWindows%5csystem.ini \[action parameter\] (Source: zap, 1 host)
 
 - [High] [SQL Injection](sql-injection.md) at /demo/SQLI2.php \[username parameter\] (Source: zap, 1 host)
 
@@ -495,7 +495,7 @@ Total Findings: 49
 
 - .
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1
 
 - 10.31.112.24 (qa3app04)
 

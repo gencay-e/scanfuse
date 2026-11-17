@@ -1,0 +1,18 @@
+[
+  {
+    "id": "cipherlist_3DES_IDEA",
+    "ip": "example.test/192.0.2.1",
+    "port": "443",
+    "severity": "HIGH",
+    "cwe": "CWE-310",
+    "finding": "offered"
+  },
+  {
+    "id": "cipherlist_AVERAGE",
+    "ip": "example.test/192.0.2.1",
+    "port": "443",
+    "severity": "LOW",
+    "cwe": "CWE-310",
+    "finding": "offered"
+  }
+]

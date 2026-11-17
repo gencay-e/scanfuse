@@ -31,12 +31,17 @@ def run_exe(tmp_path, args):
     ("nmap", "dummy_nmap_clean.xml"), ("nuclei", "dummy_nuclei.json"),
     ("zap", "dummy_zap.xml"), ("burp", "dummy_burp.xml"),
     ("nessus", "dummy_nessus.xml"), ("trivy", "dummy_trivy.json"),
+    ("sarif", "public/extended/codeql.sarif"),
+    ("semgrep", "public/extended/semgrep.json"),
+    ("grype", "public/extended/grype.json"),
+    ("nikto", "public/extended/nikto.csv"),
+    ("testssl", "public/extended/testssl-pretty.json"),
 ])
 def test_packaged_parsers_match_source(tmp_path, fixtures_dir, format_hint, filename):
     source = fixtures_dir / filename
     output = tmp_path / "report"
     expected = deduplicate_findings(ScanfuseEngine(str(output)).process_file(str(source), format_hint))
-    run_exe(tmp_path, [str(source), "-f", format_hint, "--format-out", "json", "-o", str(output)])
+    run_exe(tmp_path, [str(source), "--format", "auto", "--format-out", "json", "-o", str(output)])
     exported = json.loads((output / "report.json").read_text(encoding="utf-8"))["findings"]
     assert exported == [finding.model_dump() for finding in expected]
 

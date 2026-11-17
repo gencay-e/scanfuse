@@ -1,11 +1,11 @@
 import os
-import re
 from unittest.mock import patch
 
 import pytest
+from pypdf import PdfReader
 
 from scanfuse.engine import OutputExistsError, ScanfuseEngine
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, SourceRecord
 
 
 def test_pdf_export_creates_report(tmp_path):
@@ -95,8 +95,44 @@ def test_a_finding_with_long_evidence_continues_on_further_pages(tmp_path):
                 evidence=[Evidence(type="log", data="\n".join(f"line {n}" for n in range(400)))] if i == 0 else [])
         for i in range(2)
     ]
-    ScanfuseEngine(str(tmp_path)).export_pdf(findings)
-    # fpdf2 writes one uncompressed "/Type /Page" object per page, so no PDF reader is needed.
+    with patch("scanfuse.reporters.pdf._unicode_font_path", return_value=None):
+        ScanfuseEngine(str(tmp_path)).export_pdf(findings)
+    report = PdfReader(tmp_path / "report.pdf")
+    assert len(report.pages) > len(findings) + 1
+    for number, page in enumerate(report.pages, 1):
+        assert f"Page {number}/{len(report.pages)}" in page.extract_text()
+
+
+def test_pdf_summary_import_errors_and_finding_metadata(tmp_path):
+    finding = Finding(
+        title="Web issue", severity="High", description="description", source_tool="zap",
+        hosts=[Host(ip="192.0.2.5", hostname="web.example")],
+        tags=["injection", "internet-facing"],
+        sources=[SourceRecord(source_tool="nuclei", title="Template issue", severity="Medium",
+                              description="also reported")],
+    )
+    with patch("scanfuse.reporters.pdf._unicode_font_path", return_value=None):
+        ScanfuseEngine(str(tmp_path)).export_pdf(
+            [finding], errors=[{"file": "missing.xml", "error": "parse failed"}]
+        )
+    text_content = "\n".join(page.extract_text() for page in PdfReader(tmp_path / "report.pdf").pages)
+    for text in ("Severity", "Critical", "Import errors", "missing.xml", "parse failed",
+                 "web.example", "injection", "Reported by: nuclei"):
+        assert text in text_content
+
+
+def test_pdf_large_evidence_is_capped_with_full_report_hint(tmp_path):
+    finding = Finding(title="Large", severity="Low", description="d", source_tool="test",
+                      evidence=[Evidence(type="log", data="x" * 2_000_000)])
+    with patch("scanfuse.reporters.pdf._unicode_font_path", return_value=None):
+        ScanfuseEngine(str(tmp_path)).export_pdf([finding])
     data = (tmp_path / "report.pdf").read_bytes()
-    pages = len(re.findall(rb"/Type\s*/Page(?![a-z])", data))
-    assert pages > len(findings) + 1
+    assert len(data) < 100_000
+    text = "\n".join(page.extract_text() for page in PdfReader(tmp_path / "report.pdf").pages)
+    assert "Evidence shortened; see full text in Markdown/JSON report." in text
+
+
+def test_pdf_unicode_fallback_replaces_unsupported_glyphs(tmp_path):
+    from scanfuse.reporters.pdf import _safe
+
+    assert _safe("cafe\u0301 \u2714", is_unicode=False) == "cafe? ?"

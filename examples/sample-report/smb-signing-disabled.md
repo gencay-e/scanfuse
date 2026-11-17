@@ -1,5 +1,7 @@
 # SMB Signing Disabled
 
+
+
 **Severity**: Medium
 
 

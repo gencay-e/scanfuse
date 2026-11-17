@@ -1,5 +1,9 @@
 # {{ finding.title | md }}
 
+{% if finding.status %}
+**Retest status**: {{ finding.status | md }}
+{% endif %}
+
 **Severity**: {{ finding.severity | md }}
 {% if finding.cvss_score is not none %}
 
@@ -34,7 +38,7 @@
 {% if finding.references %}
 ## References
 {% for url in finding.references %}
-- <{{ url }}>
+- {{ url | reference }}
 {% endfor %}
 
 {% endif %}

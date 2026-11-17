@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, extract_urls
+from scanfuse.models import Evidence, Finding, Host, Observation
+from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, cwe_ids_from_text, extract_urls
 
 
 def _dict(value: object) -> dict[str, Any]:
@@ -21,7 +21,8 @@ class SemgrepParser(BaseParser):
         if not isinstance(results, list):
             raise ValueError("Not a valid Semgrep JSON report")
         findings: list[Finding] = []
-        severity_map = {"ERROR": "High", "WARNING": "Medium", "INFO": "Info"}
+        severity_map = {"CRITICAL": "Critical", "HIGH": "High", "ERROR": "High",
+                        "MEDIUM": "Medium", "WARNING": "Medium", "LOW": "Low", "INFO": "Info"}
         for result in results:
             if not isinstance(result, dict):
                 continue
@@ -33,14 +34,17 @@ class SemgrepParser(BaseParser):
             line = start.get("line")
             message = str(extra.get("message") or rule_id)
             severity = severity_map.get(str(extra.get("severity") or "WARNING").upper(), "Medium")
+            location = f"{path}:{line}" if line is not None else path
             findings.append(Finding(
                 title=message,
                 severity=severity,
                 description=message,
                 hosts=[Host(ip="local", hostname=path)],
-                evidence=[Evidence(type="code-location", data=f"{path}:{line}" if line else path)],
+                evidence=[Evidence(type="code-location", data=location)],
                 source_tool="semgrep",
-                identifiers=clean_ids(rule_id, cve_ids(metadata.get("cve"))),
+                observations=[Observation(location=location, source_tool="semgrep")],
+                identifiers=clean_ids(rule_id, cve_ids(metadata.get("cve")),
+                                     cwe_ids_from_text(metadata.get("cwe"))),
                 references=extract_urls(metadata.get("references")),
             ))
         return findings

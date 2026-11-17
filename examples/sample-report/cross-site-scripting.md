@@ -1,5 +1,7 @@
 # Cross Site Scripting
 
+
+
 **Severity**: High
 
 
@@ -80,4 +82,5 @@ Ensure that you perform input validation at well-defined interfaces within the a
 ```
 Request: http://10.2.100.1/demo/EvalInjection2.php
 Parameter: command
+Attack: </pre><script>alert(1);</script><pre>
 ```

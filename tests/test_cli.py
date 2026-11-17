@@ -89,7 +89,7 @@ def test_config_valid_list_applies_rules_and_exit_0(tmp_path, monkeypatch):
     assert [f["title"] for f in exported] == ["Retained alert"]
 
 
-@pytest.mark.parametrize("config_text", ["", "ignore_titles:", "other: 1"])
+@pytest.mark.parametrize("config_text", ["", "ignore_titles:"])
 def test_config_empty_or_without_ignore_titles_is_ok(tmp_path, monkeypatch, config_text):
     result, output = _run_with_config(tmp_path, monkeypatch, config_text)
     assert result.exit_code == 0, result.stdout

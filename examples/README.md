@@ -11,7 +11,7 @@ scanfuse nmap_output_v7.12.xml zaproxy-demo-site_1.4.0.1.xml juice_shop-trivy-re
   -o ../../../examples/sample-report --min-severity Medium --replace
 ```
 
-Result: the six files hold 206 findings. Merging the same finding on several hosts leaves 162, and 49 of them are Medium or higher. (With 1.0.2 the same files gave 104 and 39: ZAP and Burp findings with the same title at different URL paths were merged then. Version 1.1.0 gives the same numbers for these files.) `--replace` is only needed if the folder already holds a report.
+Result: the six files hold 206 findings. Merging the same finding on several hosts leaves 162, and 49 of them are Medium or higher. (With 1.0.2 the same files gave 104 and 39: ZAP and Burp findings with the same title at different URL paths were merged then. Versions 1.1.0 and 1.2.0 give the same numbers for these files.) `--replace` is only needed if the folder already holds a report.
 
 * `sample-report/report.html`: one HTML file with search and a severity filter. It needs no network.
 * `sample-report/index.md`: the summary with the risk matrix and the list of findings.

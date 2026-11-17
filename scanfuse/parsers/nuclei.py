@@ -1,6 +1,6 @@
 import json
 import math
-from urllib.parse import urlsplit
+from urllib.parse import SplitResult, urlsplit
 
 from pydantic import ValidationError
 
@@ -17,6 +17,12 @@ from scanfuse.parsers.base import (
 
 class NucleiParser(BaseParser):
     def parse(self, file_path: str) -> list[Finding]:
+        try:
+            return self._parse(file_path)
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"Invalid Nuclei text encoding: {exc}") from exc
+
+    def _parse(self, file_path: str) -> list[Finding]:
         findings = []
         invalid_lines: list[int] = []
 
@@ -40,6 +46,8 @@ class NucleiParser(BaseParser):
                 try:
                     data = json.load(f)
                     if isinstance(data, list):
+                        if not data:
+                            return []
                         findings = []
                         invalid_items = []
                         for index, item in enumerate(data, start=1):
@@ -124,27 +132,42 @@ class NucleiParser(BaseParser):
         # Handle host extraction
         ip = data.get("ip")
         host_val = data.get("host")
+        matched_at = data.get("matched-at")
         hostname = None
+        url_parts: SplitResult | None = None
+        host_is_url = isinstance(host_val, str) and host_val.lower().startswith(("http://", "https://"))
+        if isinstance(host_val, str) and host_is_url:
+            try:
+                url_parts = urlsplit(host_val)
+                host_val = url_parts.hostname
+            except ValueError:
+                host_val = None
 
-        # If ip is missing but host is an IP, we could try to guess,
-        # but let's stick to using ip as ip and host as hostname if different.
         if not ip and host_val:
             ip = host_val
         elif host_val and ip and host_val != ip:
             hostname = host_val
-        elif host_val and not ip:
-            ip = host_val
-
         if not ip:
             ip = "unknown"
 
-        host_model = Host(ip=ip, hostname=hostname)
+        if url_parts is None and isinstance(matched_at, str) and matched_at.lower().startswith(("http://", "https://")):
+            try:
+                url_parts = urlsplit(str(matched_at).strip())
+            except ValueError:
+                url_parts = None
+        try:
+            port = url_parts.port if url_parts else None
+        except ValueError:
+            port = None
+        if url_parts and not data.get("ip") and (host_is_url or not host_val):
+            ip = "unknown"
+            hostname = url_parts.hostname
+        host_model = Host(ip=ip, hostname=hostname, port=port)
 
         # Handle evidence
         evidence_list = []
         req = data.get("request")
         resp = data.get("response")
-        matched_at = data.get("matched-at")
 
         if req or resp:
             ev_text = ""
@@ -168,7 +191,8 @@ class NucleiParser(BaseParser):
         location = None
         if isinstance(matched_at, str) and matched_at.lower().startswith(("http://", "https://")):
             try:
-                location = urlsplit(matched_at.strip()).path or "/"
+                parsed = urlsplit(matched_at.strip())
+                location = (parsed.path or "/") + (f"?{parsed.query}" if parsed.query else "")
             except ValueError:
                 location = None
 
@@ -184,5 +208,6 @@ class NucleiParser(BaseParser):
             evidence=evidence_list,
             identifiers=identifiers,
             references=extract_urls(info.get("reference")),
+            port=f"{port}/tcp" if port is not None else None,
             source_tool="nuclei"
         )

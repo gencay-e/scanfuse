@@ -1,5 +1,7 @@
 # \[SSL Scanner\] BREACH
 
+
+
 **Severity**: Medium
 
 
@@ -33,7 +35,7 @@ Disable HTTP compression on the server or ignored if there is no secret in the p
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

@@ -1,0 +1,14 @@
+{
+  "host": "example.test",
+  "ip": "192.0.2.1",
+  "port": "443",
+  "vulnerabilities": [
+    {
+      "id": "999986",
+      "OSVDB": "0",
+      "method": "GET",
+      "url": "/",
+      "msg": "Retrieved via header: 1.1 vegur"
+    }
+  ]
+}

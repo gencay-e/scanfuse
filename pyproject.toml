@@ -15,7 +15,7 @@ authors = [
 ]
 keywords = ["pentest", "security", "report", "nmap", "nuclei", "zap", "burp", "nessus", "trivy"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Information Technology",
     "Operating System :: OS Independent",
@@ -53,6 +53,8 @@ dev = [
     "ruff>=0.3.0",
     "mypy>=1.9.0",
     "pyinstaller>=6.5.0",
+    "playwright>=1.65.2",
+    "pypdf>=7.1.0",
 ]
 
 [tool.hatch.build.targets.sdist]

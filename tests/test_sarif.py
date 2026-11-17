@@ -101,6 +101,56 @@ def test_sarif_export_preserves_description_and_all_references(tmp_path):
     assert rule["properties"]["references"] == finding.references
 
 
+def test_sarif_handles_null_snippet_properties_and_rule_index(tmp_path):
+    data = _sarif()
+    run = data["runs"][0]
+    run["tool"]["driver"]["rules"][0]["defaultConfiguration"] = {"level": "error"}
+    run["tool"]["driver"]["rules"][0]["properties"]["cvss"] = {"vector": 42}
+    result = run["results"][0]
+    result.pop("ruleId")
+    result["ruleIndex"] = 0
+    result["properties"] = None
+    result["locations"][0]["physicalLocation"]["region"]["snippet"] = None
+    source = tmp_path / "nulls.sarif"
+    source.write_text(json.dumps(data), encoding="utf-8")
+
+    finding = SarifParser().parse(str(source))[0]
+    assert finding.title == "Dangerous eval"
+    assert finding.severity == "High"
+    assert finding.cvss_vector is None
+    assert finding.evidence[0].code == ""
+    assert finding.observations[0].host == "192.0.2.10"
+
+
+def test_sarif_uses_each_run_tool_name(tmp_path):
+    data = _sarif()
+    second = json.loads(json.dumps(data["runs"][0]))
+    second["tool"]["driver"]["name"] = "CodeQL"
+    second["results"][0]["locations"] = []
+    data["runs"].append(second)
+    source = tmp_path / "multi.sarif"
+    source.write_text(json.dumps(data), encoding="utf-8")
+
+    findings = SarifParser().parse(str(source))
+    assert [finding.source_tool for finding in findings] == ["Semgrep", "CodeQL"]
+
+
+def test_sarif_uses_default_level_and_markdown_help(tmp_path):
+    data = _sarif()
+    rule = data["runs"][0]["tool"]["driver"]["rules"][0]
+    rule["help"] = {"markdown": "See https://docs.example.test/fix"}
+    rule["defaultConfiguration"] = {"level": "note"}
+    rule["properties"] = {}
+    data["runs"][0]["results"][0]["level"] = None
+    source = tmp_path / "markdown.sarif"
+    source.write_text(json.dumps(data), encoding="utf-8")
+
+    finding = SarifParser().parse(str(source))[0]
+    assert finding.severity == "Low"
+    assert finding.remediation == "See https://docs.example.test/fix"
+    assert "https://docs.example.test/fix" in finding.references
+
+
 def test_sarif_export_structure_follows_the_2_1_0_schema_for_locations(tmp_path):
     # The log was also checked against the official sarif-schema-2.1.0.json by hand;
     # the schema is not part of the package, so this checks the shape that matters.

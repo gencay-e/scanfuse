@@ -101,22 +101,40 @@ def md_text(value: object) -> str:
     """For longer scanner text (description, remediation): raw HTML is escaped, Markdown
     formatting such as emphasis, code and links is kept, but the text cannot start a heading,
     so it cannot fake a section of the report."""
-    text = html.escape(_unify_line_breaks("" if value is None else str(value)), quote=False)
+    text = _unify_line_breaks("" if value is None else str(value))
     # Split text by fenced code blocks (```...```) to preserve code indentation.
-    parts = re.split(r"(```[^\n]*\n[\s\S]*?\n```)", text)
+    fence = re.compile(r"^(?P<fence>`{3,}|~{3,})(?![`~])[^\n]*\n[\s\S]*?^(?P=fence)[ \t]*$", re.MULTILINE)
+    parts: list[tuple[str, bool]] = []
+    offset = 0
+    for match in fence.finditer(text):
+        parts.extend(((text[offset:match.start()], False), (match.group(), True)))
+        offset = match.end()
+    parts.append((text[offset:], False))
     result = []
-    for i, part in enumerate(parts):
-        if i % 2 == 1:
+    for part, is_code in parts:
+        if is_code:
             # Inside fenced code block: preserve indentation
             result.append(part)
         else:
             # Outside code blocks: strip leading blanks so indented lines don't become 4-space code blocks
-            p = re.sub(r"^[ \t]+", "", part, flags=re.MULTILINE)
+            p = re.sub(r"^[ \t]+", "", html.escape(part, quote=False), flags=re.MULTILINE)
             p = _separate_lists(p)
             p = re.sub(r"^(\s*)(#+)", r"\1\\\2", p, flags=re.MULTILINE)
             p = re.sub(r"^(\s*)(=+|-{2,})\s*$", r"\1\\\2", p, flags=re.MULTILINE)
             result.append(p)
     return "".join(result)
+
+
+def md_reference(value: str) -> str:
+    """Keep HTTP references clickable without allowing Markdown or HTML injection."""
+    from urllib.parse import quote, urlsplit
+    try:
+        parsed = urlsplit(value)
+        if parsed.scheme.lower() in {"http", "https"} and parsed.netloc:
+            return "<" + quote(value, safe=":/?#[]@!$&'()*+,;=%") + ">"
+    except ValueError:
+        pass
+    return md_escape(" ".join(value.split()))
 
 
 def code_fence(data: object) -> str:
@@ -151,6 +169,7 @@ def _host_label(host: Host) -> str:
 
 class ScanfuseEngine:
     def __init__(self, output_dir: str, template_dir: str | None = None):
+        self.resolved: list[Finding] = []
         self.output_dir = Path(output_dir).resolve()
         self.custom_template_dir = Path(template_dir).resolve() if template_dir else None
 
@@ -221,6 +240,7 @@ class ScanfuseEngine:
         ("nmaprun", "nmap"),
         ("issues", "burp"),
         ("NessusClientData_v2", "nessus"),
+        ("niktoscan", "nikto"),
     )
 
     @staticmethod
@@ -246,27 +266,67 @@ class ScanfuseEngine:
                 except UnicodeDecodeError:
                     header = raw_bytes.decode("latin-1", errors="replace")
         start = header.lstrip()
+        if re.match(r'"?Nikto\s+-\s+v[0-9]', start, re.IGNORECASE):
+            return "nikto"
         if start.startswith("<"):
+            from defusedxml import ElementTree
+            from defusedxml.common import DefusedXmlException
+            root = None
+            try:
+                with open(file_path, "rb") as stream:
+                    root = next(ElementTree.iterparse(stream, events=("start",)))[1].tag
+            except (ElementTree.ParseError, DefusedXmlException, StopIteration):
+                pass
             for tag, name in ScanfuseEngine._XML_ROOTS:
-                if re.search(rf"<{tag}[\s>/]", header):
+                if root == tag:
                     return name
             raise ValueError(
                 f"Could not detect the format of {file_path}: unknown XML root element. Use --format."
             )
         if start.startswith(("{", "[")):
-            # Only the stable formats are detected automatically. The experimental formats
-            # (sarif, semgrep, grype, nikto, testssl) need --format, so a Nuclei or Trivy file
-            # can never be read by one of them by mistake.
-            # Trivy writes either an object with SchemaVersion/ArtifactName (current versions) or,
-            # in older versions, a list of results that have a Target.
-            is_trivy_object = start.startswith("{") and '"SchemaVersion"' in header and '"ArtifactName"' in header
-            is_trivy_list = start.startswith("[") and '"Target"' in header and any(
-                f'"{key}"' in header for key in ("Vulnerabilities", "Misconfigurations", "Secrets", "Class")
-            )
-            if is_trivy_object or is_trivy_list:
-                return "trivy"
-            if start.startswith("{") and '"version"' in header and '"runs"' in header and "2.1.0" in header:
-                raise ValueError(f"{file_path} looks like SARIF. SARIF import is experimental: use --format sarif.")
+            # Read the first JSONL record alone; pretty JSON needs the full document.
+            encoding = "utf-16" if raw_bytes.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
+            try:
+                with open(file_path, encoding=encoding) as stream:
+                    first_line = next((line for line in stream if line.strip()), "")
+                    try:
+                        data = json.loads(first_line)
+                    except json.JSONDecodeError:
+                        stream.seek(0)
+                        data = json.load(stream)
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                return "nuclei"
+            if isinstance(data, dict):
+                if data.get("version") == "2.1.0" and isinstance(data.get("runs"), list):
+                    return "sarif"
+                if isinstance(data.get("scanResult"), list):
+                    return "testssl"
+                matches = data.get("matches")
+                if isinstance(matches, list) and (not matches or any(
+                    isinstance(item, dict) and "vulnerability" in item for item in matches
+                )):
+                    return "grype"
+                if "SchemaVersion" in data:
+                    return "trivy"
+                if isinstance(data.get("vulnerabilities"), list) and any(
+                    key in data for key in ("host", "ip", "port", "banner")
+                ):
+                    return "nikto"
+                results = data.get("results")
+                if isinstance(results, list) and (not results or any(isinstance(item, dict) and "check_id" in item for item in results)):
+                    return "semgrep"
+                if "findingSeverity" in data and "id" in data:
+                    return "testssl"
+            elif isinstance(data, list):
+                entries = [item for item in data if isinstance(item, dict)]
+                if any("Target" in item and any(key in item for key in
+                       ("Vulnerabilities", "Misconfigurations", "Secrets", "Class")) for item in entries):
+                    return "trivy"
+                if any("vulnerabilities" in item and any(key in item for key in ("host", "ip", "port"))
+                       for item in entries):
+                    return "nikto"
+                if any("id" in item and "severity" in item and "finding" in item for item in entries):
+                    return "testssl"
             return "nuclei"
         raise ValueError(f"Could not detect the format of {file_path}. Use --format.")
 
@@ -282,7 +342,7 @@ class ScanfuseEngine:
         def match_host(h: Host) -> bool:
             h_ip = h.ip.lower()
             norm_ip = h_ip.strip("[]")
-            if fnmatch.fnmatchcase(h_ip, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_ip, norm_pattern)):
+            if norm_ip and norm_ip != "unknown" and (fnmatch.fnmatchcase(h_ip, pattern) or (norm_pattern and fnmatch.fnmatchcase(norm_ip, norm_pattern))):
                 return True
             h_name = (h.hostname or "").lower()
             norm_name = h_name.strip("[]")
@@ -296,18 +356,18 @@ class ScanfuseEngine:
             matching_hosts = [h for h in f.hosts if match_host(h)]
             if matching_hosts:
                 names = {
-                    name.strip().lower()
-                    for h in matching_hosts for name in (h.ip, h.hostname) if name
+                    name.strip().lower().strip("[]")
+                    for h in matching_hosts for name in (h.ip, h.hostname) if name and name.lower() != "unknown"
                 }
                 f_copy = f.model_copy()
                 f_copy.hosts = matching_hosts
                 f_copy.observations = [
-                    o for o in f.observations if o.host is None or o.host.lower() in names
+                    o for o in f.observations if o.host is None or o.host.lower().strip("[]") in names
                 ]
                 f_copy.evidence = [
-                    e.model_copy(update={"hosts": [x for x in e.hosts if x.strip().lower() in names]})
+                    e.model_copy(update={"hosts": [x for x in e.hosts if x.strip().lower().strip("[]") in names]})
                     for e in f.evidence
-                    if not e.hosts or any(x.strip().lower() in names for x in e.hosts)
+                    if not e.hosts or any(x.strip().lower().strip("[]") in names for x in e.hosts)
                 ]
                 new_filtered.append(f_copy)
         return new_filtered
@@ -385,7 +445,7 @@ class ScanfuseEngine:
             # A stale file is removed only if its digest still matches the manifest (which is
             # not authenticated). Entries without a digest (manifest of scanfuse 1.0.2 or earlier) are left in place.
             stale_names = sorted(
-                name for name in set(old_names) - set(names)
+                name for name in {name for name in old_names if isinstance(name, str)} - set(names)
                 if replace and isinstance(name, str) and name
                 and Path(name).name == name and not name.startswith(".")
                 and _matches_digest(self.output_dir / name, old_digests.get(name))
@@ -441,7 +501,9 @@ class ScanfuseEngine:
         env = Environment(loader=ChoiceLoader(loaders), autoescape=False)  # noqa: S701
         env.filters['md'] = md_escape
         env.filters['mdtext'] = md_text
+        env.filters['singleline'] = lambda value: ' '.join(str(value).split())
         env.filters['fence'] = code_fence
+        env.filters['reference'] = md_reference
         return env
 
     def export_findings(self, findings: list[Finding], errors: list[dict[str, str]] | None = None,
@@ -451,8 +513,6 @@ class ScanfuseEngine:
         `errors` lists inputs that could not be read; the report is then marked as incomplete.
         """
         errors = errors or []
-        if not findings:
-            return []
         env = self._template_env()
         finding_template = env.get_template("finding.md.j2")
         index_template = env.get_template("index.md.j2")
@@ -473,8 +533,8 @@ class ScanfuseEngine:
             )
             index_content = index_template.render(
                 findings=findings, findings_sorted=by_severity, errors=errors,
-                complete=not errors,
-            )
+                complete=not errors, resolved=self.resolved,
+            ).rstrip() + "\n"
             (staging / "index.md").write_text(index_content, encoding="utf-8")
             names.append("index.md")
 
@@ -604,6 +664,7 @@ function filterFindings() {
                 "complete": not errors,
                 "errors": errors,
                 "findings": [f.model_dump() for f in findings],
+                "resolved": [f.model_dump() for f in self.resolved],
             }
             (staging / "report.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
             return ["report.json"]
@@ -628,7 +689,7 @@ function filterFindings() {
                 # The first eight columns keep the order of scanfuse 0.1. New columns come last.
                 writer.writerow(["Title", "Severity", "CVSS", "Hosts", "Source Tool", "Description",
                                  "Remediation", "Evidence", "CVSS Vector", "Port", "Identifiers",
-                                 "References", "Other Reports", "Import Status", "Affected"])
+                                 "References", "Other Reports", "Import Status", "Affected", "Retest Status"])
                 for finding in findings:
                     hosts_str = ", ".join(
                         f"{h.ip} ({h.hostname})" if h.hostname else h.ip for h in finding.hosts
@@ -651,7 +712,7 @@ function filterFindings() {
                         finding.description, finding.remediation, evidence_str,
                         finding.cvss_vector, finding.port, ", ".join(finding.identifiers),
                         "\n".join(finding.references), others, status,
-                        "\n".join(finding.affected()),
+                        "\n".join(finding.affected()), finding.status or "",
                     ]])
             return ["report.csv"]
 
@@ -740,4 +801,4 @@ function filterFindings() {
     def export_pdf(self, findings: list[Finding], errors: list[dict[str, str]] | None = None,
                    replace: bool = False) -> list[str]:
         from scanfuse.reporters.pdf import export_pdf
-        return export_pdf(self.output_dir, findings, errors=errors, replace=replace)
+        return export_pdf(self.output_dir, findings, errors=errors, replace=replace, resolved=self.resolved)

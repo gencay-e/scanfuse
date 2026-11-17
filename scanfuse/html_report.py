@@ -1,7 +1,5 @@
 """Render untrusted report Markdown as restricted HTML fragments."""
 
-import re
-
 import markdown
 import nh3
 
@@ -12,19 +10,19 @@ REPORT_TAGS = {
 }
 
 
-def _rewrite_internal_md_link(match: re.Match) -> str:
-    target = match.group(1)
-    if "://" in target or target.startswith(("//", "/", "mailto:", "javascript:")):
-        return match.group(0)
-    return f"](#{target})"
+def _rewrite_internal_md_link(tag: str, attribute: str, value: str) -> str:
+    if tag == "a" and attribute == "href" and value.endswith(".md"):
+        if ":" not in value and not value.startswith(("//", "/", "#")):
+            return "#" + value[:-3]
+    return value
 
 
 def render_report_fragment(content: str) -> str:
-    content = re.sub(r'\]\(([^)]+)\.md\)', _rewrite_internal_md_link, content)
     rendered = markdown.markdown(content, extensions=["tables", "fenced_code"])
     return nh3.clean(
         rendered,
         tags=REPORT_TAGS,
         attributes={"a": {"href", "title"}},
+        attribute_filter=_rewrite_internal_md_link,
         url_schemes={"http", "https", "mailto"},
     )

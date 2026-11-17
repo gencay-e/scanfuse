@@ -1,5 +1,7 @@
 # Kyverno resource with a deletionTimestamp may allow policy circumvention
 
+
+
 **Severity**: Medium
 
 

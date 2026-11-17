@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies (locked)
         run: uv sync --locked --extra dev
 
+      - name: Install Chromium for browser tests
+        run: uv run playwright install --with-deps chromium
+
       - name: Ruff
         shell: bash
         run: .github/scripts/run-with-annotations.sh "ruff" uv run ruff check .

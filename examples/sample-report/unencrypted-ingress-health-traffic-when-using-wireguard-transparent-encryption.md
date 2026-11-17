@@ -1,5 +1,7 @@
 # Unencrypted ingress/health traffic when using Wireguard transparent encryption
 
+
+
 **Severity**: Medium
 
 

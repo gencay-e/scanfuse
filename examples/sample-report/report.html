@@ -159,7 +159,7 @@ function filterFindings() {
 <p>[High] <a href="#kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default" rel="noopener noreferrer">Kyverno's PolicyException objects can be created in any namespace by default</a> (Source: trivy, 1 host)</p>
 </li>
 <li>
-<p>[High] <a href="#path-traversal" rel="noopener noreferrer">Path Traversal</a> at /demo/PathTraversal.php [action parameter] (Source: zap, 1 host)</p>
+<p>[High] <a href="#path-traversal" rel="noopener noreferrer">Path Traversal</a> at /demo/PathTraversal.php?action=%5cWindows%5csystem.ini [action parameter] (Source: zap, 1 host)</p>
 </li>
 <li>
 <p>[High] <a href="#sql-injection" rel="noopener noreferrer">SQL Injection</a> at /demo/SQLI2.php [username parameter] (Source: zap, 1 host)</p>
@@ -273,7 +273,7 @@ function filterFindings() {
 <p>.</p>
 </li>
 <li>
-<p>127.0.0.1 (https://127.0.0.1)</p>
+<p>127.0.0.1</p>
 </li>
 <li>
 <p>10.31.112.24 (qa3app04)</p>
@@ -729,14 +729,14 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/DirectoryIndexing/
 </code></pre></div>
-<div id="path-traversal" class="finding-block" data-severity="High" data-title="path traversal 10.2.100.1 /demo/pathtraversal.php [action parameter]"><hr>
+<div id="path-traversal" class="finding-block" data-severity="High" data-title="path traversal 10.2.100.1 /demo/pathtraversal.php?action=%5cwindows%5csystem.ini [action parameter]"><hr>
 <h1>Path Traversal</h1>
 <p><strong>Severity</strong>: High</p>
 <p><strong>Source</strong>: zap</p>
 <p><strong>Port</strong>: 80/tcp</p>
 <p><strong>Affected</strong>:</p>
 <ul>
-<li>10.2.100.1 /demo/PathTraversal.php [action parameter]</li>
+<li>10.2.100.1 /demo/PathTraversal.php?action=%5cWindows%5csystem.ini [action parameter]</li>
 </ul>
 <p><strong>Identifiers</strong>: zap-plugin:6</p>
 <h2>Description</h2>
@@ -923,6 +923,7 @@ For every web page that is generated, use and specify a character encoding such 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/EvalInjection2.php
 Parameter: command
+Attack: &lt;/pre&gt;&lt;script&gt;alert(1);&lt;/script&gt;&lt;pre&gt;
 </code></pre></div>
 <div id="cross-site-scripting-1" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xss-reflected2.php [username parameter]"><hr>
 <h1>Cross Site Scripting</h1>
@@ -974,6 +975,7 @@ For every web page that is generated, use and specify a character encoding such 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XSS-reflected2.php
 Parameter: username
+Attack: &lt;script&gt;alert(1);&lt;/script&gt;
 </code></pre></div>
 <div id="cross-site-scripting-2" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xpathinjection2.php [username parameter]"><hr>
 <h1>Cross Site Scripting</h1>
@@ -1025,7 +1027,7 @@ For every web page that is generated, use and specify a character encoding such 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XPathInjection2.php
 Parameter: username
-Attack: '"
+Attack: '"&lt;script&gt;alert(1);&lt;/script&gt;
 </code></pre></div>
 <div id="cross-site-scripting-3" class="finding-block" data-severity="High" data-title="cross site scripting 10.2.100.1 /demo/xpathinjection2.php [password parameter]"><hr>
 <h1>Cross Site Scripting</h1>
@@ -1077,7 +1079,7 @@ For every web page that is generated, use and specify a character encoding such 
 <h3>http-request</h3>
 <pre><code>Request: http://10.2.100.1/demo/XPathInjection2.php
 Parameter: password
-Attack: '"
+Attack: '"&lt;script&gt;alert(1);&lt;/script&gt;
 </code></pre></div>
 <div id="jwt-token" class="finding-block" data-severity="Medium" data-title="jwt token"><hr>
 <h1>JWT token</h1>
@@ -2493,7 +2495,7 @@ Installed: 0.22.0
 <p>The parameter max-age gives the time frame for requirement of HTTPS in seconds and should be chosen quite high, e.g. several months.            A value below 7776000 is considered as too low by this scanner check.             The flag includeSubDomains defines that the policy applies also for sub domains of the sender of the response.</p>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>
@@ -2557,7 +2559,7 @@ Installed: 0.22.0
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>
@@ -2609,7 +2611,7 @@ These measures might include blocking network access from the application server
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>
@@ -2634,7 +2636,7 @@ These measures might include blocking network access from the application server
 <p>SSLv3 should never be enabled on production systems.</p>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>
@@ -2662,7 +2664,7 @@ These measures might include blocking network access from the application server
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>
@@ -2687,7 +2689,7 @@ These measures might include blocking network access from the application server
 <p>Disable HTTP compression on the server or ignored if there is no secret in the page.</p>
 <h2>Hosts</h2>
 <ul>
-<li>127.0.0.1 (https://127.0.0.1)</li>
+<li>127.0.0.1 (127.0.0.1)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>path</h3>

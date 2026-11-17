@@ -1,5 +1,7 @@
 # Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present
 
+
+
 **Severity**: Medium
 
 

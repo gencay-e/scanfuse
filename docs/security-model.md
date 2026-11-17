@@ -1,6 +1,6 @@
 # Security Model
 
-`scanfuse` is an offline command-line utility that imports pentest scanner outputs (Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus and Trivy, plus the experimental SARIF, Semgrep, Grype, Nikto and testssl.sh formats), deduplicates findings, and exports unified reports as Markdown, standalone HTML, JSON, CSV, SARIF or PDF.
+`scanfuse` is an offline command-line utility that imports pentest scanner outputs (Nmap, Nuclei, OWASP ZAP, Burp Suite, Nessus, Trivy, SARIF, Semgrep, Grype, Nikto and testssl.sh), deduplicates findings, and exports unified reports as Markdown, standalone HTML, JSON, CSV, SARIF or PDF.
 
 ## Deployment Context
 
@@ -13,12 +13,13 @@
 ### Untrusted Inputs
 
 * **Scanner input files** (`file_path` arguments and `stdin` in `scanfuse/cli.py`, parsed by `scanfuse/parsers/*.py`):
-  * XML inputs (`nmap.py`, `zap.py`, `burp.py`, `nessus.py`, `nikto.py`) and JSON/JSONL inputs (`nuclei.py`, `trivy.py`, `sarif.py`, `semgrep.py`, `grype.py`, `nikto.py`, `testssl.py`) are untrusted. Both the file structure and all embedded text fields (`title`, `description`, `remediation`, `host`, `evidence`, `references`, `identifiers`) may be attacker-controlled.
+  * XML inputs (`nmap.py`, `zap.py`, `burp.py`, `nessus.py`, `nikto.py`) and JSON/JSONL inputs (`nuclei.py`, `trivy.py`, `sarif.py`, `semgrep.py`, `grype.py`, `nikto.py`, `testssl.py`) are untrusted. Nikto CSV inputs are also untrusted. Both the file structure and all embedded text fields (`title`, `description`, `remediation`, `host`, `evidence`, `references`, `identifiers`) may be attacker-controlled.
 
 ### Trusted Operator Inputs
 
-* **Command-line arguments** (`--output`, `-f`/`--format` (input format), `--format-out`, `--min-severity`, `--host`, `--template-dir`, `--replace`, `--csv-excel`).
-* **Local configuration file** (`.scanfuse.yaml` in the current working directory, loaded via `yaml.safe_load` in `scanfuse/cli.py` and `scanfuse/config.py`).
+* **Command-line arguments** (`--output`, `-f`/`--format` (input format), `--format-out`, `--min-severity`, `--host`, `--template-dir`, `--replace`, `--csv-excel`, `--config`, `--baseline`).
+* **Local configuration file** (`.scanfuse.yaml` in the current working directory or the file selected by `--config`, loaded with a strict `yaml.SafeLoader` subclass in `scanfuse/config.py`). Configuration affects filtering and report contents; malformed or invalid configuration marks the run incomplete.
+* **Baseline JSON report** (`--baseline`): the operator selects a complete schema version 2 report. Its contents affect retest statuses and must come from the same scope and filters; comparison does not authenticate the report. An incomplete current run does not mark findings resolved.
 * **Custom Jinja2 templates** (`--template-dir`, loaded by `ScanfuseEngine._template_env` in `scanfuse/engine.py`).
 
 ## Security Invariants
@@ -29,7 +30,8 @@
    All Markdown fragments rendered into `report.html` must pass through `nh3.clean` in `scanfuse/html_report.py` (`render_report_fragment`), restricting elements to `REPORT_TAGS` (`a`, `b`, `blockquote`, `br`, `code`, `del`, `div`, `em`, `h1`–`h6`, `hr`, `i`, `li`, `ol`, `p`, `pre`, `s`, `strong`, `table`, `tbody`, `td`, `th`, `thead`, `tr`, `ul`) and URL schemes on `a[href]` to `http`, `https`, and `mailto`.
 3. **Markdown Escaping and Fence Isolation:**
    * Scalar fields (`title`, `ip`, `hostname`, `os`, `source_tool`, `port`, `identifiers`, and the host, `method` and `location` of each observation) use the `md` filter (`md_escape` in `scanfuse/engine.py`) so they cannot inject HTML tags, Markdown links, or headings.
-   * Free-text fields (`description`, `remediation`) use the `mdtext` filter (`md_text` in `scanfuse/engine.py`), which HTML-escapes raw `<`/`>`/`&` and escapes leading `#`/`=`/`-` heading markers.
+   * Free-text fields (`description`, `remediation`) use the `mdtext` filter (`md_text` in `scanfuse/engine.py`), which HTML-escapes raw `<`/`>`/`&` and escapes leading `#`/`=`/`-` heading markers outside fenced code blocks. Fenced text is preserved for the Markdown renderer to escape as code; rendered HTML still passes through `nh3.clean`.
+   * Reference URLs use `md_reference`: HTTP(S) URLs with a network location are quoted to prevent Markdown or HTML injection; other values are shown as escaped text.
    * Raw evidence blocks use the `fence` filter (`code_fence` in `scanfuse/engine.py`), which computes a backtick fence strictly longer than any backtick run inside the evidence payload.
 4. **Spreadsheet Formula Neutralization (CSV Injection):**
    Every cell written by `ScanfuseEngine.export_csv` in `scanfuse/engine.py` must pass through `csv_safe`, which normalizes text with `NFKC` and prepends a single quote (`'`) whenever the normalized cell starts with `=`, `+`, `-`, or `@`, or the raw cell starts with whitespace (`\t`, `\r`, `\n`, space).
@@ -39,13 +41,17 @@
 6. **SARIF and PDF output:**
    `report.sarif` is written with `json.dumps`, so scanner text cannot break the JSON structure. `report.pdf` (`scanfuse/reporters/pdf.py`) only draws text; it contains no links, scripts or embedded files from the scanner input.
 
+## Runtime verification limits
+
+Automated Chromium tests exercise report controls and a representative untrusted payload. Excel Power Query tests check formula-like CSV values when Windows Excel is installed and skip otherwise. These tests do not cover every payload, browser, spreadsheet application or version.
+
 ## In-Scope Vulnerability Classes
 
 * **XXE or XML entity expansion** bypassing `defusedxml` in `scanfuse/parsers/*.py`.
 * **Cross-Site Scripting (XSS)** in generated `report.html` via crafted scanner fields bypassing `md_escape`, `md_text`, `code_fence`, or `nh3.clean` (`scanfuse/engine.py`, `scanfuse/html_report.py`).
 * **Path traversal or arbitrary file overwrite** outside `--output` triggered by crafted finding titles, slugs, or manifest entries (`scanfuse/utils.py`, `scanfuse/engine.py`).
 * **CSV formula injection** bypassing `csv_safe` (`scanfuse/engine.py`).
-* **Unsafe deserialization** in configuration or parser loading (e.g., replacing `yaml.safe_load` in `scanfuse/cli.py`).
+* **Unsafe deserialization** in configuration or parser loading (e.g., replacing the safe configuration loader with an unsafe loader).
 
 ## Out of Scope / Non-Issues
 

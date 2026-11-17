@@ -23,7 +23,8 @@ class GrypeParser(BaseParser):
         findings: list[Finding] = []
         severity_map = {"CRITICAL": "Critical", "HIGH": "High", "MEDIUM": "Medium",
                         "LOW": "Low", "NEGLIGIBLE": "Info", "UNKNOWN": "Info"}
-        source_info = _dict(payload.get("source", payload.get("context", {}).get("source", {})))
+        context = _dict(payload.get("context"))
+        source_info = _dict(payload.get("source") or context.get("source"))
         target = source_info.get("target")
         if isinstance(target, dict):
             target = target.get("userInput") or target.get("imageID") or target.get("path")
@@ -57,16 +58,20 @@ class GrypeParser(BaseParser):
                         cvss_vector = str(vector) if vector else None
             elif isinstance(cvss_val, str):
                 cvss_vector = cvss_val
+            fix_versions = _dict(vulnerability.get("fix")).get("versions")
+            remediation = str(fix_versions[0]) if isinstance(fix_versions, list) and fix_versions else None
+            related = match.get("relatedVulnerabilities")
+            related_ids = [item.get("id") for item in related if isinstance(item, dict)] \
+                if isinstance(related, list) else []
             findings.append(Finding(
                 title=f"{vuln_id} in {package}",
                 severity=severity,
                 description=description,
-                remediation=str(_dict(vulnerability.get("fix")).get("versions", [None])[0])
-                if _dict(vulnerability.get("fix")).get("versions") else None,
+                remediation=remediation,
                 hosts=[Host(ip="local", hostname=str(target_name))],
                 evidence=[Evidence(type="package", data=f"{package} {pkg_version or ''}".strip())],
                 source_tool="grype",
-                identifiers=clean_ids(vuln_id, cve_list),
+                identifiers=clean_ids(vuln_id, cve_list, related_ids),
                 references=extract_urls(vulnerability.get("urls")),
                 cvss_vector=cvss_vector,
                 cvss_score=cvss_score,

@@ -1,3 +1,4 @@
+import ipaddress
 import math
 import xml.etree.ElementTree as ET
 
@@ -49,9 +50,15 @@ class NessusParser(BaseParser):
                             elif name == "operating-system":
                                 host_os = tag.text
 
-                    # Fallback if host-ip is missing but ReportHost name is an IP
+                    # ReportHost names are commonly DNS names when host-ip is absent.
                     if not host_ips:
-                        host_ips.append(report_host.get("name", "unknown"))
+                        report_name = (report_host.get("name") or "unknown").strip()
+                        try:
+                            ipaddress.ip_address(report_name)
+                            host_ips.append(report_name)
+                        except ValueError:
+                            host_ips.append("unknown")
+                            host_fqdn = host_fqdn or report_name
 
                     hosts = [Host(ip=ip, hostname=host_fqdn, os=host_os) for ip in host_ips]
 

@@ -1,0 +1,22 @@
+{
+  "version": "3.0rc2 1b5b386 from 2018-11-12",
+  "scanResult": [
+    {
+      "targetHost": "example.test",
+      "ip": "192.0.2.1",
+      "port": "443",
+      "serverDefaults": [
+        {
+          "id": "TLS_session_ticket",
+          "severity": "LOW",
+          "finding": "valid for 100800 seconds (>daily)"
+        },
+        {
+          "id": "OCSP_stapling <cert#1>",
+          "severity": "LOW",
+          "finding": "not offered"
+        }
+      ]
+    }
+  ]
+}

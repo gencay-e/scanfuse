@@ -150,3 +150,23 @@ def test_references_appear_in_markdown_html_and_csv(tmp_path):
     with (out2 / "report.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream))
     assert rows[0]["References"].startswith("http")
+
+
+@pytest.mark.parametrize(("name", "expected", "count"), [
+    ("nuclei.json", "nuclei", 2), ("nuclei.jsonl", "nuclei", 2),
+    ("codeql.sarif", "sarif", 1), ("semgrep.sarif", "sarif", 1),
+    ("semgrep.json", "semgrep", 1), ("grype.json", "grype", 1),
+    ("nikto.json", "nikto", 1), ("nikto.xml", "nikto", 1),
+    ("nikto.csv", "nikto", 1),
+    ("testssl-flat.json", "testssl", 2), ("testssl-pretty.json", "testssl", 2),
+])
+def test_extended_public_samples_auto_detect_and_parse(name, expected, count, tmp_path):
+    path = PUBLIC / "extended" / name
+    engine = ScanfuseEngine(str(tmp_path))
+    assert engine._detect_format(str(path)) == expected
+    findings = engine.process_file(str(path), "auto")
+    assert len(findings) == count
+    assert all(f.title for f in findings)
+    if name == "nikto.json":
+        assert findings[0].hosts[0].ip == "192.0.2.1"
+        assert findings[0].observations[0].location == "/"

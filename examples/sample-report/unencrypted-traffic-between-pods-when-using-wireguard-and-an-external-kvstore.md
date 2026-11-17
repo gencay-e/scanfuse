@@ -1,5 +1,7 @@
 # Unencrypted traffic between pods when using Wireguard and an external kvstore
 
+
+
 **Severity**: Medium
 
 

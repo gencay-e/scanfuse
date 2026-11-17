@@ -1,5 +1,7 @@
 # Kyverno's PolicyException objects can be created in any namespace by default
 
+
+
 **Severity**: High
 
 

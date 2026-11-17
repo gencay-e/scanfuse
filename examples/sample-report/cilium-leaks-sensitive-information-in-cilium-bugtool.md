@@ -1,5 +1,7 @@
 # Cilium leaks sensitive information in cilium-bugtool
 
+
+
 **Severity**: High
 
 

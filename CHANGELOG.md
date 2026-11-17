@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 (2026-11-17)
+
+* Auto-detection covers all 11 input formats, including SARIF, Semgrep, Grype, Nikto and testssl.sh. Real scan fixtures include Nikto CSV captured against an owned local server, with source and license notes.
+* Nikto observations retain HTTP methods, URI paths and query strings. Different queries remain separate during merging. SARIF and Semgrep observations retain file paths and start lines, so separate code locations stay separate during merging.
+* `--config` / `-c` selects a configuration file. The default and selected files use the same strict validation. Rules can match `source_tool`, `title` and `location`.
+* `--baseline` compares a retest with a complete schema version 2 JSON report. Active findings are marked new or unchanged; findings absent from a complete retest are listed as resolved. An incomplete retest does not mark findings resolved. Current report filters also apply to resolved findings.
+* PDF summaries include severity counts and import errors. Pages are numbered. Finding pages include host names, tags, source summaries and evidence; each evidence item is capped at 12,000 characters.
+* Browser tests exercise report controls and untrusted input in Chromium. Excel Power Query tests check formula-like CSV values when Windows Excel is available and skip otherwise.
+* Merging checks tool-local ids per source, retains evidence that differs only by code, and keeps an available CVSS vector when scores tie. Baseline comparison includes tool-local ids and runs before display filters.
+* Parsers handle null SARIF fields, rule defaults and multi-run sources; preserve ZAP payloads and URL queries; and retain Nikto findings without ids. Host, port, severity, references and vulnerability metadata handling are corrected across the remaining parsers.
+* Detection uses the XML root and accepts empty Semgrep results and minimal Trivy reports. Host filtering handles bracketed IPv6 addresses. Markdown code blocks retain their text, reference URLs are escaped, and malformed manifest entries cannot crash replacement.
+* Nikto unwraps nested `scanDetails`, `vulnerabilities` and `items` while retaining target metadata. URL identifiers in CSV are also retained as references. Excessive wrapper nesting produces a controlled import error.
+* Merge membership is independent of input order when several tools report competing local ids. Primary description, remediation and tied CVSS vectors use a stable source/text ordering. Finding and source-list ordering still follow the input.
+* Property tests mutate nested report values, truncate files, fuzz raw bytes and probe text encodings across all 11 parsers. Malformed Nuclei/Nikto/Trivy encodings produce import errors; wrong-typed Trivy artifact names and SARIF rule, result and location fields no longer raise internal type or validation errors. Pipeline properties exercise baseline status, escaping and all export formats.
+* Package classifier is "Development Status :: 5 - Production/Stable".
+
 ## 1.1.0 (2026-11-13)
 
 Reports can contain more findings than with 1.0.2. The merge identity changed, so this is a minor release. Findings are now merged only if the HTTP method and the location (URL path and parameter) are also the same, and paths are compared case-sensitively. Before, the same ZAP or Burp title at different paths, with different methods, or at `/Admin` and `/admin` was one finding and is now several. The example report grew from 104 to 162 findings (39 to 49 at Medium or higher).

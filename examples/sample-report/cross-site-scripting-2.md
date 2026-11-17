@@ -1,5 +1,7 @@
 # Cross Site Scripting
 
+
+
 **Severity**: High
 
 
@@ -80,5 +82,5 @@ Ensure that you perform input validation at well-defined interfaces within the a
 ```
 Request: http://10.2.100.1/demo/XPathInjection2.php
 Parameter: username
-Attack: '"
+Attack: '"<script>alert(1);</script>
 ```

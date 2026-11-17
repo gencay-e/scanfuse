@@ -55,12 +55,20 @@ class BurpParser(BaseParser):
                     severity = severity_map.get(severity_raw, "Info")
 
                     host_elem = issue_elem.find("host")
-                    ip = host_elem.get("ip", "unknown") if host_elem is not None else "unknown"
-                    hostname = host_elem.text if host_elem is not None else None
+                    ip = (host_elem.get("ip") or "unknown") if host_elem is not None else "unknown"
+                    host_value = host_elem.text.strip() if host_elem is not None and host_elem.text else None
+                    hostname = host_value
+                    if host_value:
+                        try:
+                            parsed_host = urlsplit(host_value)
+                            if parsed_host.scheme in {"http", "https"} and parsed_host.hostname:
+                                hostname = parsed_host.hostname
+                        except ValueError:
+                            pass
                     port = None
                     if hostname:
                         try:
-                            u = urlsplit(hostname)
+                            u = urlsplit(host_value or hostname)
                             if u.port:
                                 port = f"{u.port}/tcp"
                             elif u.scheme == "https":

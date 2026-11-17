@@ -1,5 +1,7 @@
 # SSL certificate
 
+
+
 **Severity**: Medium
 
 
@@ -90,7 +92,7 @@ It should be noted that various attacks exist against SSL in general, and in the
 
 ## Hosts
 
-- 127.0.0.1 (https://127.0.0.1)
+- 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence

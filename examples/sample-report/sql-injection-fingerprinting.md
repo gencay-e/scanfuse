@@ -1,5 +1,7 @@
 # SQL Injection Fingerprinting
 
+
+
 **Severity**: High
 
 

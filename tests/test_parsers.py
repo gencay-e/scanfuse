@@ -4,6 +4,8 @@ import os
 import pytest
 
 from scanfuse.parsers.base import PartialImportError
+from scanfuse.parsers.burp import BurpParser
+from scanfuse.parsers.nessus import NessusParser
 from scanfuse.parsers.nmap import NmapParser
 from scanfuse.parsers.nuclei import NucleiParser
 from scanfuse.parsers.zap import ZapParser
@@ -116,3 +118,32 @@ def test_zap_parser():
     assert f2.title == "SQL Injection"
     assert f2.severity == "High"
     assert "SQL syntax error" in f2.evidence[0].data
+
+
+def test_zap_preserves_payload_html_and_query_in_location(tmp_path):
+    source = tmp_path / "zap.xml"
+    source.write_text('''<OWASPZAPReport><site host="example.test"><alerts><alertitem>
+      <alert>Test</alert><riskcode>2</riskcode><uri>https://example.test/search?q=1</uri>
+      <param>&lt;img src=x onerror=alert(1)&gt;</param><attack>&lt;script&gt;alert(1)&lt;/script&gt;</attack>
+      <evidence>&lt;b&gt;matched&lt;/b&gt;</evidence></alertitem></alerts></site></OWASPZAPReport>''', encoding="utf-8")
+    finding = ZapParser().parse(str(source))[0]
+    assert finding.observations[0].location == "/search?q=1 [<img src=x onerror=alert(1)> parameter]"
+    assert "Attack: <script>alert(1)</script>" in finding.evidence[0].data
+    assert "Evidence: <b>matched</b>" in finding.evidence[0].data
+
+
+def test_burp_url_host_and_empty_ip_fallback(tmp_path):
+    source = tmp_path / "burp.xml"
+    source.write_text('<issues><issue><name>Test</name><host ip="">https://example.test:8443/path</host></issue></issues>', encoding="utf-8")
+    finding = BurpParser().parse(str(source))[0]
+    assert finding.hosts[0].ip == "unknown"
+    assert finding.hosts[0].hostname == "example.test"
+    assert finding.port == "8443/tcp"
+
+
+def test_nessus_reporthost_name_falls_back_to_hostname(tmp_path):
+    source = tmp_path / "nessus.xml"
+    source.write_text('<NessusClientData_v2><Report><ReportHost name="scanner.example"><ReportItem pluginName="Test" severity="1" port="0" protocol="tcp" /></ReportHost></Report></NessusClientData_v2>', encoding="utf-8")
+    finding = NessusParser().parse(str(source))[0]
+    assert finding.hosts[0].ip == "unknown"
+    assert finding.hosts[0].hostname == "scanner.example"

@@ -104,7 +104,8 @@ def check(fmt: str, out: Path, n: int, unique: int) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("count", type=int)
+    parser.add_argument("count", type=int, nargs="?", default=100_000,
+                        help="number of scan results (default: 100000)")
     parser.add_argument("--formats", default="json,csv,markdown")
     parser.add_argument("--work", default=None, help="working directory (default: a temporary one)")
     args = parser.parse_args()

@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 from typing import cast
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
-from scanfuse.models import Evidence, Finding, Host
+from scanfuse.models import Evidence, Finding, Host, Observation
 from scanfuse.parsers.base import BaseParser, clean_ids, extract_urls, html_to_text
 
 
@@ -26,36 +26,33 @@ class SarifParser(BaseParser):
         if not isinstance(runs, list):
             raise ValueError("SARIF input must contain a runs array")
 
-        source_tool = "sarif"
-        for run in runs:
-            if isinstance(run, dict) and isinstance(run.get("tool"), dict):
-                tool = run.get("tool")
-                driver = tool.get("driver") if isinstance(tool, dict) else {}
-                if isinstance(driver, dict) and driver.get("name"):
-                    source_tool = str(driver.get("name"))
-                    break
-
         findings: list[Finding] = []
-        cvss_vectors: list[str | None] = []
 
         for run in runs:
             if not isinstance(run, dict):
                 continue
+            source_tool = "sarif"
             tool = run.get("tool") or {}
             driver = tool.get("driver") if isinstance(tool, dict) else {}
-            if source_tool == "sarif" and isinstance(driver, dict) and driver.get("name"):
+            if isinstance(driver, dict) and driver.get("name"):
                 source_tool = str(driver.get("name"))
-            rules = (driver or {}).get("rules") if isinstance(driver, dict) else []
+            raw_rules = driver.get("rules") if isinstance(driver, dict) else []
+            rules = raw_rules if isinstance(raw_rules, list) else []
             rule_map = {
                 str(rule.get("id")): rule
                 for rule in rules or []
                 if isinstance(rule, dict) and rule.get("id") is not None
             }
-            results = run.get("results") or []
+            raw_results = run.get("results")
+            results = raw_results if isinstance(raw_results, list) else []
             for result in results:
                 if not isinstance(result, dict):
                     continue
                 rule_id = str(result.get("ruleId") or "")
+                if not rule_id and isinstance(result.get("ruleIndex"), int):
+                    rule_index = result["ruleIndex"]
+                    if isinstance(rules, list) and 0 <= rule_index < len(rules):
+                        rule_id = str(_dict(rules[rule_index]).get("id") or "")
                 rule = rule_map.get(rule_id, {})
                 message = result.get("message") or {}
                 if isinstance(message, dict):
@@ -84,54 +81,69 @@ class SarifParser(BaseParser):
                     description = f"{description}\n\n{rule_text}"
                 else:
                     description = description or rule_text or title
-                level = str(result.get("level") or "warning").lower()
+                level = str(result.get("level") or _dict(rule.get("defaultConfiguration")).get("level") or "warning").lower()
                 properties = _dict(result.get("properties"))
                 rule_properties = _dict(rule.get("properties"))
-                score_value = properties.get("security-severity", rule_properties.get("security-severity"))
+                score_value = properties.get("security-severity")
+                if score_value is None:
+                    score_value = rule_properties.get("security-severity")
                 severity = self._severity(score_value, level)
                 declared_severity = properties.get("scanfuse-severity")
                 if declared_severity in {"Critical", "High", "Medium", "Low", "Info"}:
                     severity = str(declared_severity)
                 score = self._score(score_value)
-                cvss_raw = properties.get("cvss", rule_properties.get("cvss"))
+                cvss_raw = properties.get("cvss")
+                if cvss_raw is None:
+                    cvss_raw = rule_properties.get("cvss")
                 cvss_vector = None
                 if isinstance(cvss_raw, str):
                     cvss_vector = cvss_raw
                 elif isinstance(cvss_raw, dict):
-                    cvss_vector = cvss_raw.get("vector")
+                    vector = cvss_raw.get("vector")
+                    cvss_vector = vector if isinstance(vector, str) else None
                 elif isinstance(cvss_raw, list) and cvss_raw:
                     if isinstance(cvss_raw[0], dict):
-                        cvss_vector = cvss_raw[0].get("vector")
-                    else:
-                        cvss_vector = str(cvss_raw[0])
-                if cvss_vector:
-                    cvss_vectors.append(cvss_vector)
-                locations = result.get("locations") or []
+                        vector = cvss_raw[0].get("vector")
+                        cvss_vector = vector if isinstance(vector, str) else None
+                    elif isinstance(cvss_raw[0], str):
+                        cvss_vector = cvss_raw[0]
+                locations = result.get("locations")
+                if not isinstance(locations, list):
+                    locations = []
                 hosts: list[Host] = []
                 evidence: list[Evidence] = []
+                observations: list[Observation] = []
                 for location in locations:
                     if not isinstance(location, dict):
                         continue
-                    physical = location.get("physicalLocation") or {}
-                    artifact = physical.get("artifactLocation") or {}
-                    uri = artifact.get("uri")
+                    physical = _dict(location.get("physicalLocation"))
+                    artifact = _dict(physical.get("artifactLocation"))
+                    uri_raw = artifact.get("uri")
+                    uri = uri_raw if isinstance(uri_raw, str) else None
                     if uri:
-                        parsed = urlparse(str(uri))
-                        hostname = parsed.hostname or str(uri)
-                        if not any(h.ip == hostname for h in hosts):
+                        parsed = urlsplit(str(uri))
+                        hostname = parsed.hostname if parsed.scheme in {"http", "https"} else None
+                        if hostname and not any(h.ip == hostname for h in hosts):
                             hosts.append(Host(ip=hostname))
-                    region = physical.get("region") or {}
+                    else:
+                        hostname = None
+                    region = _dict(physical.get("region"))
+                    start_line = region.get("startLine")
+                    location = f"{uri}:{start_line}" if uri and start_line is not None else (str(uri) if uri else None)
+                    observations.append(Observation(host=hostname, location=location, source_tool=source_tool))
                     details = str(uri or "location")
                     if region.get("startLine") is not None:
                         details += f":{region['startLine']}"
                     if region.get("startColumn") is not None:
                         details += f":{region['startColumn']}"
-                    evidence.append(Evidence(type="location", data=details, code=str(region.get("snippet", {}).get("text", ""))))
+                    snippet = _dict(region.get("snippet"))
+                    evidence.append(Evidence(type="location", data=details, code=str(snippet.get("text") or "")))
                 rule_properties = _dict(rule.get("properties"))
                 reference_values = cast(list[object], rule_properties["references"]) \
                     if isinstance(rule_properties.get("references"), list) else []
                 references = extract_urls(
-                    rule.get("helpUri"), rule.get("help"),
+                    rule.get("helpUri"), _dict(rule.get("help")).get("text"),
+                    _dict(rule.get("help")).get("markdown"),
                     "\n".join(str(ref) for ref in reference_values),
                 )
                 identifiers = clean_ids(rule_id)
@@ -140,17 +152,18 @@ class SarifParser(BaseParser):
                     title=title,
                     severity=severity,
                     cvss_score=score,
-                    cvss_vector=(cvss_vectors.pop(0) if cvss_vectors else cvss_vector),
+                    cvss_vector=cvss_vector,
                     description=description or title,
                     remediation=html_to_text(
-                        (rule.get("help") or {}).get("text")
-                        if isinstance(rule.get("help"), dict) else rule.get("help")
+                        _dict(rule.get("help")).get("text") or _dict(rule.get("help")).get("markdown")
+                        or rule.get("help")
                     ) or None,
                     hosts=hosts,
                     evidence=evidence,
                     source_tool=source_tool,
                     identifiers=identifiers,
                     references=references,
+                    observations=observations,
                 ))
         return findings
 

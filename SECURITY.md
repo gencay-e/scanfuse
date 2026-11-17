@@ -4,7 +4,7 @@
 
 Please report vulnerabilities privately and do not open a public issue. Use GitHub's private vulnerability reporting for this repository (Security tab, "Report a vulnerability").
 
-Supported: the latest release.
+Supported: 1.2.x.
 
 ## What scanfuse handles
 
@@ -20,6 +20,6 @@ The threat model and trust boundaries are described in [docs/security-model.md](
 ## Known limits
 
 * Descriptions and remediation text keep Markdown, including links. Links are shown as the scanner wrote them.
-* The HTML page and CSV output were checked by reading the files. The HTML page was not opened by hand in a browser. The CSV import was tested by hand only in Windows Excel; formula and injection handling in Excel and LibreOffice is unverified.
-* Format detection looks at the start of the file.
+* Automated Chromium tests exercise report controls and a representative untrusted payload. Excel Power Query formula-import tests run when Windows Excel is installed and skip otherwise. Other browsers, Excel versions and LibreOffice may behave differently.
+* Format detection uses scanner structure and the XML root element. Empty JSON arrays are treated as Nuclei output; select `--format` when an empty report is ambiguous.
 * Release programs are not signed. Releases come with a `SHA256SUMS` file.
