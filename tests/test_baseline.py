@@ -250,18 +250,26 @@ def test_cli_excludes_other_hosts_from_baseline_matching(tmp_path):
     assert report["resolved"] == []
 
 
+def _raise_recursion_error(*_args, **_kwargs):
+    raise RecursionError("maximum recursion depth exceeded")
+
+
 @pytest.mark.parametrize("malformation,message", [
     ("surrogate", "invalid Unicode surrogates"),
+    ("deep_list", "INCOMPLETE"),
     ("nesting", "JSON nesting is too deep"),
 ])
-def test_cli_malformed_baseline_exports_incomplete_report(tmp_path, malformation, message):
+def test_cli_malformed_baseline_exports_incomplete_report(tmp_path, monkeypatch, malformation, message):
     previous = tmp_path / "baseline.json"
     if malformation == "surrogate":
         previous.write_text(json.dumps({
             "schema_version": 2, "complete": True, "findings": [item("Gone\ud800").model_dump()],
         }), encoding="utf-8")
-    else:
+    elif malformation == "deep_list":
         previous.write_text("[" * 5000 + "]" * 5000, encoding="utf-8")
+    else:
+        previous.write_text("{}", encoding="utf-8")
+        monkeypatch.setattr("scanfuse.baseline.json.loads", _raise_recursion_error)
     source = tmp_path / "scan.json"
     source.write_text('{"matches": []}', encoding="utf-8")
     out = tmp_path / "out"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2 (2026-11-18)
+
+* Made deep-JSON `RecursionError` regression tests independent of OS-specific CPython recursion limits after Linux and macOS CI failures on `1.2.1` (no package or binary release was published for `1.2.1`).
+
 ## 1.2.1 (2026-11-18)
 
 * Fixed retest matching when secondary scanner sources change and applied `--host` consistently to baseline comparisons. Deduplication now preserves per-source IDs, tags, and CVSS conflicts independently of input order.

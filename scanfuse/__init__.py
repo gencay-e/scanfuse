@@ -1,4 +1,4 @@
 """
 scanfuse - Pentest Finding Extractor & Report Engine.
 """
-__version__ = "1.2.1"
+__version__ = "1.2.2"

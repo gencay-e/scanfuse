@@ -28,10 +28,19 @@ def test_manifest_unhashable_entries(tmp_path):
     assert (tmp_path / "report.json").exists()
 
 
-def test_replace_recovers_from_deeply_nested_manifest(tmp_path):
+def test_replace_recovers_from_deeply_nested_manifest(tmp_path, monkeypatch):
     manifest = tmp_path / ".scanfuse-manifest-json.json"
     manifest.write_text("[" * 5000 + "]" * 5000, encoding="utf-8")
     ScanfuseEngine(str(tmp_path)).export_json([], replace=True)
+    assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["complete"] is True
+    assert json.loads(manifest.read_text(encoding="utf-8"))["files"] == ["report.json"]
+
+    def _raise_recursion_error(*_args, **_kwargs):
+        raise RecursionError("maximum recursion depth exceeded")
+
+    with monkeypatch.context() as patch:
+        patch.setattr("scanfuse.engine.json.loads", _raise_recursion_error)
+        ScanfuseEngine(str(tmp_path)).export_json([], replace=True)
     assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["complete"] is True
     assert json.loads(manifest.read_text(encoding="utf-8"))["files"] == ["report.json"]
 
