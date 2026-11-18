@@ -19,6 +19,19 @@ _GLOBAL_ID = re.compile(r"^(CVE-\d{4}-\d{4,}|GHSA(-[0-9a-z]{4}){3})$", re.IGNORE
 MAX_SLUG = 100
 
 
+def has_surrogates(value: object) -> bool:
+    if isinstance(value, str):
+        try:
+            value.encode("utf-8")
+            return False
+        except UnicodeEncodeError:
+            return True
+    if isinstance(value, dict):
+        return any(has_surrogates(k) or has_surrogates(v) for k, v in value.items())
+    if isinstance(value, (list, tuple)):
+        return any(has_surrogates(item) for item in value)
+    return False
+
 def slugify(text: str) -> str:
     """
     Convert text to a safe, lower-cased filename slug.
@@ -48,7 +61,7 @@ def _global_ids(f: Finding) -> frozenset[str]:
     return frozenset(i.upper() for i in f.identifiers if _GLOBAL_ID.match(i))
 
 
-def _local_ids(f: Finding) -> dict[str, frozenset[str]]:
+def _local_ids(f: Finding | SourceRecord) -> dict[str, frozenset[str]]:
     """Tool specific ids grouped by prefix, e.g. {'nessus-plugin': {'12345'}}."""
     grouped: dict[str, set[str]] = {}
     for ident in f.identifiers:
@@ -81,10 +94,26 @@ def with_host_observations(f: Finding) -> Finding:
     return f.model_copy(update={"observations": [*f.observations, *extra]})
 
 
-def _compatible(group_ids: dict[str, dict[str, frozenset[str]]], f: Finding) -> bool:
+_LocalIdSignature = tuple[tuple[str, tuple[str, ...]], ...]
+_SourceIds = dict[str, frozenset[_LocalIdSignature]]
+
+
+def _explicit_tool_ids(f: Finding) -> _SourceIds:
+    """Keep every distinct local ID group reported by each source tool."""
+    if not f.sources and "," in f.source_tool:
+        return {}
+    grouped: dict[str, set[_LocalIdSignature]] = {}
+    records: list[Finding | SourceRecord] = list(f.sources) if f.sources else [f]
+    for rec in records:
+        signature = tuple(sorted((prefix, tuple(sorted(values))) for prefix, values in _local_ids(rec).items()))
+        grouped.setdefault(rec.source_tool, set()).add(signature)
+    return {tool: frozenset(signatures) for tool, signatures in grouped.items()}
+
+
+def _compatible(group_ids: _SourceIds, f: Finding) -> bool:
     """Two findings of the same tool with different tool ids are different findings."""
-    local_ids = _local_ids(f)
-    return f.source_tool not in group_ids or local_ids == group_ids[f.source_tool]
+    source_ids = _explicit_tool_ids(f)
+    return all(source_ids[tool] == group_ids[tool] for tool in source_ids.keys() & group_ids.keys())
 
 
 def _record(f: Finding) -> SourceRecord:
@@ -92,6 +121,8 @@ def _record(f: Finding) -> SourceRecord:
         source_tool=f.source_tool, title=f.title, severity=f.severity,
         cvss_score=f.cvss_score, cvss_vector=f.cvss_vector, description=f.description,
         remediation=f.remediation, identifiers=list(f.identifiers), port=f.port,
+        hosts=[h.model_copy() for h in f.hosts], references=list(f.references),
+        tags=list(f.tags), cvss_merge_conflict=f.cvss_merge_conflict,
     )
 
 
@@ -135,17 +166,18 @@ def deduplicate_findings(findings: list[Finding]) -> list[Finding]:
             key=lambda item: (
                 item[1].source_tool,
                 tuple(sorted((tool, tuple(sorted(ids))) for tool, ids in _local_ids(item[1]).items())),
+                tuple(sorted((tool, tuple(sorted(ids))) for tool, ids in _explicit_tool_ids(item[1]).items())),
             ),
         )
         compatible_groups: list[list] = []
         for index, f in ordered:
             target = next((group for group in compatible_groups if _compatible(group[2], f)), None)
             if target is None:
-                compatible_groups.append([index, f, {f.source_tool: _local_ids(f)}, [(index, f)]])
+                compatible_groups.append([index, f, _explicit_tool_ids(f), [(index, f)]])
             else:
                 target[0] = min(target[0], index)
                 target[3].append((index, f))
-                target[2].setdefault(f.source_tool, _local_ids(f))
+                target[2].update(_explicit_tool_ids(f))
         for first_index, _first, _ids, indexed_originals in compatible_groups:
             originals = [f for _index, f in sorted(indexed_originals, key=lambda item: item[0])]
             merged = originals[0] if len(originals) == 1 else _merge_group(originals)
@@ -161,12 +193,14 @@ def _merge_group(originals: list[Finding]) -> Finding:
     unique_sources = []
     seen_sources = set()
     for f in originals:
-        rec = _record(f)
-        s_key = (rec.source_tool, rec.description, rec.remediation, rec.severity, rec.cvss_score, rec.cvss_vector)
-        if s_key not in seen_sources:
-            seen_sources.add(s_key)
-            unique_sources.append(rec)
+        for rec in f.sources or [_record(f)]:
+            s_key = rec.model_dump_json()
+            if s_key not in seen_sources:
+                seen_sources.add(s_key)
+                unique_sources.append(rec.model_copy(deep=True))
     base.sources = unique_sources
+    base.tags = list(dict.fromkeys(tag for f in originals for tag in f.tags))
+    base.cvss_merge_conflict = any(f.cvss_merge_conflict for f in originals)
 
     tools: list[str] = []
     for f in originals:

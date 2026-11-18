@@ -2,7 +2,14 @@ import json
 import math
 
 from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, cwe_id, extract_urls
+from scanfuse.parsers.base import (
+    BaseParser,
+    PartialImportError,
+    clean_ids,
+    cve_ids,
+    cwe_id,
+    extract_urls,
+)
 
 
 class TrivyParser(BaseParser):
@@ -25,8 +32,12 @@ class TrivyParser(BaseParser):
         if not isinstance(data, dict) or ("SchemaVersion" not in data and "ArtifactName" not in data):
             raise ValueError(f"Not a valid Trivy JSON file: {file_path}")
 
-        artifact_name = str(data.get("ArtifactName") or "unknown-artifact")
-        host_model = Host(ip="unknown", hostname=artifact_name)
+        artifact_raw = str(data.get("ArtifactName") or "").strip()
+        artifact_type = str(data.get("ArtifactType") or "").strip()
+        if artifact_raw in {"", ".", "./", ".\\"}:
+            host_model = Host(ip="local", hostname=artifact_type or "artifact")
+        else:
+            host_model = Host(ip="unknown", hostname=artifact_raw)
 
         severity_map = {
             "CRITICAL": "Critical",
@@ -37,22 +48,29 @@ class TrivyParser(BaseParser):
             "UNKNOWN": "Info"
         }
 
-        results = data.get("Results") or []
-        if not isinstance(results, list):
-            results = []
+        raw_results = data.get("Results")
+        if "Results" in data and raw_results is not None and not isinstance(raw_results, list):
+            raise ValueError(f"Not a valid Trivy JSON file: 'Results' must be a list in {file_path}")
+        results = raw_results or []
+        parse_errors: list[str] = []
 
         for result in results:
             if not isinstance(result, dict):
+                parse_errors.append("Trivy result entry must be an object")
                 continue
 
             target = str(result.get("Target") or "Unknown Target")
 
             # Parse Vulnerabilities (CVEs)
-            vulns = result.get("Vulnerabilities") or []
-            if not isinstance(vulns, list):
-                vulns = []
+            raw_vulns = result.get("Vulnerabilities")
+            if "Vulnerabilities" in result and raw_vulns is not None and not isinstance(raw_vulns, list):
+                parse_errors.append(f"Trivy 'Vulnerabilities' for {target} must be a list")
+                vulns: list[object] = []
+            else:
+                vulns = raw_vulns or []
             for vuln in vulns:
                 if not isinstance(vuln, dict):
+                    parse_errors.append(f"Trivy vulnerability entry for {target} must be an object")
                     continue
                 vuln_id = vuln.get("VulnerabilityID", "Unknown ID")
                 pkg_name = vuln.get("PkgName", "")
@@ -82,7 +100,7 @@ class TrivyParser(BaseParser):
                                 cvss_val = float(val) if val is not None else None
                                 if cvss_val is not None and (not math.isfinite(cvss_val) or cvss_val < 0.0 or cvss_val > 10.0):
                                     cvss_val = None
-                            except (ValueError, TypeError):
+                            except (ValueError, TypeError, OverflowError):
                                 cvss_val = None
                             vector = scores.get("V3Vector")
                             vector = vector if isinstance(vector, str) else None
@@ -121,11 +139,18 @@ class TrivyParser(BaseParser):
                 findings.append(finding)
 
             # Parse Misconfigurations (IaC)
-            misconfs = result.get("Misconfigurations") or []
-            if not isinstance(misconfs, list):
-                misconfs = []
+            raw_misconfs = result.get("Misconfigurations")
+            if "Misconfigurations" in result and raw_misconfs is not None and not isinstance(raw_misconfs, list):
+                parse_errors.append(f"Trivy 'Misconfigurations' for {target} must be a list")
+                misconfs: list[object] = []
+            else:
+                misconfs = raw_misconfs or []
             for misconf in misconfs:
                 if not isinstance(misconf, dict):
+                    parse_errors.append(f"Trivy misconfiguration entry for {target} must be an object")
+                    continue
+                misconf_status = str(misconf.get("Status") or "").strip().upper()
+                if misconf_status in {"PASS", "OK", "EXCEPTION", "SKIP", "NOT_APPLICABLE"}:
                     continue
                 misconf_id = misconf.get("ID") or "Unknown ID"
                 title_raw = misconf.get("Title")
@@ -171,11 +196,15 @@ class TrivyParser(BaseParser):
                 findings.append(finding)
 
             # Parse Secrets
-            secrets = result.get("Secrets") or []
-            if not isinstance(secrets, list):
-                secrets = []
+            raw_secrets = result.get("Secrets")
+            if "Secrets" in result and raw_secrets is not None and not isinstance(raw_secrets, list):
+                parse_errors.append(f"Trivy 'Secrets' for {target} must be a list")
+                secrets: list[object] = []
+            else:
+                secrets = raw_secrets or []
             for secret in secrets:
                 if not isinstance(secret, dict):
+                    parse_errors.append(f"Trivy secret entry for {target} must be an object")
                     continue
                 sec_id = secret.get("RuleID") or "Unknown Secret"
                 title_raw = secret.get("Title")
@@ -198,5 +227,11 @@ class TrivyParser(BaseParser):
                     source_tool="trivy"
                 )
                 findings.append(finding)
+
+        if parse_errors:
+            message = "; ".join(parse_errors)
+            if findings:
+                raise PartialImportError(message, findings)
+            raise ValueError(message)
 
         return findings

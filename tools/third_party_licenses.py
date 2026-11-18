@@ -70,7 +70,8 @@ def main() -> None:
             parts = str(file).replace("\\", "/").split("/")
             if parts[0].endswith(".dist-info") and re.match(r"(?i)(licen[cs]e|copying|notice|authors)", parts[-1]):
                 try:
-                    print(open(str(dist.locate_file(file)), encoding="utf-8", errors="replace").read().strip())
+                    with open(str(dist.locate_file(file)), encoding="utf-8", errors="replace") as handle:
+                        print(handle.read().strip())
                     print()
                 except OSError:
                     pass

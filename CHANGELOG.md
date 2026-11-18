@@ -1,38 +1,35 @@
 # Changelog
 
+## 1.2.1 (2026-11-18)
+
+* Fixed retest matching when secondary scanner sources change and applied `--host` consistently to baseline comparisons. Deduplication now preserves per-source IDs, tags, and CVSS conflicts independently of input order.
+* Marked aborted scans, truncated XML, malformed JSON or CSV, and invalid configuration files as incomplete. Valid findings recovered before an import error are still available.
+* Added lossless re-import of scanfuse SARIF exports. The SARIF parser also resolves artifact references and message templates, preserves literal text, and skips passing or inapplicable results.
+* Improved port and CVSS parsing for Nuclei, Grype, and Trivy. Preserved Burp URLs and request/response evidence, multiline Nikto CSV fields, testssl.sh targets, and evidence code across report formats. Trivy uses a descriptive label for local artifacts and skips passing misconfiguration checks.
+* Fixed Markdown spacing and broken HTML anchor rewrites. Long HTML links wrap on narrow screens, and PDF evidence retains tab indentation.
+* Added all supported formats to package keywords and included the lockfile, tests, and build scripts in the source distribution.
+
 ## 1.2.0 (2026-11-17)
 
-* Auto-detection covers all 11 input formats, including SARIF, Semgrep, Grype, Nikto and testssl.sh. Real scan fixtures include Nikto CSV captured against an owned local server, with source and license notes.
-* Nikto observations retain HTTP methods, URI paths and query strings. Different queries remain separate during merging. SARIF and Semgrep observations retain file paths and start lines, so separate code locations stay separate during merging.
-* `--config` / `-c` selects a configuration file. The default and selected files use the same strict validation. Rules can match `source_tool`, `title` and `location`.
-* `--baseline` compares a retest with a complete schema version 2 JSON report. Active findings are marked new or unchanged; findings absent from a complete retest are listed as resolved. An incomplete retest does not mark findings resolved. Current report filters also apply to resolved findings.
-* PDF summaries include severity counts and import errors. Pages are numbered. Finding pages include host names, tags, source summaries and evidence; each evidence item is capped at 12,000 characters.
-* Browser tests exercise report controls and untrusted input in Chromium. Excel Power Query tests check formula-like CSV values when Windows Excel is available and skip otherwise.
-* Merging checks tool-local ids per source, retains evidence that differs only by code, and keeps an available CVSS vector when scores tie. Baseline comparison includes tool-local ids and runs before display filters.
-* Parsers handle null SARIF fields, rule defaults and multi-run sources; preserve ZAP payloads and URL queries; and retain Nikto findings without ids. Host, port, severity, references and vulnerability metadata handling are corrected across the remaining parsers.
-* Detection uses the XML root and accepts empty Semgrep results and minimal Trivy reports. Host filtering handles bracketed IPv6 addresses. Markdown code blocks retain their text, reference URLs are escaped, and malformed manifest entries cannot crash replacement.
-* Nikto unwraps nested `scanDetails`, `vulnerabilities` and `items` while retaining target metadata. URL identifiers in CSV are also retained as references. Excessive wrapper nesting produces a controlled import error.
-* Merge membership is independent of input order when several tools report competing local ids. Primary description, remediation and tied CVSS vectors use a stable source/text ordering. Finding and source-list ordering still follow the input.
-* Property tests mutate nested report values, truncate files, fuzz raw bytes and probe text encodings across all 11 parsers. Malformed Nuclei/Nikto/Trivy encodings produce import errors; wrong-typed Trivy artifact names and SARIF rule, result and location fields no longer raise internal type or validation errors. Pipeline properties exercise baseline status, escaping and all export formats.
-* Package classifier is "Development Status :: 5 - Production/Stable".
+* Expanded format auto-detection (`-f auto`) to all 11 input formats, adding SARIF, Semgrep, Grype, Nikto (JSON, XML, and CSV), and testssl.sh.
+* Preserved HTTP methods, URI paths, and query strings in Nikto observations, and `path:line` locations in SARIF and Semgrep observations so distinct endpoints and source locations stay separate when merging.
+* Added `--config` / `-c` to select a configuration YAML file using the same strict validation as `.scanfuse.yaml`, with rule matching across `source_tool`, `title`, and `location`.
+* Added `--baseline` to compare retests against a complete schema version 2 JSON report, marking active findings `new` or `unchanged` and absent findings `resolved` (only when the retest run is complete, with current filters applied to resolved entries).
+* Expanded PDF summaries with severity counts and import errors, added page numbers, and included host names, tags, source summaries, and evidence blocks (12,000 characters per entry) on finding pages.
+* Improved multi-tool deduplication determinism across competing local tool IDs, retained evidence differing only by `code`, kept available CVSS vectors on tied scores, and added bracketed IPv6 filtering for `--host`.
+* Hardened parsers and engine handling across malformed encodings, nested Nikto wrapper objects (with recursion limits), null/wrong-typed SARIF and Trivy fields, XML root detection, empty Semgrep/Trivy inputs, reference URL escaping, and manifest cleanup validation.
+* Promoted package classifier to `Development Status :: 5 - Production/Stable`.
 
 ## 1.1.0 (2026-11-13)
 
-Reports can contain more findings than with 1.0.2. The merge identity changed, so this is a minor release. Findings are now merged only if the HTTP method and the location (URL path and parameter) are also the same, and paths are compared case-sensitively. Before, the same ZAP or Burp title at different paths, with different methods, or at `/Admin` and `/admin` was one finding and is now several. The example report grew from 104 to 162 findings (39 to 49 at Medium or higher).
+Reports from 1.1.0 onward can contain more findings than 1.0.2 because deduplication compares affected `(method, location)` pairs case-sensitively.
 
-* Observations: every finding has `observations`, one per place where a tool saw it: `host`, `method`, `location` (URL path, with the parameter if named) and `source_tool`. ZAP gives one per alert instance, Burp one per issue, Nuclei one per result (the URL path of a web match), the other tools one per host. There are no `location`, `method` or `locations` fields on a finding.
-* Merge rule: findings with the same title, ids and port are merged only if they have the same set of (method, location) pairs. Locations and parameter names are compared exactly: URL paths are case-sensitive, so `/login` and `/Login` are two findings; only surrounding spaces and the case of the method are ignored. Two ZAP alerts with different sets of locations stay two findings, also on different hosts. The same title on several hosts or from several tools with the same set is still one finding. Findings without a location merge as before. Nuclei findings of one template at different URL paths are now several findings.
-* `--host` removes the observations and the evidence of other hosts, so a merged finding no longer shows paths seen only on another host. Evidence gets `hosts` when findings are merged. Evidence of an unmerged finding with several hosts names no host and is kept; README says so.
-* Filter order: `--host` runs on the parsed findings before merging, so severity, CVSS and sources of a merged finding come only from the selected hosts. Then come merging, overrides and exclusions, `ignore_titles` and `--min-severity`. Before, `--host A --min-severity High` kept a finding that was Low on A and Critical on B.
-* "Affected" (host, method and location per line) is shown in the Markdown, the HTML search, the PDF and the CSV (last column `Affected`); the index shows the method and location. The JSON has `observations`; `schema_version` stays 2 because the fields are additions.
-* SARIF: results no longer put a host in `artifactLocation`. Each host is a logical location (kind `resource`); hosts and observations are in the result `properties`. The output validates against the SARIF 2.1.0 schema. It has no `physicalLocation`, so it is not for GitHub code scanning upload; README says so.
-* Markdown escaping treats every line break that Python or a renderer recognises (`\r`, `\x0b`, `\x0c`, `\x1c`-`\x1e`, `\x85`, U+2028, U+2029) as a newline, so scanner text cannot start a heading, list or underline after one of them.
-* `--format-out pdf` exits with code 2, not 1, when `report.pdf` exists and `--replace` is not given.
-* `--replace` removes a stale file listed in the manifest only if its SHA-256 matches the digest in the manifest. Manifests now contain the digests; entries of older manifests have none and are never removed. When the manifest is trusted, the digest check prevents cleanup of files that changed since scanfuse wrote them. The manifest is not authenticated and does not prove that scanfuse created a file; anyone who can edit the report folder can also delete files in it. README and `docs/security-model.md` say so.
-* File names: the `-N` suffix that makes a slug unique no longer pushes it past 100 characters.
-* README and SECURITY: the Excel notes no longer contradict each other. The import observations are manual tests in Windows Excel; formula handling in Excel and LibreOffice and opening the HTML page in a browser are unverified. Each finding starts on a new page in the PDF; long findings continue on further pages.
-* A German comment in `.gitignore` is now English.
-* Package classifier is "Development Status :: 4 - Beta" again.
+* Added `observations` (`host`, `method`, `location`, `source_tool`) per finding and removed the legacy top-level `location`, `method`, and `locations` fields.
+* Applied `--host` filtering before merging so severity, CVSS scores, and source summaries reflect only selected hosts.
+* Added `Affected` locations across Markdown, HTML search, CSV, PDF, and SARIF (`logicalLocations` + `properties`).
+* Normalized all Unicode and control line breaks in Markdown escaping (`\r`, `\x0b`, `\x0c`, `\x1c`–`\x1e`, `\x85`, `\u2028`, `\u2029`) to prevent heading or list injection.
+* Verified SHA-256 digests in `.scanfuse-manifest-<kind>.json` before `--replace` removes stale files, and returned exit code 2 when overwriting existing PDFs without `--replace`.
+* Capped deduplicated finding slugs (`-N` suffixes) within 100 characters, started each finding on a new page in PDF output, and restored `Development Status :: 4 - Beta` classifier for 1.1.x.
 
 ## 1.0.2 (2026-11-12)
 

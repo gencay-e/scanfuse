@@ -1,24 +1,13 @@
 # JWT token
 
-
-
 **Severity**: Medium
-
 
 **Source**: trivy
 
-
-
-
 **Identifiers**: trivy-rule:jwt-token
-
 
 ## Description
 Secret detected: jwt-token
-
-
-
-
 
 ## Reported by
 
@@ -30,39 +19,36 @@ Secret detected: jwt-token
 Secret detected: jwt-token
 
 
-
-
 ## Hosts
-
-- unknown (.)
+- local (filesystem)
 
 
 ## Evidence
-
 ### target (trivy)
-
 
 ```
 frontend/src/app/app.guard.spec.ts
 ```
 
-### match (trivy)
 
+### match (trivy)
 
 ```
 Match: ocalStorage.setItem('token', '***********************************************************************************************************************************************************')
 ```
 
-### target (trivy)
 
+### target (trivy)
 
 ```
 frontend/src/app/last-login-ip/last-login-ip.component.spec.ts
 ```
 
-### match (trivy)
 
+### match (trivy)
 
 ```
 Match: ocalStorage.setItem('token', '*******************************************************************************************************************************')
 ```
+
+

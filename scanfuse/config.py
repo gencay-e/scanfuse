@@ -80,6 +80,8 @@ def load_config(path: str | Path = ".scanfuse.yaml") -> dict[str, Any]:
             value = loader.get_single_data()
         finally:
             loader.dispose()
+    except RecursionError as exc:
+        raise ValueError("configuration YAML nesting is too deep") from exc
     except yaml.YAMLError as exc:
         raise ValueError(f"invalid YAML: {exc}") from exc
     return validate_config(value)
@@ -125,8 +127,11 @@ def _matches(finding: Finding, rule: dict[str, Any]) -> bool:
                                   fnmatchcase((host.hostname or "").casefold(), str(rule["host"]).casefold())
                                   for host in finding.hosts):
         return False
-    if "source_tool" in rule and not _text_matches(finding.source_tool, str(rule["source_tool"])):
-        return False
+    if "source_tool" in rule:
+        pattern = str(rule["source_tool"])
+        tools = [t.strip() for t in finding.source_tool.split(",") if t.strip()] or [finding.source_tool]
+        if not any(_text_matches(tool, pattern) for tool in tools):
+            return False
     if "title" in rule and not _text_matches(finding.title, str(rule["title"])):
         return False
     if "location" in rule and not any(_text_matches(o.location or "", str(rule["location"]), insensitive=False)

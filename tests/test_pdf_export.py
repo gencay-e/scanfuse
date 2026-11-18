@@ -132,6 +132,17 @@ def test_pdf_large_evidence_is_capped_with_full_report_hint(tmp_path):
     assert "Evidence shortened; see full text in Markdown/JSON report." in text
 
 
+def test_pdf_preserves_spacing_for_tabs(tmp_path):
+    finding = Finding(
+        title="Tabbed evidence", severity="Low", description="Description", source_tool="test",
+        evidence=[Evidence(type="log", data="one\n\tindented\ncol1\tcol2")],
+    )
+    ScanfuseEngine(str(tmp_path)).export_pdf([finding])
+    text = PdfReader(tmp_path / "report.pdf").pages[1].extract_text()
+    assert "    indented" in text
+    assert "col1    col2" in text
+
+
 def test_pdf_unicode_fallback_replaces_unsupported_glyphs(tmp_path):
     from scanfuse.reporters.pdf import _safe
 

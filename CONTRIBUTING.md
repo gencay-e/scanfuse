@@ -6,6 +6,7 @@ Issues and pull requests are welcome. For a larger change, open an issue first.
 
 ```bash
 uv sync --locked --extra dev
+uv run playwright install chromium   # on Linux, use: uv run playwright install --with-deps chromium
 uv run ruff check .
 uv run mypy scanfuse
 uv run pytest tests/

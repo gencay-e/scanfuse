@@ -37,7 +37,9 @@ def test_report_browser_controls_and_untrusted_input(tmp_path):
     engine.export_findings([
         Finding(title="Unsafe " + payload, severity="High", description=payload, source_tool="test",
                 evidence=[Evidence(type="raw", data=payload)]),
-        Finding(title="Low finding", severity="Low", description="Safe", source_tool="test"),
+        Finding(title="Low finding", severity="Low", description="Safe", source_tool="test",
+                references=["https://example.test/" + "x" * 200],
+                evidence=[Evidence(type="raw", data="x" * 200)]),
     ])
     with sync_playwright() as p:
         edge = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
@@ -50,6 +52,9 @@ def test_report_browser_controls_and_untrusted_input(tmp_path):
             page.on("request", lambda request: requests.append(request.url) if request.url.startswith(("http:", "https:")) else None)
             page.goto((tmp_path / "report.html").as_uri())
             assert page.locator(".finding-block").count() == 2
+            page.set_viewport_size({"width": 320, "height": 800})
+            assert page.evaluate("document.documentElement.scrollWidth") == 320
+            assert page.locator("pre").last.evaluate("el => el.scrollWidth > el.clientWidth")
             assert page.evaluate("window.injected") is None
             assert page.locator("script").count() == 1
             for theme in ["light", "dark"]:

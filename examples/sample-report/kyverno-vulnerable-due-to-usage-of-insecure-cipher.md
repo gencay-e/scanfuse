@@ -1,17 +1,10 @@
 # Kyverno vulnerable due to usage of insecure cipher
 
-
-
 **Severity**: Medium
-
 
 **Source**: trivy
 
-
-
-
 **Identifiers**: GHSA-hgv6-w7r3-w4qw
-
 
 ## Description
 \### Summary
@@ -64,46 +57,34 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 12.72 seconds
 ```
 
-
 ## Remediation
 Update github.com/kyverno/kyverno from 1.9.2 to 1.9.5.
 
-
-
 ## References
-
 - <https://github.com/advisories/GHSA-hgv6-w7r3-w4qw>
-
 - <https://github.com/kyverno/kyverno>
-
 - <https://github.com/kyverno/kyverno/pull/7308>
-
 - <https://github.com/kyverno/kyverno/releases/tag/v1.9.5>
-
 - <https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw>
 
 
-
-
-
 ## Hosts
-
-- unknown (.)
+- local (filesystem)
 
 
 ## Evidence
-
 ### target
-
 
 ```
 go.mod
 ```
 
-### package
 
+### package
 
 ```
 Package: github.com/kyverno/kyverno
 Installed: 1.9.2
 ```
+
+

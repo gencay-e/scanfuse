@@ -1,8 +1,14 @@
 import re
 from abc import ABC, abstractmethod
 from html.parser import HTMLParser
+from typing import Any
 
 from scanfuse.models import Finding
+
+
+def as_dict(value: object) -> dict[str, Any]:
+    """Return `value` when it is a dict, otherwise an empty dict."""
+    return value if isinstance(value, dict) else {}
 
 
 class PartialImportError(ValueError):
@@ -143,4 +149,3 @@ class BaseParser(ABC):
         Parse the given file and return a list of Finding objects.
         Must handle malformed files gracefully and raise ValueError if the format is fundamentally wrong.
         """
-        pass

@@ -173,3 +173,334 @@ def test_nikto_deep_wrappers_are_controlled_errors(tmp_path, depth):
     path.write_text("[" * depth + '{"msg":"Nested"}' + "]" * depth, encoding="utf-8")
     with pytest.raises(ValueError):
         NiktoParser().parse(str(path))
+
+
+def test_trivy_malformed_containers_and_dot_artifact(tmp_path):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+    from scanfuse.engine import ScanfuseEngine
+    from scanfuse.models import Finding
+    from scanfuse.parsers.base import PartialImportError
+    from scanfuse.parsers.trivy import TrivyParser
+
+    base_dir = tmp_path / "baseline"
+    ScanfuseEngine(str(base_dir)).export_json([
+        Finding(title="Existing", severity="High", description="D", source_tool="trivy"),
+    ])
+
+    bad_results = _write_json(tmp_path, "bad-trivy.json", {"SchemaVersion": 2, "Results": {"unexpected": "object"}})
+    out = tmp_path / "out-bad-trivy"
+    result = CliRunner().invoke(
+        app, [bad_results, "-f", "trivy", "--baseline", str(base_dir / "report.json"), "--format-out", "json", "-o", str(out)],
+    )
+    assert result.exit_code == 1, result.output
+    report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False and report["resolved"] == []
+
+    partial_path = _write_json(tmp_path, "partial-trivy.json", {
+        "SchemaVersion": 2,
+        "Results": [
+            {"Target": "a", "Vulnerabilities": [{"VulnerabilityID": "CVE-2024-1"}]},
+            {"Target": "b", "Vulnerabilities": "wrong-type"},
+        ],
+    })
+    with pytest.raises(PartialImportError) as err:
+        TrivyParser().parse(partial_path)
+    assert len(err.value.findings) == 1
+
+    dot_path = _write_json(tmp_path, "dot-trivy.json", {
+        "SchemaVersion": 2,
+        "ArtifactName": ".",
+        "ArtifactType": "filesystem",
+        "Results": [{"Target": "package.json", "Vulnerabilities": [{"VulnerabilityID": "CVE-2024-2"}]}],
+    })
+    (finding,) = TrivyParser().parse(dot_path)
+    assert (finding.hosts[0].ip, finding.hosts[0].hostname) == ("local", "filesystem")
+
+
+def test_semgrep_top_level_errors_mark_run_incomplete(tmp_path):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+    from scanfuse.engine import ScanfuseEngine
+    from scanfuse.models import Finding
+
+    base_dir = tmp_path / "baseline"
+    ScanfuseEngine(str(base_dir)).export_json([
+        Finding(title="Existing", severity="High", description="D", source_tool="semgrep"),
+    ])
+
+    empty_err = _write_json(tmp_path, "semgrep-err.json", {
+        "results": [],
+        "errors": [{"type": "ParseError", "message": "Failed to parse target"}],
+    })
+    out = tmp_path / "out-semgrep-err"
+    result = CliRunner().invoke(
+        app, [empty_err, "-f", "semgrep", "--baseline", str(base_dir / "report.json"), "--format-out", "json", "-o", str(out)],
+    )
+    assert result.exit_code == 1, result.output
+    report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False and report["resolved"] == []
+
+    partial_err = _write_json(tmp_path, "semgrep-partial.json", {
+        "results": [{"check_id": "rule-1", "path": "app.py", "start": {"line": 3}, "extra": {"message": "Hit"}}],
+        "errors": [{"type": "ParseError", "message": "Failed on other file"}],
+    })
+    out2 = tmp_path / "out-semgrep-partial"
+    result2 = CliRunner().invoke(app, [partial_err, "-f", "semgrep", "--format-out", "json", "-o", str(out2)])
+    assert result2.exit_code == 1, result2.output
+    report2 = json.loads((out2 / "report.json").read_text(encoding="utf-8"))
+    assert report2["complete"] is False and len(report2["findings"]) == 1
+
+
+def test_aborted_scans_and_malformed_list_entries_report_errors(tmp_path):
+    from scanfuse.parsers.base import PartialImportError
+    from scanfuse.parsers.nmap import NmapParser
+    from scanfuse.parsers.sarif import SarifParser
+    from scanfuse.parsers.semgrep import SemgrepParser
+    from scanfuse.parsers.trivy import TrivyParser
+
+    nmap_abort = tmp_path / "nmap-abort.xml"
+    nmap_abort.write_text('<nmaprun><runstats><finished exit="error" errormsg="Failed scan"/></runstats></nmaprun>', encoding="utf-8")
+    with pytest.raises(ValueError, match="Failed scan"):
+        NmapParser().parse(str(nmap_abort))
+
+    sarif_abort = _write_json(tmp_path, "sarif-abort.sarif", {
+        "version": "2.1.0",
+        "runs": [{"invocations": [{"executionSuccessful": False}], "results": []}],
+    })
+    with pytest.raises(PartialImportError):
+        SarifParser().parse(sarif_abort)
+
+    for parser_cls, name, payload in (
+        (SarifParser, "sarif-bad-results.sarif", {"version": "2.1.0", "runs": [{"results": {}}]}),
+        (TestsslParser, "testssl-bad.json", {"scanResult": {}}),
+        (NiktoParser, "nikto-bad.json", {"vulnerabilities": {}}),
+        (SemgrepParser, "semgrep-null.json", {"results": [None]}),
+        (GrypeParser, "grype-null.json", {"matches": [None]}),
+        (TrivyParser, "trivy-null.json", {"SchemaVersion": 2, "Results": [{"Target": "app", "Vulnerabilities": [None]}]}),
+    ):
+        bad_path = _write_json(tmp_path, name, payload)
+        with pytest.raises((ValueError, PartialImportError)):
+            parser_cls().parse(bad_path)
+
+
+def test_testssl_flat_target_host_and_partial_fatal(tmp_path):
+    from scanfuse.parsers.base import PartialImportError
+
+    flat = _write_json(tmp_path, "flat-target.json", [
+        {"id": "x", "severity": "HIGH", "finding": "vulnerable", "targetHost": "example.test"},
+    ])
+    (finding,) = TestsslParser().parse(flat)
+    assert finding.title == "x" and finding.hosts[0].ip == "example.test"
+
+    mixed = _write_json(tmp_path, "mixed-fatal.json", [
+        {"id": "x", "severity": "HIGH", "finding": "vulnerable", "ip": "192.0.2.1"},
+        {"id": "fatal", "severity": "FATAL", "finding": "Can't connect"},
+    ])
+    with pytest.raises(PartialImportError) as err:
+        TestsslParser().parse(mixed)
+    assert len(err.value.findings) == 1
+
+
+def test_sarif_artifacts_index_kind_filter_and_unhashable_severity(tmp_path):
+    from scanfuse.parsers.sarif import SarifParser
+    from scanfuse.utils import deduplicate_findings
+
+    path = _write_json(tmp_path, "artifacts.sarif", {
+        "version": "2.1.0",
+        "runs": [{
+            "artifacts": [{"location": {"uri": "a.py"}}, {"location": {"uri": "b.py"}}],
+            "results": [
+                {"ruleId": "r1", "kind": "fail", "properties": {"scanfuse-severity": []},
+                 "message": {"text": "Hit"},
+                 "locations": [{"physicalLocation": {"artifactLocation": {"index": 0}, "region": {"startLine": 1}}}]},
+                {"ruleId": "r1", "kind": "fail",
+                 "message": {"text": "Hit"},
+                 "locations": [{"physicalLocation": {"artifactLocation": {"index": 1}, "region": {"startLine": 1}}}]},
+                {"ruleId": "r1", "kind": "pass", "message": {"text": "OK"}},
+            ],
+        }],
+    })
+    findings = SarifParser().parse(path)
+    assert len(findings) == 2
+    assert {f.observations[0].location for f in findings} == {"a.py:1", "b.py:1"}
+    assert len(deduplicate_findings(findings)) == 2
+
+
+def test_nuclei_network_ports_ipv6_trivy_pass_and_large_cvss(tmp_path):
+    from scanfuse.parsers.trivy import TrivyParser
+    from scanfuse.utils import deduplicate_findings
+
+    nuclei_net = _write_json(tmp_path, "nuclei-net.json", [
+        {"template-id": "banner", "info": {"name": "Banner", "classification": {"cvss-score": 10**400}}, "host": "example.test:22"},
+        {"template-id": "banner", "info": {"name": "Banner"}, "host": "example.test:443"},
+        {"template-id": "banner", "info": {"name": "Banner"}, "host": "[2001:db8::1]:2222"},
+    ])
+    n_findings = NucleiParser().parse(nuclei_net)
+    assert [f.port for f in n_findings] == ["22/tcp", "443/tcp", "2222/tcp"]
+    assert n_findings[0].cvss_score is None
+    assert n_findings[0].hosts[0].hostname == "example.test"
+    assert n_findings[2].hosts[0].ip == "2001:db8::1"
+    assert len(deduplicate_findings(n_findings[:2])) == 2
+
+    grype_huge = _write_json(tmp_path, "grype-huge.json", {"matches": [{
+        "vulnerability": {"id": "CVE-2024-1", "severity": "HIGH", "cvss": [{"metrics": {"baseScore": 10**400}}]},
+        "artifact": {"name": "pkg"},
+    }]})
+    assert GrypeParser().parse(grype_huge)[0].cvss_score is None
+
+    trivy_pass = _write_json(tmp_path, "trivy-pass.json", {
+        "SchemaVersion": 2,
+        "Results": [{"Target": "main.tf", "Misconfigurations": [
+            {"ID": "OK1", "Title": "Passed", "Severity": "HIGH", "Status": "PASS"},
+            {"ID": "FAIL1", "Title": "Broken", "Severity": "HIGH", "Status": "FAIL"},
+        ]}],
+    })
+    t_findings = TrivyParser().parse(trivy_pass)
+    assert [f.title for f in t_findings] == ["Broken"]
+
+
+def test_burp_location_preserves_entities_rejects_bad_base64_and_nikto_csv_multiline(tmp_path):
+    from scanfuse.parsers.burp import BurpParser
+    from scanfuse.utils import deduplicate_findings
+
+    burp_xml = tmp_path / "burp-edge.xml"
+    burp_xml.write_text(
+        '<issues>'
+        '<issue><name>XSS</name><host ip="192.0.2.1">http://example.test</host>'
+        '<location>/search?a=1&amp;amp;b=2</location><severity>High</severity></issue>'
+        '<issue><name>XSS</name><host ip="192.0.2.1">http://example.test</host>'
+        '<location>/search?a=1&amp;b=2</location><severity>High</severity></issue>'
+        '<issue><name>BadB64</name><host ip="192.0.2.1">http://example.test</host>'
+        '<location>/ok</location><severity>Low</severity>'
+        '<requestresponse><request base64="true">!!!!</request></requestresponse></issue>'
+        '</issues>',
+        encoding="utf-8",
+    )
+    findings = BurpParser().parse(str(burp_xml))
+    assert len(findings) == 3
+    xss = [f for f in findings if f.title == "XSS"]
+    assert {f.observations[0].location for f in xss} == {"/search?a=1&amp;b=2", "/search?a=1&b=2"}
+    assert len(deduplicate_findings(xss)) == 2
+    bad_b64 = next(f for f in findings if f.title == "BadB64")
+    http_ev = next(e.data for e in bad_b64.evidence if e.type == "http-request")
+    assert "Request:\n!!!!" in http_ev
+
+    nikto_csv = tmp_path / "multiline.csv"
+    nikto_csv.write_text(
+        'Nikto - v2.6.1\n'
+        '"web.test","192.0.2.1","80","1","GET","/","first\nsecond"\n',
+        encoding="utf-8",
+    )
+    (n_finding,) = NiktoParser().parse(str(nikto_csv))
+    assert n_finding.description == "first\nsecond"
+
+
+def test_nikto_rejects_null_containers_and_malformed_csv_rows(tmp_path):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+    from scanfuse.engine import ScanfuseEngine
+    from scanfuse.parsers.base import PartialImportError
+
+    for key in ("vulnerabilities", "items", "scanDetails"):
+        path = _write_json(tmp_path, f"nikto_{key}_null.json", {key: None})
+        with pytest.raises(ValueError):
+            NiktoParser().parse(path)
+        with pytest.raises(ValueError):
+            ScanfuseEngine(str(tmp_path)).process_file(path, "nikto")
+
+    mixed_json = _write_json(
+        tmp_path,
+        "nikto_mixed_null.json",
+        [
+            {"host": "web.test", "vulnerabilities": [{"id": "1", "msg": "Valid entry"}]},
+            {"host": "web.test", "vulnerabilities": None},
+        ],
+    )
+    with pytest.raises(PartialImportError) as exc_info:
+        NiktoParser().parse(mixed_json)
+    assert [f.title for f in exc_info.value.findings] == ["Valid entry"]
+
+    engine = ScanfuseEngine(str(tmp_path))
+    with pytest.raises(PartialImportError) as engine_exc:
+        engine.process_file(mixed_json, "auto")
+    assert [f.title for f in engine_exc.value.findings] == ["Valid entry"]
+
+    base_json = _write_json(
+        tmp_path,
+        "nikto_base.json",
+        {"host": "web.test", "vulnerabilities": [{"id": "99", "msg": "Baseline entry"}]},
+    )
+    base_dir = tmp_path / "base_out"
+    base_res = CliRunner().invoke(app, [base_json, "--output", str(base_dir), "--format-out", "json"])
+    assert base_res.exit_code == 0, base_res.output
+    baseline = base_dir / "report.json"
+
+    broken_csv = tmp_path / "nikto_broken.csv"
+    broken_csv.write_text(
+        '"Nikto - v2.6.1/"\n'
+        '"192.0.2.1","192.0.2.1","80","","","",""\n'
+        '"web.test","192.0.2.1","80","1","GET","/ok","Valid CSV finding"\n'
+        '"web.test","192.0.2.1","80","2","GET","/truncated"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(PartialImportError) as csv_exc:
+        NiktoParser().parse(str(broken_csv))
+    assert [f.title for f in csv_exc.value.findings] == ["Valid CSV finding"]
+
+    out_dir = tmp_path / "out"
+    res = CliRunner().invoke(
+        app,
+        [str(broken_csv), "--baseline", str(baseline), "--output", str(out_dir), "--format-out", "json"],
+    )
+    assert res.exit_code == 1
+    report = json.loads((out_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False
+    assert report["errors"]
+    assert report["resolved"] == []
+    assert [f["title"] for f in report["findings"]] == ["Valid CSV finding"]
+
+
+@pytest.mark.parametrize("bad", [None, [], 42, "invalid"])
+def test_grype_invalid_vulnerability_preserves_valid_match_and_marks_cli_incomplete(tmp_path, bad):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+    from scanfuse.parsers.base import PartialImportError
+
+    good = {"vulnerability": {"id": "CVE-2026-12345", "severity": "High"},
+            "artifact": {"name": "package"}}
+    path = _write_json(tmp_path, "grype.json", {"matches": [good, {"vulnerability": bad}]})
+    with pytest.raises(PartialImportError, match="vulnerability.*object") as error:
+        GrypeParser().parse(path)
+    assert [f.title for f in error.value.findings] == ["CVE-2026-12345 in package"]
+    output = tmp_path / "report"
+    result = CliRunner().invoke(app, [path, "-f", "grype", "--format-out", "json", "-o", str(output)])
+    assert result.exit_code == 1
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False
+    assert len(report["findings"]) == len(report["errors"]) == 1
+
+
+@pytest.mark.parametrize("bad", [{}, {"severity": "HIGH"},
+                              {"id": "overflow", "severity": "HIGH", "port": float("inf")}])
+def test_testssl_malformed_flat_record_preserves_valid_check_and_marks_cli_incomplete(tmp_path, bad):
+    from typer.testing import CliRunner
+
+    from scanfuse.cli import app
+    from scanfuse.parsers.base import PartialImportError
+
+    good = {"id": "SSLv3", "severity": "HIGH", "finding": "enabled", "port": "443"}
+    path = _write_json(tmp_path, "tls.json", [good, bad])
+    with pytest.raises(PartialImportError) as error:
+        TestsslParser().parse(path)
+    assert [f.title for f in error.value.findings] == ["SSLv3"]
+    output = tmp_path / "report"
+    result = CliRunner().invoke(app, [path, "-f", "testssl", "--format-out", "json", "-o", str(output)])
+    assert result.exit_code == 1
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False
+    assert len(report["findings"]) == len(report["errors"]) == 1

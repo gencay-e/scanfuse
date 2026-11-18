@@ -3,7 +3,13 @@ from pathlib import Path
 from typing import Any
 
 from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, cwe_ids_from_text
+from scanfuse.parsers.base import (
+    BaseParser,
+    PartialImportError,
+    clean_ids,
+    cve_ids,
+    cwe_ids_from_text,
+)
 
 
 class TestsslParser(BaseParser):
@@ -16,16 +22,21 @@ class TestsslParser(BaseParser):
         if isinstance(data, list):
             items: list[Any] = data
         elif isinstance(data, dict):
-            raw_items = data.get("scanResult", data.get("results", data.get("findResults")))
-            items = raw_items if isinstance(raw_items, list) else ([data] if any(
-                key in data for key in ("id", "finding", "severity", "severityLevel")
-            ) else [])
+            container_key = next((k for k in ("scanResult", "results", "findResults") if k in data), None)
+            if container_key is not None:
+                raw_items = data[container_key]
+                if not isinstance(raw_items, list):
+                    raise ValueError(f"Not a valid testssl.sh JSON report: '{container_key}' must be a list")
+                items = raw_items
+            elif any(key in data for key in ("id", "finding", "severity", "severityLevel", "findingSeverity")):
+                items = [data]
+            else:
+                raise ValueError("Not a valid testssl.sh JSON report")
         else:
-            items = []
+            raise ValueError("Not a valid testssl.sh JSON report")
 
-        if not isinstance(items, list):
-            items = []
-        items = _flatten_pretty(items)
+        parse_errors: list[str] = []
+        items = _flatten_pretty(items, parse_errors)
 
         findings: list[Finding] = []
         severity_map = {
@@ -39,14 +50,19 @@ class TestsslParser(BaseParser):
 
         for item in items:
             if not isinstance(item, dict):
+                parse_errors.append("testssl.sh entry must be an object")
+                continue
+            if not any(key in item for key in ("id", "finding")):
+                parse_errors.append("testssl.sh entry must contain an id or finding")
                 continue
             sev_raw = str(item.get("severity") or item.get("severityLevel") or item.get("findingSeverity") or "OK").upper()
-            # OK/INFO/DEBUG are not findings. WARN marks a check testssl.sh could not run
-            # completely (e.g. engine_problem) and is skipped; FATAL means the scan failed.
+            # OK/INFO/DEBUG are not findings. WARN marks a non-fatal OpenSSL check notice
+            # (e.g. engine_problem) and is skipped; FATAL marks scan failure.
             if sev_raw in {"OK", "INFO", "DEBUG", "NONE", "WARN", "WARNING"}:
                 continue
             if sev_raw == "FATAL":
-                raise ValueError(f"testssl.sh scan failed: {item.get('finding') or item.get('id')}")
+                parse_errors.append(f"testssl.sh scan failed: {item.get('finding') or item.get('id')}")
+                continue
             severity = severity_map.get(sev_raw, "Info")
             id_ = str(item.get("id") or item.get("finding") or "testssl")
             finding_text = str(item.get("finding") or item.get("desc") or item.get("details") or "")
@@ -67,6 +83,9 @@ class TestsslParser(BaseParser):
                 port_val, port_proto = port_val.split("/", 1)
             try:
                 port = int(port_val) if port_val is not None else None
+            except OverflowError:
+                parse_errors.append("testssl.sh port must be a finite number")
+                continue
             except (TypeError, ValueError):
                 port = None
 
@@ -86,24 +105,39 @@ class TestsslParser(BaseParser):
                     str(port) if port is not None else None
                 ),
             ))
+        if parse_errors:
+            message = "; ".join(parse_errors)
+            if findings:
+                raise PartialImportError(message, findings)
+            raise ValueError(message)
         return findings
 
 
-def _flatten_pretty(items: list[Any]) -> list[Any]:
+def _flatten_pretty(items: list[Any], parse_errors: list[str]) -> list[Any]:
     """`--jsonfile-pretty` nests the checks per target: scanResult[].{protocols,ciphers,...}[].
     Each nested check gets the target's ip and port, so it looks like a `--jsonfile` line."""
     flat: list[Any] = []
     for entry in items:
-        if not isinstance(entry, dict) or "targetHost" not in entry:
+        if (
+            not isinstance(entry, dict)
+            or "targetHost" not in entry
+            or any(key in entry for key in ("id", "finding", "severity", "severityLevel", "findingSeverity"))
+        ):
             flat.append(entry)
             continue
         target = entry.get("targetHost") or ""
         ip = entry.get("ip") or ""
         combined = f"{target}/{ip}" if target and ip and target != ip else (ip or target)
-        for value in entry.values():
+        for key, value in entry.items():
             if not isinstance(value, list):
+                if key in {"pretest", "protocols", "grease", "ciphers", "serverPreferences",
+                           "serverDefaults", "headerResponse", "vulnerabilities", "cipherTests",
+                           "browserSimulations"}:
+                    parse_errors.append(f"testssl.sh category '{key}' must be a list")
                 continue
             for check in value:
                 if isinstance(check, dict) and "id" in check:
                     flat.append({"ip": combined, "port": entry.get("port"), **check})
+                else:
+                    parse_errors.append(f"testssl.sh category '{key}' entry must be an object with an id")
     return flat

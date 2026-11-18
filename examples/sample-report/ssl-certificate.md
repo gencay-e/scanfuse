@@ -1,26 +1,17 @@
 # SSL certificate
 
-
-
 **Severity**: Medium
-
 
 **Source**: burp
 
-
 **Port**: 443/tcp
-
-
 
 **Affected**:
 
 - 127.0.0.1 /
 
 
-
-
 **Identifiers**: burp-type:16777472, CWE-295, CWE-326, CWE-327
-
 
 ## Description
 The following problem was identified with the server's SSL certificate:
@@ -73,40 +64,29 @@ SSL (or TLS) helps to protect the confidentiality and integrity of information i
 
 It should be noted that various attacks exist against SSL in general, and in the context of HTTPS web connections in particular. It may be possible for a determined and suitably-positioned attacker to compromise SSL connections without user detection even when a valid SSL certificate is used.
 
-
-
-
 ## References
-
 - <https://wiki.mozilla.org/Security/Server_Side_TLS>
-
 - <https://cwe.mitre.org/data/definitions/295.html>
-
 - <https://cwe.mitre.org/data/definitions/326.html>
-
 - <https://cwe.mitre.org/data/definitions/327.html>
 
 
-
-
-
 ## Hosts
-
 - 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence
-
 ### path
-
 
 ```
 /
 ```
 
-### burp-details
 
+### burp-details
 
 ```
 Confidence: Certain
 ```
+
+

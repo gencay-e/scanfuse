@@ -147,3 +147,47 @@ def test_nessus_reporthost_name_falls_back_to_hostname(tmp_path):
     finding = NessusParser().parse(str(source))[0]
     assert finding.hosts[0].ip == "unknown"
     assert finding.hosts[0].hostname == "scanner.example"
+
+
+@pytest.mark.parametrize("scheme, port", [("http", 80), ("https", 443)])
+def test_nuclei_default_ports_preserve_merge_and_baseline_identity(tmp_path, scheme, port):
+    from scanfuse.baseline import compare_baseline
+    from scanfuse.utils import deduplicate_findings
+
+    def parse(url):
+        return NucleiParser()._parse_dict({
+            "template-id": "same", "host": url, "matched-at": url,
+            "info": {"name": "same", "severity": "high"},
+        })
+
+    implicit = parse(f"{scheme}://example.test/a")
+    explicit = parse(f"{scheme}://example.test:{port}/a")
+    assert implicit.port == explicit.port == f"{port}/tcp"
+    assert len(deduplicate_findings([implicit, explicit])) == 1
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(json.dumps({"schema_version": 2, "complete": True,
+                                    "findings": [explicit.model_dump()]}), encoding="utf-8")
+    assert compare_baseline([implicit], baseline) == []
+    assert implicit.status == "unchanged"
+
+
+@pytest.mark.parametrize("extra", [{"port": 8443}, {"matched-at": "https://example.test:8443/a"}])
+def test_nuclei_explicit_port_precedes_url_default(extra):
+    finding = NucleiParser()._parse_dict({
+        "template-id": "same", "host": "https://example.test/a", **extra,
+    })
+    assert finding.port == "8443/tcp"
+
+
+@pytest.mark.parametrize("content", [
+    json.dumps([{"template-id": "ok", "info": {"name": "Valid result"}}, None]),
+    json.dumps({"template-id": "ok", "info": {"name": "Valid result"}}) + "\nnull\n",
+])
+def test_nuclei_rejects_non_finding_entries_with_partial_import_error(tmp_path, content):
+    from scanfuse.engine import ScanfuseEngine
+
+    source = tmp_path / "nuclei.json"
+    source.write_text(content, encoding="utf-8")
+    with pytest.raises(PartialImportError) as exc:
+        ScanfuseEngine(str(tmp_path / "out")).process_file(str(source), "nuclei")
+    assert [f.title for f in exc.value.findings] == ["Valid result"]

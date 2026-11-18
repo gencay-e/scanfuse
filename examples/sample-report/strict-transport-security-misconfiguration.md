@@ -1,26 +1,17 @@
 # Strict Transport Security Misconfiguration
 
-
-
 **Severity**: Medium
-
 
 **Source**: burp
 
-
 **Port**: 443/tcp
-
-
 
 **Affected**:
 
 - 127.0.0.1 /
 
 
-
-
 **Identifiers**: burp-type:134217728
-
 
 ## Description
 There was no "Strict-Transport-Security" header in the server response.
@@ -33,7 +24,6 @@ The HTTP Strict Transport Security policy defines a timeframe where a browser mu
 
 The protection is effective only for the given amount of time. Multiple occurrence of this header could cause undefined behaviour in browsers and should be avoided.
 
-
 ## Remediation
 A Strict-Transport-Security HTTP header should be sent with each HTTPS response. The syntax is as follows:
 
@@ -41,27 +31,22 @@ Strict-Transport-Security: max-age=&lt;seconds&gt;[; includeSubDomains]
 
 The parameter max-age gives the time frame for requirement of HTTPS in seconds and should be chosen quite high, e.g. several months.            A value below 7776000 is considered as too low by this scanner check.             The flag includeSubDomains defines that the policy applies also for sub domains of the sender of the response.
 
-
-
-
-
 ## Hosts
-
 - 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence
-
 ### path
-
 
 ```
 /
 ```
 
-### burp-details
 
+### burp-details
 
 ```
 Confidence: Certain
 ```
+
+

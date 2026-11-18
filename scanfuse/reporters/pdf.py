@@ -158,7 +158,7 @@ def export_pdf(
             pdf.multi_cell(0, 6, s(f"Reported by: {source.source_tool} | {source.title} | {source.severity}"), new_x="LMARGIN", new_y="NEXT")
         for evidence in finding.evidence:
             max_chars = 12000
-            data = evidence.data
+            data = f"{evidence.data}\n{evidence.code}" if evidence.code else evidence.data
             if len(data) > max_chars:
                 data = data[:max_chars] + "\n[Evidence shortened; see full text in Markdown/JSON report.]"
             pdf.multi_cell(
@@ -188,7 +188,7 @@ def export_pdf(
 
 
 def _safe(value: object, is_unicode: bool = True) -> str:
-    text = str(value or "")
+    text = str(value or "").expandtabs(4)
     if not is_unicode:
         return text.encode("latin-1", "replace").decode("latin-1")
     return text

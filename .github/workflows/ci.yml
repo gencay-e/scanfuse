@@ -148,6 +148,13 @@ jobs:
           version="$(python -c 'import re;print(re.search(r"__version__ = \"(.+?)\"", open("scanfuse/__init__.py").read()).group(1))')"
           test "${GITHUB_REF_NAME}" = "v${version}"
       - run: uv build --out-dir dist
+      - name: Verify source archive tests and metadata
+        run: |
+          mkdir -p "$RUNNER_TEMP/sdist-check"
+          tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist-check" --strip-components=1
+          cd "$RUNNER_TEMP/sdist-check"
+          uv sync --locked --extra dev
+          uv run pytest tests/test_baseline.py tests/test_config.py tests/test_merge.py -q
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: python-packages

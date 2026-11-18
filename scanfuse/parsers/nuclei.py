@@ -1,6 +1,7 @@
+import ipaddress
 import json
 import math
-from urllib.parse import SplitResult, urlsplit
+from urllib.parse import urlsplit
 
 from pydantic import ValidationError
 
@@ -35,6 +36,7 @@ class NucleiParser(BaseParser):
                 try:
                     data = json.loads(line)
                     if not self._looks_like_nuclei(data):
+                        invalid_lines.append(line_idx)
                         continue
                     findings.append(self._parse_dict(data))
                 except (json.JSONDecodeError, ValidationError, ValueError, TypeError, AttributeError):
@@ -51,11 +53,13 @@ class NucleiParser(BaseParser):
                         findings = []
                         invalid_items = []
                         for index, item in enumerate(data, start=1):
-                            if self._looks_like_nuclei(item):
-                                try:
-                                    findings.append(self._parse_dict(item))
-                                except (ValidationError, ValueError, TypeError, AttributeError):
-                                    invalid_items.append(index)
+                            if not self._looks_like_nuclei(item):
+                                invalid_items.append(index)
+                                continue
+                            try:
+                                findings.append(self._parse_dict(item))
+                            except (ValidationError, ValueError, TypeError, AttributeError):
+                                invalid_items.append(index)
                         if findings and invalid_items:
                             raise PartialImportError(
                                 f"Invalid Nuclei finding at array position {invalid_items[0]}",
@@ -122,47 +126,62 @@ class NucleiParser(BaseParser):
             cvss_score = float(cvss_score_raw) if cvss_score_raw is not None else None
             if cvss_score is not None and (not math.isfinite(cvss_score) or cvss_score < 0.0 or cvss_score > 10.0):
                 cvss_score = None
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             cvss_score = None
 
         cvss_vector = classification.get("cvss-metrics")
         if not isinstance(cvss_vector, str):
             cvss_vector = None
 
-        # Handle host extraction
+        # Handle host extraction (URLs, host:port, [ipv6]:port, bare IPv4/IPv6/hostname)
         ip = data.get("ip")
-        host_val = data.get("host")
+        host_raw = data.get("host")
+        if host_raw is not None and not isinstance(host_raw, str):
+            raise ValueError("Nuclei 'host' must be a string")
         matched_at = data.get("matched-at")
         hostname = None
-        url_parts: SplitResult | None = None
-        host_is_url = isinstance(host_val, str) and host_val.lower().startswith(("http://", "https://"))
-        if isinstance(host_val, str) and host_is_url:
+        host_val, host_port, host_is_url = (
+            _split_endpoint(host_raw) if isinstance(host_raw, str) else (None, None, False)
+        )
+        matched_host, matched_port, _matched_is_url = (
+            _split_endpoint(matched_at) if isinstance(matched_at, str) else (None, None, False)
+        )
+        port = host_port if host_port is not None else matched_port
+        if port is None and data.get("port") is not None and not isinstance(data.get("port"), bool):
             try:
-                url_parts = urlsplit(host_val)
-                host_val = url_parts.hostname
+                candidate = int(str(data["port"]).split("/", 1)[0])
+                if 1 <= candidate <= 65535:
+                    port = candidate
             except ValueError:
-                host_val = None
+                pass
+        if port is None:
+            for endpoint in (matched_at, host_raw):
+                if isinstance(endpoint, str):
+                    try:
+                        parsed_endpoint = urlsplit(endpoint.strip())
+                        if (parsed_endpoint.scheme in {"http", "https"} and parsed_endpoint.hostname
+                                and parsed_endpoint.port is None):
+                            port = 443 if parsed_endpoint.scheme == "https" else 80
+                            break
+                    except ValueError:
+                        continue
 
         if not ip and host_val:
-            ip = host_val
+            if not host_is_url and _is_ip(host_val):
+                ip = host_val
+            else:
+                ip = "unknown"
+                hostname = host_val
         elif host_val and ip and host_val != ip:
             hostname = host_val
         if not ip:
             ip = "unknown"
-
-        if url_parts is None and isinstance(matched_at, str) and matched_at.lower().startswith(("http://", "https://")):
-            try:
-                url_parts = urlsplit(str(matched_at).strip())
-            except ValueError:
-                url_parts = None
-        try:
-            port = url_parts.port if url_parts else None
-        except ValueError:
-            port = None
-        if url_parts and not data.get("ip") and (host_is_url or not host_val):
-            ip = "unknown"
-            hostname = url_parts.hostname
-        host_model = Host(ip=ip, hostname=hostname, port=port)
+        if ip == "unknown" and not hostname and matched_host:
+            if _is_ip(matched_host):
+                ip = matched_host
+            else:
+                hostname = matched_host
+        host_model = Host(ip=str(ip), hostname=hostname, port=port)
 
         # Handle evidence
         evidence_list = []
@@ -211,3 +230,43 @@ class NucleiParser(BaseParser):
             port=f"{port}/tcp" if port is not None else None,
             source_tool="nuclei"
         )
+
+
+def _is_ip(value: str) -> bool:
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except ValueError:
+        return False
+
+
+def _split_endpoint(raw: str) -> tuple[str | None, int | None, bool]:
+    """Return `(host, port, is_http_url)` from a URL or network `host:port` string."""
+    text = raw.strip()
+    if not text:
+        return None, None, False
+    is_http = text.lower().startswith(("http://", "https://"))
+    if "://" in text:
+        try:
+            parsed = urlsplit(text)
+            hostname = parsed.hostname
+        except ValueError:
+            return None, None, is_http
+        try:
+            port = parsed.port
+        except ValueError:
+            port = None
+        return hostname, port, is_http
+    if text.startswith("["):
+        if "]:" in text:
+            host_part, _, port_part = text[1:].partition("]:")
+            if port_part.isdigit() and 1 <= int(port_part) <= 65535:
+                return host_part or None, int(port_part), False
+            return host_part or None, None, False
+        if text.endswith("]"):
+            return text[1:-1] or None, None, False
+    if text.count(":") == 1:
+        host_part, _, port_part = text.partition(":")
+        if port_part.isdigit() and 1 <= int(port_part) <= 65535:
+            return host_part or None, int(port_part), False
+    return text, None, False

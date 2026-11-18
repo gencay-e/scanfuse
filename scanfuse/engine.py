@@ -25,12 +25,10 @@ from scanfuse.parsers.sarif import SarifParser
 from scanfuse.parsers.semgrep import SemgrepParser
 from scanfuse.parsers.testssl import TestsslParser
 from scanfuse.parsers.zap import ZapParser
-from scanfuse.utils import unique_slug, with_host_observations
+from scanfuse.utils import _merge_group, has_surrogates, unique_slug, with_host_observations
 
 SEVERITIES = ("Critical", "High", "Medium", "Low", "Info")
 SEVERITY_RANK = {name: len(SEVERITIES) - i for i, name in enumerate(SEVERITIES)}
-INPUT_FORMATS = ("auto", "nmap", "nuclei", "zap", "burp", "nessus", "trivy", "sarif", "semgrep", "grype", "nikto", "testssl")
-OUTPUT_FORMATS = ("markdown", "json", "csv", "sarif", "pdf")
 JSON_SCHEMA_VERSION = 2
 
 _MD_SPECIAL = re.compile(r"([\\`*_\[\]])")
@@ -220,8 +218,33 @@ class ScanfuseEngine:
 
         from defusedxml.common import DefusedXmlException
         from pydantic import ValidationError
+
+        from scanfuse.parsers.base import PartialImportError
+
+        def _filter_surrogates(raw_findings: list[Finding]) -> tuple[list[Finding], int]:
+            clean: list[Finding] = []
+            dropped = 0
+            for f in raw_findings:
+                if has_surrogates(f.model_dump()):
+                    dropped += 1
+                else:
+                    clean.append(with_host_observations(f))
+            return clean, dropped
+
         try:
-            return [with_host_observations(f) for f in parser.parse(file_path)]
+            parsed_findings = parser.parse(file_path)
+            clean, dropped = _filter_surrogates(parsed_findings)
+            if dropped:
+                msg = f"{dropped} finding(s) in {file_path} contain invalid Unicode surrogates"
+                if clean:
+                    raise PartialImportError(msg, clean)
+                raise ValueError(msg)
+            return clean
+        except PartialImportError as e:
+            clean, dropped = _filter_surrogates(e.findings)
+            if dropped:
+                raise PartialImportError(f"{e}; dropped {dropped} finding(s) with invalid Unicode surrogates", clean) from e
+            raise PartialImportError(str(e), clean) from e
         except DefusedXmlException as e:
             raise ValueError(
                 f"{file_path}: the XML uses entity or DTD declarations, which scanfuse does not "
@@ -369,6 +392,34 @@ class ScanfuseEngine:
                     for e in f.evidence
                     if not e.hosts or any(x.strip().lower().strip("[]") in names for x in e.hosts)
                 ]
+                if f.sources and all(source.hosts is not None for source in f.sources):
+                    originals = [Finding.model_validate(source.model_dump()) for source in f.sources]
+                    # A merged host can supply an alias absent from an individual source.
+                    def match_source_host(host: Host) -> bool:
+                        ip = host.ip.strip().lower().strip("[]")
+                        name = (host.hostname or "").strip().lower()
+                        return match_host(host) or (
+                            not name and ip not in ("", "unknown") and ip in names
+                        ) or (ip in ("", "unknown") and bool(name) and name in names)
+
+                    selected = []
+                    for original in originals:
+                        hosts = [h for h in original.hosts if match_source_host(h)]
+                        if hosts:
+                            selected.append(original.model_copy(update={"hosts": hosts}))
+                    if selected:
+                        summary = _merge_group(selected)
+                        previous = _merge_group(originals)
+                        for field in ("title", "severity", "cvss_score", "cvss_vector", "description", "remediation",
+                                      "identifiers", "references", "cvss_merge_conflict"):
+                            # Keep explicit changes made after the original merge (e.g. overrides).
+                            if getattr(f, field) == getattr(previous, field):
+                                setattr(f_copy, field, getattr(summary, field))
+                        kept_tags = set(summary.tags)
+                        original_tags = set(previous.tags)
+                        f_copy.tags = [tag for tag in f.tags if tag in kept_tags or tag not in original_tags]
+                        f_copy.sources = summary.sources
+                        f_copy.source_tool = summary.source_tool
                 new_filtered.append(f_copy)
         return new_filtered
 
@@ -434,7 +485,7 @@ class ScanfuseEngine:
                     old_names = list(old.get("files", []))
                     if isinstance(old.get("sha256"), dict):
                         old_digests = old["sha256"]
-                except (OSError, ValueError, AttributeError, TypeError):
+                except (OSError, ValueError, AttributeError, TypeError, RecursionError):
                     old_names = []
 
             staged_manifest = staging / manifest.name
@@ -498,7 +549,7 @@ class ScanfuseEngine:
             loaders.append(FileSystemLoader(str(self.custom_template_dir)))
         loaders.append(FileSystemLoader(str(builtin_template_dir)))
 
-        env = Environment(loader=ChoiceLoader(loaders), autoescape=False)  # noqa: S701
+        env = Environment(loader=ChoiceLoader(loaders), autoescape=False)
         env.filters['md'] = md_escape
         env.filters['mdtext'] = md_text
         env.filters['singleline'] = lambda value: ' '.join(str(value).split())
@@ -551,10 +602,11 @@ class ScanfuseEngine:
 
     @staticmethod
     def _render_html(index_content: str, findings: list[Finding], rendered: list[str]) -> str:
-        index_html = render_report_fragment(index_content)
+        finding_slugs = {finding.slug for finding in findings if finding.slug}
+        index_html = render_report_fragment(index_content, finding_slugs=finding_slugs)
         finding_htmls = []
         for finding, content in zip(findings, rendered):
-            html_c = render_report_fragment(content)
+            html_c = render_report_fragment(content, finding_slugs=finding_slugs)
             clean_title = html.escape(
                 " ".join([finding.title, *finding.affected()]).strip().lower(), quote=True
             )
@@ -563,7 +615,7 @@ class ScanfuseEngine:
 
         html_body = index_html + "\n" + "\n".join(finding_htmls)
 
-        out = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset='utf-8'>\n"
+        out = "<!DOCTYPE html>\n<html lang='en'>\n<head>\n<meta charset='utf-8'>\n"
         out += "<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
         out += "<meta name='color-scheme' content='light dark'>\n"
         out += "<title>Pentest Report</title>\n"
@@ -579,7 +631,7 @@ class ScanfuseEngine:
   :root { --fg: #24292f !important; --bg: #ffffff !important; --muted-bg: #f6f8fa !important; --border: #d0d7de !important; --head-bg: #eaeef2 !important; --link: #0969da !important; color-scheme: light !important; }
   .filter-bar { display: none !important; }
 }
-body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); }
+body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); overflow-wrap: anywhere; }
 a { color: var(--link); }
 table { border-collapse: collapse; width: 100%; margin: 20px 0; }
 th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
@@ -587,7 +639,7 @@ th { background-color: var(--head-bg); }
 pre { background: var(--muted-bg); padding: 15px; overflow-x: auto; border: 1px solid var(--border); }
 code { background: var(--muted-bg); }
 hr { margin: 40px 0; border: 0; border-top: 2px solid var(--border); }
-.filter-bar { padding: 15px; background: var(--muted-bg); border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-bar { padding: 15px; background: var(--muted-bg); border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .filter-bar input, .filter-bar select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); }
 """
         out += "</style>\n</head>\n<body>\n"
@@ -696,7 +748,8 @@ function filterFindings() {
                     )
                     cvss_str = str(finding.cvss_score) if finding.cvss_score is not None else ""
                     evidence_str = "\n---\n".join(
-                        f"{e.type}{f' [{e.source}]' if e.source else ''}:\n{e.data}"
+                        f"{e.type}{f' [{e.source}]' if e.source else ''}:\n"
+                        + (f"{e.data}\n{e.code}" if e.code else e.data)
                         for e in finding.evidence
                     )
                     others = "\n---\n".join(
@@ -757,6 +810,8 @@ function filterFindings() {
                     rule["helpUri"] = finding.references[0]
                 rules.setdefault(rule_id, rule)
                 result_properties: dict[str, object] = {
+                    **finding.model_dump(),
+                    "scanfuse-finding-version": 1,
                     "identifiers": finding.identifiers,
                     "references": finding.references,
                     "remediation": finding.remediation,
@@ -772,7 +827,7 @@ function filterFindings() {
                     "ruleId": rule_id,
                     "level": {"Critical": "error", "High": "error", "Medium": "warning",
                               "Low": "note", "Info": "note"}.get(finding.severity, "warning"),
-                    "message": {"text": finding.title},
+                    "message": {"text": finding.title.replace("{", "{{").replace("}", "}}")},
                     "properties": result_properties,
                 }
                 # A host is not a file, so there is no physicalLocation. Hosts are logical locations.

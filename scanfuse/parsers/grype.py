@@ -3,11 +3,14 @@ from pathlib import Path
 from typing import Any
 
 from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids, cve_ids, extract_urls
-
-
-def _dict(value: object) -> dict[str, Any]:
-    return value if isinstance(value, dict) else {}
+from scanfuse.parsers.base import (
+    BaseParser,
+    PartialImportError,
+    as_dict,
+    clean_ids,
+    cve_ids,
+    extract_urls,
+)
 
 
 class GrypeParser(BaseParser):
@@ -21,10 +24,11 @@ class GrypeParser(BaseParser):
         if not isinstance(matches, list):
             raise ValueError("Not a valid Grype JSON report")
         findings: list[Finding] = []
+        parse_errors: list[str] = []
         severity_map = {"CRITICAL": "Critical", "HIGH": "High", "MEDIUM": "Medium",
                         "LOW": "Low", "NEGLIGIBLE": "Info", "UNKNOWN": "Info"}
-        context = _dict(payload.get("context"))
-        source_info = _dict(payload.get("source") or context.get("source"))
+        context = as_dict(payload.get("context"))
+        source_info = as_dict(payload.get("source") or context.get("source"))
         target = source_info.get("target")
         if isinstance(target, dict):
             target = target.get("userInput") or target.get("imageID") or target.get("path")
@@ -32,9 +36,13 @@ class GrypeParser(BaseParser):
 
         for match in matches:
             if not isinstance(match, dict):
+                parse_errors.append("Grype match entry must be an object")
                 continue
-            vulnerability = _dict(match.get("vulnerability"))
-            artifact = _dict(match.get("artifact"))
+            vulnerability = match.get("vulnerability")
+            if not isinstance(vulnerability, dict):
+                parse_errors.append("Grype match vulnerability must be an object")
+                continue
+            artifact = as_dict(match.get("artifact"))
             vuln_id = str(vulnerability.get("id") or "grype-vulnerability")
             package = str(artifact.get("name") or "unknown package")
             version = artifact.get("version")
@@ -48,17 +56,21 @@ class GrypeParser(BaseParser):
             if isinstance(cvss_val, list):
                 # Highest valid base score, with its own vector.
                 for entry in cvss_val:
-                    metrics = _dict(entry).get("metrics")
-                    score = _dict(metrics).get("baseScore")
+                    metrics = as_dict(entry).get("metrics")
+                    score = as_dict(metrics).get("baseScore")
                     if isinstance(score, bool) or not isinstance(score, (int, float)):
                         continue
-                    if 0.0 <= float(score) <= 10.0 and (cvss_score is None or float(score) > cvss_score):
-                        cvss_score = float(score)
-                        vector = _dict(entry).get("vector")
+                    try:
+                        numeric_score = float(score)
+                    except (ValueError, TypeError, OverflowError):
+                        continue
+                    if 0.0 <= numeric_score <= 10.0 and (cvss_score is None or numeric_score > cvss_score):
+                        cvss_score = numeric_score
+                        vector = as_dict(entry).get("vector")
                         cvss_vector = str(vector) if vector else None
             elif isinstance(cvss_val, str):
                 cvss_vector = cvss_val
-            fix_versions = _dict(vulnerability.get("fix")).get("versions")
+            fix_versions = as_dict(vulnerability.get("fix")).get("versions")
             remediation = str(fix_versions[0]) if isinstance(fix_versions, list) and fix_versions else None
             related = match.get("relatedVulnerabilities")
             related_ids = [item.get("id") for item in related if isinstance(item, dict)] \
@@ -76,4 +88,9 @@ class GrypeParser(BaseParser):
                 cvss_vector=cvss_vector,
                 cvss_score=cvss_score,
             ))
+        if parse_errors:
+            message = "; ".join(dict.fromkeys(parse_errors))
+            if findings:
+                raise PartialImportError(message, findings)
+            raise ValueError(message)
         return findings

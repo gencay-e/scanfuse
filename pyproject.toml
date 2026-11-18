@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Gencay" }
 ]
-keywords = ["pentest", "security", "report", "nmap", "nuclei", "zap", "burp", "nessus", "trivy"]
+keywords = ["pentest", "security", "report", "nmap", "nuclei", "zap", "burp", "nessus", "trivy", "sarif", "semgrep", "grype", "nikto", "testssl"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -58,7 +58,20 @@ dev = [
 ]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/.github", "/.hypothesis", "/.venv", "/.pytest_cache", "/.mypy_cache", "/.ruff_cache", "/build", "/dist", "/out", "/report", "/tests"]
+include = [
+    "/scanfuse",
+    "/tests",
+    "/tools",
+    "/uv.lock",
+    "/build.py",
+    "/scanfuse.spec",
+    "/pyproject.toml",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/SECURITY.md",
+    "/CONTRIBUTING.md",
+    "/LICENSE",
+]
 
 [tool.hatch.version]
 path = "scanfuse/__init__.py"

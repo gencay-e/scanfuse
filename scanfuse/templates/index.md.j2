@@ -1,13 +1,14 @@
 # Pentest Report Summary
 
 ## Import status
-{% if complete %}
+{% if complete -%}
 Complete. All inputs were read.
-{% else %}
+{% else -%}
 **INCOMPLETE.** {{ errors|length }} input problem(s). The findings below come only from inputs that could be read.
-{% for e in errors %}
+
+{% for e in errors -%}
 - {{ e.file | md }}: {{ e.message | md }}
-{% endfor %}
+{% endfor -%}
 {% endif %}
 
 ## Executive Summary
@@ -23,36 +24,34 @@ Total Findings: {{ findings|length }}
 | Info     | {{ findings|selectattr('severity', 'equalto', 'Info')|list|length }} |
 
 ## Findings Overview
-{% for finding in findings_sorted %}
+{% for finding in findings_sorted -%}
 - [{{ finding.severity | md }}] [{{ finding.title | singleline | md }}]({{ finding.slug }}.md){% set places = finding.place_labels() %}{% if places | length == 1 %} at {{ places[0] | md }}{% elif places %} at {{ places | length }} locations{% endif %} {% if finding.status %}[{{ finding.status | md }}] {% endif %}(Source: {{ finding.source_tool | md }}, {{ finding.hosts | length }} host{{ "" if finding.hosts | length == 1 else "s" }})
 {% endfor %}
-
 ## Affected Hosts
-{% set hosts = {} %}
-{% for finding in findings %}
-  {% for host in finding.hosts %}
-    {% if host.ip == "unknown" and host.hostname %}
-      {% set label = host.hostname %}
-    {% elif host.hostname and host.hostname != host.ip %}
-      {% set label = host.ip ~ " (" ~ host.hostname ~ ")" %}
-    {% else %}
-      {% set label = host.ip %}
-    {% endif %}
-    {% if label not in hosts %}
-      {% set _ = hosts.update({label: 1}) %}
-    {% endif %}
-  {% endfor %}
-{% endfor %}
-
-{% for host_label in hosts %}
+{% set hosts = {} -%}
+{%- for finding in findings -%}
+  {%- for host in finding.hosts -%}
+    {%- if host.ip == "unknown" and host.hostname -%}
+      {%- set label = host.hostname -%}
+    {%- elif host.hostname and host.hostname != host.ip -%}
+      {%- set label = host.ip ~ " (" ~ host.hostname ~ ")" -%}
+    {%- else -%}
+      {%- set label = host.ip -%}
+    {%- endif -%}
+    {%- if label not in hosts -%}
+      {%- set _ = hosts.update({label: 1}) -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{% for host_label in hosts -%}
 - {{ host_label | md }}
-{% else %}
+{% else -%}
 No host data extracted.
-{% endfor %}
-
+{% endfor -%}
 {% if resolved %}
+
 ## Resolved findings
-{% for finding in resolved %}
+{% for finding in resolved -%}
 - [resolved] {{ finding.title | singleline | md }}{% for place in finding.affected() %}: {{ place | md }}{% endfor %}
-{% endfor %}
-{% endif %}
+{% endfor -%}
+{% endif -%}

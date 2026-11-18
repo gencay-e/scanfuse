@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import defusedxml.ElementTree as defused_et
 
 from scanfuse.models import Evidence, Finding, Host
-from scanfuse.parsers.base import BaseParser, clean_ids
+from scanfuse.parsers.base import BaseParser, PartialImportError, clean_ids
 
 
 def _best_os_guess(host_elem: ET.Element) -> str | None:
@@ -31,6 +31,7 @@ def _best_os_guess(host_elem: ET.Element) -> str | None:
 class NmapParser(BaseParser):
     def parse(self, file_path: str) -> list[Finding]:
         findings = []
+        abort_error: str | None = None
         try:
             context = iter(defused_et.iterparse(file_path, events=("start", "end")))
 
@@ -43,7 +44,13 @@ class NmapParser(BaseParser):
                 raise ValueError("Not a valid Nmap XML file (missing <nmaprun> root tag)")
 
             for event, host_elem in context:
-                if event == "end" and host_elem.tag == "host":
+                if event == "end" and host_elem.tag == "finished":
+                    exit_state = (host_elem.get("exit") or "").strip().lower()
+                    if exit_state and exit_state != "success":
+                        abort_error = host_elem.get("errormsg") or f"Nmap scan finished with exit={exit_state}"
+                    host_elem.clear()
+                    root.clear()
+                elif event == "end" and host_elem.tag == "host":
                     status = host_elem.find("status")
                     if status is not None and status.get("state") != "up":
                         host_elem.clear()
@@ -158,8 +165,16 @@ class NmapParser(BaseParser):
                     root.clear()
 
         except ET.ParseError as e:
-            raise ValueError(f"Invalid XML in {file_path}: {e}")
+            message = f"Invalid XML in {file_path}: {e}"
+            if findings:
+                raise PartialImportError(message, findings) from e
+            raise ValueError(message) from e
         except OSError as e:
             raise ValueError(f"File I/O error reading {file_path}: {e}")
+
+        if abort_error:
+            if findings:
+                raise PartialImportError(abort_error, findings)
+            raise ValueError(abort_error)
 
         return findings

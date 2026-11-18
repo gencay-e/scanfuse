@@ -145,6 +145,30 @@ def test_baseline_identity_includes_prefix_value_tool_ids(tmp_path):
     assert [(f.identifiers, f.status) for f in resolved] == [(["scanner-rule:one"], "resolved")]
 
 
+def test_baseline_tolerates_added_and_removed_secondary_scanners(tmp_path):
+    nessus = Finding(
+        title="SQL Injection", severity="High", description="Desc", source_tool="nessus",
+        identifiers=["nessus-plugin:1"], hosts=[Host(ip="192.0.2.1")],
+        observations=[Observation(host="192.0.2.1", location="/login", source_tool="nessus")],
+    )
+    merged = Finding(
+        title="SQL Injection", severity="High", description="Desc", source_tool="nessus, zap",
+        identifiers=["nessus-plugin:1", "zap-plugin:2"], hosts=[Host(ip="192.0.2.1")],
+        observations=[
+            Observation(host="192.0.2.1", location="/login", source_tool="nessus"),
+            Observation(host="192.0.2.1", location="/login", source_tool="zap"),
+        ],
+    )
+    resolved_added = compare_baseline([merged], baseline(tmp_path / "b1", [nessus]))
+    assert merged.status == "unchanged"
+    assert resolved_added == []
+
+    nessus_copy = nessus.model_copy(deep=True)
+    resolved_removed = compare_baseline([nessus_copy], baseline(tmp_path / "b2", [merged]))
+    assert nessus_copy.status == "unchanged"
+    assert resolved_removed == []
+
+
 def test_cli_compares_active_downgraded_finding_before_min_severity(tmp_path, monkeypatch):
     source = tmp_path / "scan.json"
     source.write_text(json.dumps([{
@@ -157,9 +181,9 @@ def test_cli_compares_active_downgraded_finding_before_min_severity(tmp_path, mo
     observed = []
     original = compare_baseline
 
-    def capture(findings, path, *, complete=True):
+    def capture(findings, path, **kwargs):
         observed.extend(findings)
-        return original(findings, path, complete=complete)
+        return original(findings, path, **kwargs)
 
     monkeypatch.setattr("scanfuse.cli.compare_baseline", capture)
     result = CliRunner().invoke(app, [str(source), "--baseline", str(initial / "report.json"),
@@ -202,3 +226,62 @@ def test_stdin_temp_file_is_removed_and_fd_closed_when_write_fails(tmp_path, mon
     assert not Path(created["name"]).exists()
     with pytest.raises(OSError):
         os.fstat(created["fd"])
+
+
+def test_baseline_empty_local_ids_do_not_match_populated_same_tool_ids(tmp_path):
+    first = Finding(title="Same Rule", severity="High", description="D", source_tool="nessus", identifiers=["nessus-plugin:1"])
+    second = Finding(title="Same Rule", severity="High", description="D", source_tool="nessus", identifiers=["nessus-plugin:2"])
+    current = Finding(title="Same Rule", severity="High", description="D", source_tool="nessus", identifiers=[])
+    resolved = compare_baseline([current], baseline(tmp_path, [first, second]))
+    assert current.status == "new"
+    assert len(resolved) == 2 and all(f.status == "resolved" for f in resolved)
+
+
+def test_cli_excludes_other_hosts_from_baseline_matching(tmp_path):
+    previous = baseline(tmp_path, [item(host="192.0.2.2")])
+    source = tmp_path / "source"
+    ScanfuseEngine(str(source)).export_sarif([item(host="192.0.2.1")])
+    output = tmp_path / "retest"
+    result = CliRunner().invoke(app, [str(source / "report.sarif"), "--baseline", str(previous),
+                                      "--host", "192.0.2.1", "--format-out", "json", "-o", str(output)])
+    assert result.exit_code == 0, result.output
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert [f["status"] for f in report["findings"]] == ["new"]
+    assert report["resolved"] == []
+
+
+@pytest.mark.parametrize("malformation,message", [
+    ("surrogate", "invalid Unicode surrogates"),
+    ("nesting", "JSON nesting is too deep"),
+])
+def test_cli_malformed_baseline_exports_incomplete_report(tmp_path, malformation, message):
+    previous = tmp_path / "baseline.json"
+    if malformation == "surrogate":
+        previous.write_text(json.dumps({
+            "schema_version": 2, "complete": True, "findings": [item("Gone\ud800").model_dump()],
+        }), encoding="utf-8")
+    else:
+        previous.write_text("[" * 5000 + "]" * 5000, encoding="utf-8")
+    source = tmp_path / "scan.json"
+    source.write_text('{"matches": []}', encoding="utf-8")
+    out = tmp_path / "out"
+
+    result = CliRunner().invoke(app, [str(source), "-f", "grype", "--baseline", str(previous), "-o", str(out)])
+    assert result.exit_code == 1, result.output
+    index = (out / "index.md").read_text(encoding="utf-8")
+    assert "INCOMPLETE" in index
+    assert message in index
+
+
+def test_cli_deep_config_exports_incomplete_report(tmp_path):
+    config = tmp_path / "config.yaml"
+    config.write_text("overrides: " + "[" * 500 + "]" * 500, encoding="utf-8")
+    source = tmp_path / "scan.json"
+    source.write_text('{"matches": []}', encoding="utf-8")
+    out = tmp_path / "out"
+    result = CliRunner().invoke(app, [str(source), "-f", "grype", "-c", str(config),
+                                    "--format-out", "json", "-o", str(out)])
+    assert result.exit_code == 1, result.output
+    report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+    assert report["complete"] is False
+    assert "YAML nesting is too deep" in report["errors"][0]["message"]

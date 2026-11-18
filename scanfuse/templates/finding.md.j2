@@ -1,48 +1,49 @@
 # {{ finding.title | md }}
+{%- if finding.status %}
 
-{% if finding.status %}
 **Retest status**: {{ finding.status | md }}
-{% endif %}
+{%- endif %}
 
 **Severity**: {{ finding.severity | md }}
-{% if finding.cvss_score is not none %}
+{%- if finding.cvss_score is not none %}
 
 **CVSS Score**: {{ finding.cvss_score }}{% if finding.cvss_vector %} ({{ finding.cvss_vector | md }}){% endif %}
-{% endif %}
+{%- endif %}
 
 **Source**: {{ finding.source_tool | md }}
-{% if finding.port %}
+{%- if finding.port %}
 
 **Port**: {{ finding.port | md }}
-{% endif %}
-{% if finding.affected() %}
+{%- endif %}
+{%- if finding.affected() %}
 
 **Affected**:
-{% for place in finding.affected() %}
+
+{% for place in finding.affected() -%}
 - {{ place | md }}
-{% endfor %}
-{% endif %}
-{% if finding.identifiers %}
+{% endfor -%}
+{%- endif %}
+{%- if finding.identifiers %}
 
 **Identifiers**: {% for ident in finding.identifiers %}{{ ident | md }}{% if not loop.last %}, {% endif %}{% endfor %}
-{% endif %}
+{%- endif %}
 
 ## Description
 {{ finding.description | mdtext }}
 
-{% if finding.remediation %}
+{% if finding.remediation -%}
 ## Remediation
 {{ finding.remediation | mdtext }}
-{% endif %}
 
-{% if finding.references %}
+{% endif -%}
+{% if finding.references -%}
 ## References
-{% for url in finding.references %}
+{% for url in finding.references -%}
 - {{ url | reference }}
 {% endfor %}
 
-{% endif %}
-{% if finding.sources %}
+{% endif -%}
+{% if finding.sources -%}
 ## Reported by
 {% for s in finding.sources %}
 
@@ -54,25 +55,33 @@
 {% if s.remediation %}
 
 **Remediation**: {{ s.remediation | mdtext }}
-{% endif %}
+{% endif -%}
 {% endfor %}
-{% endif %}
 
+{% endif -%}
 ## Hosts
-{% for host in finding.hosts %}
+{% for host in finding.hosts -%}
 - {{ host.ip | md }}{% if host.hostname %} ({{ host.hostname | md }}){% endif %}{% if host.os %} - OS: {{ host.os | md }}{% endif %}
-{% else %}
+{% else -%}
 No host information.
 {% endfor %}
 
 ## Evidence
-{% for ev in finding.evidence %}
+{% for ev in finding.evidence -%}
 ### {{ ev.type | md }}{% if ev.source %} ({{ ev.source | md }}){% endif %}
 
-{% set fence = ev.data | fence %}
+{% set fence = ev.data | fence -%}
 {{ fence }}
 {{ ev.data }}
 {{ fence }}
-{% else %}
+{% if ev.code %}
+
+{% set code_fence = ev.code | fence -%}
+{{ code_fence }}
+{{ ev.code }}
+{{ code_fence }}
+{%- endif %}
+
+{% else -%}
 No evidence provided.
-{% endfor %}
+{% endfor -%}

@@ -11,8 +11,9 @@ from rich.markup import escape
 
 from scanfuse import __version__
 from scanfuse.baseline import compare_baseline
-from scanfuse.config import apply_overrides, load_config, validate_config
+from scanfuse.config import apply_overrides, load_config
 from scanfuse.engine import OutputExistsError, ScanfuseEngine
+from scanfuse.models import Finding
 from scanfuse.parsers.base import PartialImportError
 
 app = typer.Typer(
@@ -65,15 +66,6 @@ def _version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-def parse_config(config_data: object) -> tuple[list[str], str | None]:
-    """Compatibility wrapper around the shared strict configuration validator."""
-    try:
-        config = validate_config(config_data)
-    except ValueError as exc:
-        return [], str(exc)
-    return list(config.get("ignore_titles", [])), None
-
-
 @app.command()
 def parse(
     file_paths: list[str] = typer.Argument(None, help="Paths to the scan files (or '-' for stdin)"),
@@ -114,8 +106,8 @@ def parse(
 
     Exit codes:
     0 = complete.
-    1 = incomplete or failed (an input could not be read, or .scanfuse.yaml is invalid).
-    2 = invalid options, or the output files already exist.
+    1 = incomplete or failed (an input, .scanfuse.yaml, or --baseline could not be read, no input was given, or the report could not be written).
+    2 = invalid options, --output is a file, or output files already exist.
     """
     input_format = format.value
     output_format = format_out.value
@@ -212,9 +204,12 @@ def parse(
 
         if baseline is not None:
             try:
-                resolved = compare_baseline(all_findings, baseline, complete=not errors)
-                if host_filter:
-                    resolved = engine.filter_by_host(resolved, host_filter)
+                def scope_previous(previous: list[Finding]) -> list[Finding]:
+                    return engine.filter_by_host(previous, host_filter) if host_filter else previous
+
+                resolved = compare_baseline(
+                    all_findings, baseline, complete=not errors, filter_previous=scope_previous,
+                )
                 if config_error is None:
                     resolved = apply_overrides(resolved, config)
                 engine.resolved = engine.filter_findings(

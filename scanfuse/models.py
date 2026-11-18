@@ -77,6 +77,10 @@ class SourceRecord(BaseModel):
     remediation: str | None = None
     identifiers: list[str] = Field(default_factory=list)
     port: str | None = None
+    hosts: list[Host] | None = None
+    references: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    cvss_merge_conflict: bool = False
 
 
 class Finding(BaseModel):

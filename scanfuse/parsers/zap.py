@@ -7,6 +7,7 @@ import defusedxml.ElementTree as defused_et
 from scanfuse.models import Evidence, Finding, Host, Observation, host_key
 from scanfuse.parsers.base import (
     BaseParser,
+    PartialImportError,
     clean_ids,
     cve_ids,
     cwe_id,
@@ -162,7 +163,10 @@ class ZapParser(BaseParser):
                     root.clear()
 
         except ET.ParseError as e:
-            raise ValueError(f"Invalid XML in {file_path}: {e}")
+            message = f"Invalid XML in {file_path}: {e}"
+            if findings:
+                raise PartialImportError(message, findings) from e
+            raise ValueError(message) from e
         except OSError as e:
             raise ValueError(f"File I/O error reading {file_path}: {e}")
 

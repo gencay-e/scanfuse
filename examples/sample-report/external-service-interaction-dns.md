@@ -1,26 +1,17 @@
 # External service interaction (DNS)
 
-
-
 **Severity**: High
-
 
 **Source**: burp
 
-
 **Port**: 443/tcp
-
-
 
 **Affected**:
 
 - 127.0.0.1 /
 
 
-
-
 **Identifiers**: burp-type:3146240, CWE-918, CWE-406
-
 
 ## Description
 It is possible to induce the application to perform server-side DNS lookups of arbitrary domain names.
@@ -40,7 +31,6 @@ By submitting suitable payloads, an attacker can cause the application server to
 This may include public third-party systems, internal systems within the same organization, or services available on the local loopback adapter of the application server itself.
 Depending on the network architecture, this may expose highly vulnerable internal services that are not otherwise accessible to external attackers.
 
-
 ## Remediation
 You should review the purpose and intended use of the relevant application functionality,
 and determine whether the ability to trigger arbitrary external service interactions is intended behavior.
@@ -49,37 +39,28 @@ These measures might include blocking network access from the application server
 
 If the ability to trigger arbitrary external service interactions is not intended behavior, then you should implement a whitelist of permitted services and hosts, and block any interactions that do not appear on this whitelist.
 
-
-
 ## References
-
 - <http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html>
-
 - <https://cwe.mitre.org/data/definitions/918.html>
-
 - <https://cwe.mitre.org/data/definitions/406.html>
 
 
-
-
-
 ## Hosts
-
 - 127.0.0.1 (127.0.0.1)
 
 
 ## Evidence
-
 ### path
-
 
 ```
 /
 ```
 
-### burp-details
 
+### burp-details
 
 ```
 Confidence: Certain
 ```
+
+

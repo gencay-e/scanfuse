@@ -1,4 +1,5 @@
 import base64
+import binascii
 import re
 import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
@@ -8,6 +9,7 @@ import defusedxml.ElementTree as defused_et
 from scanfuse.models import Evidence, Finding, Host, Observation, host_key
 from scanfuse.parsers.base import (
     BaseParser,
+    PartialImportError,
     clean_ids,
     cve_ids,
     cwe_ids_from_text,
@@ -96,7 +98,7 @@ class BurpParser(BaseParser):
                     path = issue_elem.findtext("path", default="").strip()
                     if path:
                         evidence_list.append(Evidence(type="path", data=path))
-                    location = html_to_text(issue_elem.findtext("location", default=""))
+                    location = issue_elem.findtext("location", default="").strip()
                     confidence = issue_elem.findtext("confidence", default="").strip()
                     if confidence or (location and location != path):
                         meta = []
@@ -117,8 +119,10 @@ class BurpParser(BaseParser):
                             req_data = req_elem.text
                             if req_elem.get("base64") == "true":
                                 try:
-                                    req_data = base64.b64decode(req_data).decode("utf-8", errors="replace")
-                                except Exception:  # noqa: S110
+                                    req_data = base64.b64decode(
+                                        "".join(req_data.split()), validate=True,
+                                    ).decode("utf-8", errors="replace")
+                                except (binascii.Error, ValueError):
                                     pass
                             text += f"Request:\n{req_data}\n\n"
                             methods.add(_request_method(req_elem.get("method"), req_data))
@@ -127,8 +131,10 @@ class BurpParser(BaseParser):
                             res_data = res_elem.text
                             if res_elem.get("base64") == "true":
                                 try:
-                                    res_data = base64.b64decode(res_data).decode("utf-8", errors="replace")
-                                except Exception:  # noqa: S110
+                                    res_data = base64.b64decode(
+                                        "".join(res_data.split()), validate=True,
+                                    ).decode("utf-8", errors="replace")
+                                except (binascii.Error, ValueError):
                                     pass
                             text += f"Response:\n{res_data}"
 
@@ -169,7 +175,10 @@ class BurpParser(BaseParser):
                     root.clear()
 
         except ET.ParseError as e:
-            raise ValueError(f"Invalid XML in {file_path}: {e}")
+            message = f"Invalid XML in {file_path}: {e}"
+            if findings:
+                raise PartialImportError(message, findings) from e
+            raise ValueError(message) from e
         except OSError as e:
             raise ValueError(f"File I/O error reading {file_path}: {e}")
 

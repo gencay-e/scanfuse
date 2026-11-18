@@ -1,26 +1,17 @@
 # Cross Site Request Forgery
 
-
-
 **Severity**: Medium
-
 
 **Source**: zap
 
-
 **Port**: 80/tcp
-
-
 
 **Affected**:
 
 - 10.2.100.1 /demo/OSCommandInjection.php
 
 
-
-
 **Identifiers**: zap-plugin:10014
-
 
 ## Description
 A cross-site request forgery is an attack that involves forcing a victim to send an HTTP request to a target destination without their knowledge or intent in order to perform an action as the victim. The underlying cause is application functionality using predictable URL/form actions in a repeatable way. The nature of the attack is that CSRF exploits the trust that a web site has for a user. By contrast, cross-site scripting (XSS) exploits the trust that a user has for a web site. Like XSS, CSRF attacks are not necessarily cross-site, but they can be. Cross-site request forgery is also known as CSRF, XSRF, one-click attack, session riding, confused deputy, and sea surf.
@@ -32,7 +23,6 @@ CSRF attacks are effective in a number of situations, including:
 * The victim is on the same local network as the target site.
 
 CSRF has primarily been used to perform an action against a target site using the victim's privileges, but recent techniques have been discovered to disclose information by gaining access to the response. The risk of information disclosure is dramatically increased when the target site is vulnerable to XSS, because XSS can be used as a platform for CSRF, allowing the attack to operate within the bounds of the same-origin policy.
-
 
 ## Remediation
 Phase: Architecture and Design
@@ -57,28 +47,20 @@ Do not use the GET method for any request that triggers a state change.
 Phase: Implementation
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.
 
-
-
 ## References
-
 - <http://projects.webappsec.org/Cross-Site-Request-Forgery>
-
 - <http://cwe.mitre.org/data/definitions/352.html>
 
 
-
-
-
 ## Hosts
-
 - 10.2.100.1
 
 
 ## Evidence
-
 ### http-request
-
 
 ```
 Request: http://10.2.100.1/demo/OSCommandInjection.php
 ```
+
+

@@ -1,26 +1,17 @@
 # Path Traversal
 
-
-
 **Severity**: High
-
 
 **Source**: zap
 
-
 **Port**: 80/tcp
-
-
 
 **Affected**:
 
 - 10.2.100.1 /demo/PathTraversal.php?action=%5cWindows%5csystem.ini \[action parameter\]
 
 
-
-
 **Identifiers**: zap-plugin:6
-
 
 ## Description
 The Path Traversal attack technique allows an attacker access to files, directories, and commands that potentially reside outside the web document root directory. An attacker may manipulate a URL in such a way that the web site will execute or reveal the contents of arbitrary files anywhere on the web server. Any device that exposes an HTTP-based interface is potentially vulnerable to Path Traversal.
@@ -30,7 +21,6 @@ Most web sites restrict user access to a specific portion of the file-system, ty
 The most basic Path Traversal attack uses the "../" special-character sequence to alter the resource location requested in the URL. Although most popular web servers will prevent this technique from escaping the web document root, alternate encodings of the "../" sequence may help bypass the security filters. These method variations include valid and invalid Unicode-encoding ("..%u2216" or "..%c0%af") of the forward slash character, backslash characters ("..\") on Windows-based servers, URL encoded characters "%2e%2e%2f"), and double URL encoding ("..%255c") of the backslash character.
 
 Even if the web server properly restricts Path Traversal attempts in the URL path, a web application itself may still be vulnerable due to improper handling of user-supplied input. This is a common problem of web applications that use template mechanisms or load static text from files. In variations of the attack, the original URL parameter value is substituted with the file name of one of the web application's dynamic scripts. Consequently, the results can reveal source code because the file is interpreted as text instead of an executable script. These techniques often employ additional special characters such as the dot (".") to reveal the listing of the current working directory, or "%00" NULL characters in order to bypass rudimentary file extension checks.
-
 
 ## Remediation
 Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a whitelist of acceptable inputs that strictly conform to specifications. Reject any input that does not strictly conform to specifications, or transform it into something that does. Do not rely exclusively on looking for malicious or malformed inputs (i.e., do not rely on a blacklist). However, blacklists can be useful for detecting potential attacks or determining which inputs are so malformed that they should be rejected outright.
@@ -55,27 +45,17 @@ OS-level examples include the Unix chroot jail, AppArmor, and SELinux. In genera
 
 This may not be a feasible solution, and it only limits the impact to the operating system; the rest of your application may still be subject to compromise.
 
-
-
 ## References
-
 - <http://projects.webappsec.org/Path-Traversal>
-
 - <http://cwe.mitre.org/data/definitions/22.html>
 
 
-
-
-
 ## Hosts
-
 - 10.2.100.1
 
 
 ## Evidence
-
 ### http-request
-
 
 ```
 Request: http://10.2.100.1/demo/PathTraversal.php?action=%5cWindows%5csystem.ini
@@ -83,9 +63,11 @@ Parameter: action
 Attack: null
 ```
 
-### other-info
 
+### other-info
 
 ```
 %5cWindows%5csystem.ini
 ```
+
+

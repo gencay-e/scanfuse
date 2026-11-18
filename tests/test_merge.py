@@ -167,7 +167,7 @@ def test_fixtures_zap_and_burp_sql_injection_keep_both_descriptions(tmp_path):
 
 
 def test_fixtures_zap_and_burp_sql_injection_at_different_paths_stay_separate(tmp_path):
-    # dummy_zap.xml has it at /view, dummy_burp.xml at /api/login. The old test expected one finding.
+    # dummy_zap.xml reports /view?id=1, dummy_burp.xml reports /api/login.
     engine = ScanfuseEngine(str(tmp_path))
     findings = []
     for name, fmt in (("dummy_zap.xml", "zap"), ("dummy_burp.xml", "burp")):
@@ -431,3 +431,90 @@ def test_local_identifier_grouping_is_independent_of_cross_tool_order():
         result = deduplicate_findings(ordering)
         assert len(result) == 2
         assert sum("nessus" in f.source_tool and "zap" in f.source_tool for f in result) == 1
+
+
+def test_merge_preserves_tags_from_every_tool():
+    first = finding(tool="burp", tags=["web"])
+    second = finding(tool="zap", tags=["accepted-risk"])
+    (merged,) = deduplicate_findings([first, second])
+    assert merged.tags == ["web", "accepted-risk"]
+
+
+def test_remerging_keeps_original_source_records_and_conflict():
+    first = finding(tool="burp", description="Burp original", identifiers=["burp:1"])
+    second = finding(tool="zap", description="ZAP original", identifiers=["zap:2"])
+    (merged,) = deduplicate_findings([first, second])
+    merged.cvss_merge_conflict = True
+    third = finding(tool="nuclei", description="Nuclei original")
+    (again,) = deduplicate_findings([third, merged])
+    assert {(source.source_tool, source.description) for source in again.sources} == {
+        ("burp", "Burp original"), ("zap", "ZAP original"), ("nuclei", "Nuclei original"),
+    }
+    assert again.cvss_merge_conflict is True
+
+
+def test_merge_keeps_distinct_source_identifiers():
+    first = finding(tool="zap", identifiers=["zap:1"])
+    second = finding(tool="zap", identifiers=["zap:2"])
+    # A scanner can report the same text at different hosts under a shared public ID.
+    first.identifiers = ["CVE-2026-1234", "zap:1"]
+    second.identifiers = ["CVE-2026-1234", "zap:2"]
+    from scanfuse.models import SourceRecord
+
+    combined = finding(tool="zap, burp")
+    combined.sources = [SourceRecord(**first.model_dump()), SourceRecord(**second.model_dump())]
+    (again,) = deduplicate_findings([combined, finding(tool="nuclei")])
+    assert {tuple(s.identifiers) for s in again.sources if s.source_tool == "zap"} == {
+        ("CVE-2026-1234", "zap:1"), ("CVE-2026-1234", "zap:2"),
+    }
+
+
+def test_remerged_sources_still_separate_different_ids_of_the_same_tool(tmp_path):
+    from itertools import permutations
+
+    first = finding(tool="burp", identifiers=["burp:1"])
+    second = finding(tool="zap", identifiers=["zap:1"])
+    distinct = finding(tool="burp", identifiers=["burp:2"])
+    merged = deduplicate_findings([first, second])
+    engine = ScanfuseEngine(str(tmp_path))
+    engine.export_sarif(merged)
+    restored = engine.process_file(str(tmp_path / "report.sarif"), "sarif")
+    for ordering in permutations([*restored, distinct]):
+        result = deduplicate_findings(list(ordering))
+        assert len(result) == 2
+        assert {tuple(sorted(f.identifiers)) for f in result} == {
+            ("burp:1", "zap:1"), ("burp:2",),
+        }
+
+
+def test_multiple_records_of_one_tool_keep_all_local_id_groups():
+    from scanfuse.baseline import _compatible_findings
+    from scanfuse.models import SourceRecord
+
+    combined = finding(tool="zap", identifiers=["zap:1", "zap:2"])
+    combined.sources = [SourceRecord(**finding(tool="zap", identifiers=[ident]).model_dump())
+                        for ident in combined.identifiers]
+    single = finding(tool="zap", identifiers=["zap:2"])
+    assert len(deduplicate_findings([combined, single])) == 2
+    reversed_sources = combined.model_copy(deep=True)
+    reversed_sources.sources.reverse()
+    assert _compatible_findings(combined, reversed_sources)
+    empty = finding(tool="zap")
+    combined.identifiers = ["zap:2"]
+    combined.sources[0] = SourceRecord(**empty.model_dump())
+    assert len(deduplicate_findings([combined, single])) == 2
+
+
+def test_remerge_breaks_ties_using_per_tool_ids():
+    from itertools import permutations
+
+    first, = deduplicate_findings([finding(tool="burp", identifiers=["rule:1"]),
+                                   finding(tool="zap", identifiers=["rule:2"])])
+    second, = deduplicate_findings([finding(tool="burp", identifiers=["rule:2"]),
+                                    finding(tool="zap", identifiers=["rule:1"])])
+    compatible = finding(tool="zz")
+    for order in permutations([first, second, compatible]):
+        result = deduplicate_findings(list(order))
+        assert len(result) == 2
+        merged, = [f for f in result if "zz" in f.source_tool.split(", ")]
+        assert [s.identifiers for s in merged.sources if s.source_tool == "burp"] == [["rule:1"]]

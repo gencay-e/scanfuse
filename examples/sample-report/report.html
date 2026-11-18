@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang='en'>
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -16,7 +16,7 @@
   :root { --fg: #24292f !important; --bg: #ffffff !important; --muted-bg: #f6f8fa !important; --border: #d0d7de !important; --head-bg: #eaeef2 !important; --link: #0969da !important; color-scheme: light !important; }
   .filter-bar { display: none !important; }
 }
-body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); }
+body { font-family: system-ui, sans-serif; margin: 40px auto; max-width: 900px; padding: 0 12px; line-height: 1.6; color: var(--fg); background: var(--bg); overflow-wrap: anywhere; }
 a { color: var(--link); }
 table { border-collapse: collapse; width: 100%; margin: 20px 0; }
 th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
@@ -24,7 +24,7 @@ th { background-color: var(--head-bg); }
 pre { background: var(--muted-bg); padding: 15px; overflow-x: auto; border: 1px solid var(--border); }
 code { background: var(--muted-bg); }
 hr { margin: 40px 0; border: 0; border-top: 2px solid var(--border); }
-.filter-bar { padding: 15px; background: var(--muted-bg); border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-bar { padding: 15px; background: var(--muted-bg); border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .filter-bar input, .filter-bar select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); }
 </style>
 </head>
@@ -116,171 +116,63 @@ function filterFindings() {
 </table>
 <h2>Findings Overview</h2>
 <ul>
-<li>
-<p>[Critical] <a href="#moby-authz-zero-length-regression" rel="noopener noreferrer">moby: Authz zero length regression</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#ssl-scanner-offer-sslv3" rel="noopener noreferrer">[SSL Scanner] Offer SSLv3</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#ssl-scanner-poodle-sslv3" rel="noopener noreferrer">[SSL Scanner] POODLE (SSLv3)</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#asymmetric-private-key" rel="noopener noreferrer">Asymmetric Private Key</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#attacker-can-cause-kyverno-user-to-unintentionally-consume-insecure-image" rel="noopener noreferrer">Attacker can cause Kyverno user to unintentionally consume insecure image</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cilium-has-insecure-ipsec-transport-encryption" rel="noopener noreferrer">Cilium has insecure IPsec transport encryption</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cilium-leaks-sensitive-information-in-cilium-bugtool" rel="noopener noreferrer">Cilium leaks sensitive information in cilium-bugtool</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cross-site-scripting" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/EvalInjection2.php [command parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cross-site-scripting-1" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XSS-reflected2.php [username parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cross-site-scripting-2" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XPathInjection2.php [username parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#cross-site-scripting-3" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XPathInjection2.php [password parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#external-service-interaction-dns" rel="noopener noreferrer">External service interaction (DNS)</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#intermittent-http-policy-bypass" rel="noopener noreferrer">Intermittent HTTP policy bypass</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default" rel="noopener noreferrer">Kyverno's PolicyException objects can be created in any namespace by default</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#path-traversal" rel="noopener noreferrer">Path Traversal</a> at /demo/PathTraversal.php?action=%5cWindows%5csystem.ini [action parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#sql-injection" rel="noopener noreferrer">SQL Injection</a> at /demo/SQLI2.php [username parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[High] <a href="#sql-injection-fingerprinting" rel="noopener noreferrer">SQL Injection Fingerprinting</a> at /demo/SQLI2.php [username parameter] (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#ssl-scanner-breach" rel="noopener noreferrer">[SSL Scanner] BREACH</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cilium-s-cidr-deny-policies-may-not-take-effect-when-a-more-narrow-cidr-allow-is-present" rel="noopener noreferrer">Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cosign-malicious-artifects-can-cause-machine-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious artifects can cause machine-wide denial of service</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cosign-malicious-attachments-can-cause-system-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious attachments can cause system-wide denial of service</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XSS-reflected.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-1" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/LDAPInjection.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-2" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/EvalInjection.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-3" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/SQLI.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-4" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XSS-cookie.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-5" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XPathInjection.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-6" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/FormatString.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#cross-site-request-forgery-7" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/OSCommandInjection.php (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#directory-browsing" rel="noopener noreferrer">Directory browsing</a> at /demo/DirectoryIndexing/ (Source: zap, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#go-retryablehttp-url-might-write-sensitive-information-to-log-file" rel="noopener noreferrer">go-retryablehttp: url might write sensitive information to log file</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#golang-net-http-x-net-http2-unlimited-number-of-continuation-frames-causes-dos" rel="noopener noreferrer">golang: net/http, x/net/http2: unlimited number of CONTINUATION frames causes DoS</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#jose-go-improper-handling-of-highly-compressed-data" rel="noopener noreferrer">jose-go: improper handling of highly compressed data</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#jwt-token" rel="noopener noreferrer">JWT token</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#kyverno-resource-with-a-deletiontimestamp-may-allow-policy-circumvention" rel="noopener noreferrer">Kyverno resource with a deletionTimestamp may allow policy circumvention</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#kyverno-seccomp-control-can-be-circumvented" rel="noopener noreferrer">kyverno seccomp control can be circumvented</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#kyverno-vulnerable-due-to-usage-of-insecure-cipher" rel="noopener noreferrer">Kyverno vulnerable due to usage of insecure cipher</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#mholt-archiver-path-traversal-vulnerability" rel="noopener noreferrer">mholt/archiver: path traversal vulnerability</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#microsoft-windows-remote-desktop-protocol-server-man-in-the-middle-weakness" rel="noopener noreferrer">Microsoft Windows Remote Desktop Protocol Server Man-in-the-Middle Weakness</a> (Source: nessus, 2 hosts)</p>
-</li>
-<li>
-<p>[Medium] <a href="#opa-opa-smb-force-authentication" rel="noopener noreferrer">opa: OPA SMB Force-Authentication</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#policy-bypass-for-host-firewall-policy-due-to-race-condition-in-cilium-agent" rel="noopener noreferrer">Policy bypass for Host Firewall policy due to race condition in Cilium agent</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#smb-signing-disabled" rel="noopener noreferrer">SMB Signing Disabled</a> (Source: nessus, 2 hosts)</p>
-</li>
-<li>
-<p>[Medium] <a href="#ssl-certificate" rel="noopener noreferrer">SSL certificate</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#strict-transport-security-misconfiguration" rel="noopener noreferrer">Strict Transport Security Misconfiguration</a> at / (Source: burp, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#terminal-services-encryption-level-is-medium-or-low" rel="noopener noreferrer">Terminal Services Encryption Level is Medium or Low</a> (Source: nessus, 2 hosts)</p>
-</li>
-<li>
-<p>[Medium] <a href="#unencrypted-ingress-health-traffic-when-using-wireguard-transparent-encryption" rel="noopener noreferrer">Unencrypted ingress/health traffic when using Wireguard transparent encryption</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-ipsec-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using IPsec and L7 policies</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-wireguard-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using WireGuard and L7 policies</a> (Source: trivy, 1 host)</p>
-</li>
-<li>
-<p>[Medium] <a href="#unencrypted-traffic-between-pods-when-using-wireguard-and-an-external-kvstore" rel="noopener noreferrer">Unencrypted traffic between pods when using Wireguard and an external kvstore</a> (Source: trivy, 1 host)</p>
-</li>
+<li>[Critical] <a href="#moby-authz-zero-length-regression" rel="noopener noreferrer">moby: Authz zero length regression</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#ssl-scanner-offer-sslv3" rel="noopener noreferrer">[SSL Scanner] Offer SSLv3</a> at / (Source: burp, 1 host)</li>
+<li>[High] <a href="#ssl-scanner-poodle-sslv3" rel="noopener noreferrer">[SSL Scanner] POODLE (SSLv3)</a> at / (Source: burp, 1 host)</li>
+<li>[High] <a href="#asymmetric-private-key" rel="noopener noreferrer">Asymmetric Private Key</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#attacker-can-cause-kyverno-user-to-unintentionally-consume-insecure-image" rel="noopener noreferrer">Attacker can cause Kyverno user to unintentionally consume insecure image</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#cilium-has-insecure-ipsec-transport-encryption" rel="noopener noreferrer">Cilium has insecure IPsec transport encryption</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#cilium-leaks-sensitive-information-in-cilium-bugtool" rel="noopener noreferrer">Cilium leaks sensitive information in cilium-bugtool</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#cross-site-scripting" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/EvalInjection2.php [command parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#cross-site-scripting-1" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XSS-reflected2.php [username parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#cross-site-scripting-2" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XPathInjection2.php [username parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#cross-site-scripting-3" rel="noopener noreferrer">Cross Site Scripting</a> at /demo/XPathInjection2.php [password parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#external-service-interaction-dns" rel="noopener noreferrer">External service interaction (DNS)</a> at / (Source: burp, 1 host)</li>
+<li>[High] <a href="#intermittent-http-policy-bypass" rel="noopener noreferrer">Intermittent HTTP policy bypass</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#kyverno-s-policyexception-objects-can-be-created-in-any-namespace-by-default" rel="noopener noreferrer">Kyverno's PolicyException objects can be created in any namespace by default</a> (Source: trivy, 1 host)</li>
+<li>[High] <a href="#path-traversal" rel="noopener noreferrer">Path Traversal</a> at /demo/PathTraversal.php?action=%5cWindows%5csystem.ini [action parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#sql-injection" rel="noopener noreferrer">SQL Injection</a> at /demo/SQLI2.php [username parameter] (Source: zap, 1 host)</li>
+<li>[High] <a href="#sql-injection-fingerprinting" rel="noopener noreferrer">SQL Injection Fingerprinting</a> at /demo/SQLI2.php [username parameter] (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#ssl-scanner-breach" rel="noopener noreferrer">[SSL Scanner] BREACH</a> at / (Source: burp, 1 host)</li>
+<li>[Medium] <a href="#cilium-s-cidr-deny-policies-may-not-take-effect-when-a-more-narrow-cidr-allow-is-present" rel="noopener noreferrer">Cilium's CIDR deny policies may not take effect when a more narrow CIDR allow is present</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#cosign-malicious-artifects-can-cause-machine-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious artifects can cause machine-wide denial of service</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#cosign-malicious-attachments-can-cause-system-wide-denial-of-service" rel="noopener noreferrer">cosign: Malicious attachments can cause system-wide denial of service</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XSS-reflected.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-1" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/LDAPInjection.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-2" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/EvalInjection.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-3" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/SQLI.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-4" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XSS-cookie.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-5" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/XPathInjection.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-6" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/FormatString.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#cross-site-request-forgery-7" rel="noopener noreferrer">Cross Site Request Forgery</a> at /demo/OSCommandInjection.php (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#directory-browsing" rel="noopener noreferrer">Directory browsing</a> at /demo/DirectoryIndexing/ (Source: zap, 1 host)</li>
+<li>[Medium] <a href="#go-retryablehttp-url-might-write-sensitive-information-to-log-file" rel="noopener noreferrer">go-retryablehttp: url might write sensitive information to log file</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#golang-net-http-x-net-http2-unlimited-number-of-continuation-frames-causes-dos" rel="noopener noreferrer">golang: net/http, x/net/http2: unlimited number of CONTINUATION frames causes DoS</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#jose-go-improper-handling-of-highly-compressed-data" rel="noopener noreferrer">jose-go: improper handling of highly compressed data</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#jwt-token" rel="noopener noreferrer">JWT token</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#kyverno-resource-with-a-deletiontimestamp-may-allow-policy-circumvention" rel="noopener noreferrer">Kyverno resource with a deletionTimestamp may allow policy circumvention</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#kyverno-seccomp-control-can-be-circumvented" rel="noopener noreferrer">kyverno seccomp control can be circumvented</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#kyverno-vulnerable-due-to-usage-of-insecure-cipher" rel="noopener noreferrer">Kyverno vulnerable due to usage of insecure cipher</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#mholt-archiver-path-traversal-vulnerability" rel="noopener noreferrer">mholt/archiver: path traversal vulnerability</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#microsoft-windows-remote-desktop-protocol-server-man-in-the-middle-weakness" rel="noopener noreferrer">Microsoft Windows Remote Desktop Protocol Server Man-in-the-Middle Weakness</a> (Source: nessus, 2 hosts)</li>
+<li>[Medium] <a href="#opa-opa-smb-force-authentication" rel="noopener noreferrer">opa: OPA SMB Force-Authentication</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#policy-bypass-for-host-firewall-policy-due-to-race-condition-in-cilium-agent" rel="noopener noreferrer">Policy bypass for Host Firewall policy due to race condition in Cilium agent</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#smb-signing-disabled" rel="noopener noreferrer">SMB Signing Disabled</a> (Source: nessus, 2 hosts)</li>
+<li>[Medium] <a href="#ssl-certificate" rel="noopener noreferrer">SSL certificate</a> at / (Source: burp, 1 host)</li>
+<li>[Medium] <a href="#strict-transport-security-misconfiguration" rel="noopener noreferrer">Strict Transport Security Misconfiguration</a> at / (Source: burp, 1 host)</li>
+<li>[Medium] <a href="#terminal-services-encryption-level-is-medium-or-low" rel="noopener noreferrer">Terminal Services Encryption Level is Medium or Low</a> (Source: nessus, 2 hosts)</li>
+<li>[Medium] <a href="#unencrypted-ingress-health-traffic-when-using-wireguard-transparent-encryption" rel="noopener noreferrer">Unencrypted ingress/health traffic when using Wireguard transparent encryption</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-ipsec-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using IPsec and L7 policies</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#unencrypted-traffic-between-nodes-when-using-wireguard-and-l7-policies" rel="noopener noreferrer">Unencrypted traffic between nodes when using WireGuard and L7 policies</a> (Source: trivy, 1 host)</li>
+<li>[Medium] <a href="#unencrypted-traffic-between-pods-when-using-wireguard-and-an-external-kvstore" rel="noopener noreferrer">Unencrypted traffic between pods when using Wireguard and an external kvstore</a> (Source: trivy, 1 host)</li>
 </ul>
 <h2>Affected Hosts</h2>
 <ul>
-<li>
-<p>10.2.100.1</p>
-</li>
-<li>
-<p>.</p>
-</li>
-<li>
-<p>127.0.0.1</p>
-</li>
-<li>
-<p>10.31.112.24 (qa3app04)</p>
-</li>
-<li>
-<p>10.31.112.23 (qa3app03)</p>
-</li>
+<li>10.2.100.1</li>
+<li>local (filesystem)</li>
+<li>127.0.0.1</li>
+<li>10.31.112.24 (qa3app04)</li>
+<li>10.31.112.23 (qa3app03)</li>
 </ul>
 <div id="cross-site-request-forgery" class="finding-block" data-severity="Medium" data-title="cross site request forgery 10.2.100.1 /demo/xss-reflected.php"><hr>
 <h1>Cross Site Request Forgery</h1>
@@ -319,12 +211,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -371,12 +259,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -423,12 +307,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -475,12 +355,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -527,12 +403,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -579,12 +451,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -631,12 +499,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -683,12 +547,8 @@ This control includes a component for CSRF.</p>
 Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Request-Forgery" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Request-Forgery</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/352.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -714,12 +574,8 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <p>Disable directory browsing.  If this is required, make sure the listed files does not induce risks.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://httpd.apache.org/docs/mod/core.html#options" rel="noopener noreferrer">http://httpd.apache.org/docs/mod/core.html#options</a></p>
-</li>
-<li>
-<p><a href="http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html" rel="noopener noreferrer">http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html</a></p>
-</li>
+<li><a href="http://httpd.apache.org/docs/mod/core.html#options" rel="noopener noreferrer">http://httpd.apache.org/docs/mod/core.html#options</a></li>
+<li><a href="http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html" rel="noopener noreferrer">http://alamo.satlug.org/pipermail/satlug/2002-February/000053.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -758,12 +614,8 @@ Check the HTTP Referer header to see if the request originated from an expected 
 <p>This may not be a feasible solution, and it only limits the impact to the operating system; the rest of your application may still be subject to compromise.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Path-Traversal" rel="noopener noreferrer">http://projects.webappsec.org/Path-Traversal</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/22.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/22.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Path-Traversal" rel="noopener noreferrer">http://projects.webappsec.org/Path-Traversal</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/22.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/22.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -799,18 +651,10 @@ Do not create dynamic SQL query by simple string concatentation.
 Use minimum database user privilege for the application.  This does not eliminate SQL injection but minimize its damage.  Eg if the application require reading one table only, grant such access to the application.  Avoid using 'sa' or 'db-owner'.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></p>
-</li>
-<li>
-<p><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></p>
-</li>
-<li>
-<p><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></p>
-</li>
-<li>
-<p><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></p>
-</li>
+<li><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></li>
+<li><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></li>
+<li><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></li>
+<li><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -847,18 +691,10 @@ Do not create dynamic SQL query by simple string concatentation.
 Use minimum database user privilege for the application.  This does not eliminate SQL injection but minimize its damage.  Eg if the application require reading one table only, grant such access to the application.  Avoid using 'sa' or 'db-owner'.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></p>
-</li>
-<li>
-<p><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></p>
-</li>
-<li>
-<p><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></p>
-</li>
-<li>
-<p><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></p>
-</li>
+<li><a href="http://www.owasp.org/documentation/guide" rel="noopener noreferrer">http://www.owasp.org/documentation/guide</a></li>
+<li><a href="http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23" rel="noopener noreferrer">http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23</a></li>
+<li><a href="http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf" rel="noopener noreferrer">http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf</a></li>
+<li><a href="http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf" rel="noopener noreferrer">http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -908,12 +744,8 @@ For every web page that is generated, use and specify a character encoding such 
 <p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -960,12 +792,8 @@ For every web page that is generated, use and specify a character encoding such 
 <p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -1012,12 +840,8 @@ For every web page that is generated, use and specify a character encoding such 
 <p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -1064,12 +888,8 @@ For every web page that is generated, use and specify a character encoding such 
 <p>Ensure that you perform input validation at well-defined interfaces within the application. This will help protect the application even if a component is reused or moved elsewhere.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></p>
-</li>
-<li>
-<p><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></p>
-</li>
+<li><a href="http://projects.webappsec.org/Cross-Site-Scripting" rel="noopener noreferrer">http://projects.webappsec.org/Cross-Site-Scripting</a></li>
+<li><a href="http://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer">http://cwe.mitre.org/data/definitions/79.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -1094,7 +914,7 @@ Attack: '"&lt;script&gt;alert(1);&lt;/script&gt;
 <p>Secret detected: jwt-token</p>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target (trivy)</h3>
@@ -1118,7 +938,7 @@ Attack: '"&lt;script&gt;alert(1);&lt;/script&gt;
 <p>Secret detected: private-key</p>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1139,34 +959,18 @@ Attack: '"&lt;script&gt;alert(1);&lt;/script&gt;
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.13.13, 1.14.8, 1.15.2.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-28248" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28248</a></p>
-</li>
-<li>
-<p><a href="https://docs.cilium.io/en/stable/security/policy/language/#http" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/policy/language/#http</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28248" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28248</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-28248" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28248</a></li>
+<li><a href="https://docs.cilium.io/en/stable/security/policy/language/#http" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/policy/language/#http</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-68mj-9pjq-mc85</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28248" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28248</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1188,37 +992,19 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.13.14, 1.14.9, 1.15.3.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-28860" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28860</a></p>
-</li>
-<li>
-<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-ipsec" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-ipsec</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28860" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28860</a></p>
-</li>
-<li>
-<p><a href="https://pkg.go.dev/vuln/GO-2024-2666" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2666</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-28860" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28860</a></li>
+<li><a href="https://docs.cilium.io/en/stable/security/network/encryption-ipsec" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-ipsec</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/311fbce5280491cddceab178d83b06fa23688c72</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a1742b478306fa256cd27df1039dfae0537b4149</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/a652c123331852cca90c74202f993d4170fd37fa</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-pwqm-x5x6-5586</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28860" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28860</a></li>
+<li><a href="https://pkg.go.dev/vuln/GO-2024-2666" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2666</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1240,43 +1026,21 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.13.17, 1.14.12, 1.15.6.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-37307" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-37307</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-37307" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-37307</a></p>
-</li>
-<li>
-<p><a href="https://pkg.go.dev/vuln/GO-2024-2922" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2922</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-37307" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-37307</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/0191b1ebcfdd61cefd06da0315a0e7d504167407</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/224e288a5bf40d0bb0f16c9413693b319633431a</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9299c0fd0024e33397cffc666ff851e82af28741</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/958d7b77274bf2c272d8cdfd812631d644250653</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9eb25ba40391a9b035d7e66401b862818f4aac4b</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/bf9a1ae1b2d2b2c9cca329d7aa96aa4858032a61</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-wh78-7948-358j</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-37307" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-37307</a></li>
+<li><a href="https://pkg.go.dev/vuln/GO-2024-2922" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2922</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1298,28 +1062,16 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.14.7.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-25630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25630</a></p>
-</li>
-<li>
-<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25630</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-25630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25630</a></li>
+<li><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-7496-fgv9-xw82</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25630</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1341,31 +1093,17 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.14.7.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-25631" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25631</a></p>
-</li>
-<li>
-<p><a href="https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore" rel="noopener noreferrer">https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore</a></p>
-</li>
-<li>
-<p><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25631" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25631</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-25631" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-25631</a></li>
+<li><a href="https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore" rel="noopener noreferrer">https://docs.cilium.io/en/stable/installation/k8s-install-external-etcd/#when-do-i-need-to-use-a-kvstore</a></li>
+<li><a href="https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg" rel="noopener noreferrer">https://docs.cilium.io/en/stable/security/network/encryption-wireguard/#encryption-wg</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.14.7" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.7</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-x989-52fc-4vr4</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-25631" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-25631</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1387,31 +1125,17 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.13.13, 1.14.8, 1.15.2.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-28249" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28249</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28249" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28249</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-28249" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28249</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-j89h-qrvr-xc36</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28249" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28249</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1433,31 +1157,17 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.14.8, 1.15.2.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-28250" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28250</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28250" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28250</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-28250" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28250</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.13.13" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.13.13</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.14.8" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.14.8</a></li>
+<li><a href="https://github.com/cilium/cilium/releases/tag/v1.15.2" rel="noopener noreferrer">https://github.com/cilium/cilium/releases/tag/v1.15.2</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-v6q2-4qr3-5cw6</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28250" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28250</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1479,34 +1189,18 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.14.14, 1.15.8.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-42488" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-42488</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/pull/33511" rel="noopener noreferrer">https://github.com/cilium/cilium/pull/33511</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-42488" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-42488</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-42488" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-42488</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/7877db09b3f34d3081a1d66459b8fa6603dc3d30</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/aa44dd148a9be95e07782e4f990e61678ef0abf8</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/f81a1ee0cfdec928980db8640def984b2eeaa134</a></li>
+<li><a href="https://github.com/cilium/cilium/pull/33511" rel="noopener noreferrer">https://github.com/cilium/cilium/pull/33511</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-q7w8-72mr-vpgw</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-42488" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-42488</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1528,28 +1222,16 @@ Installed: 1.14.5
 <p>Update github.com/cilium/cilium from 1.14.5 to 1.15.10, 1.14.16.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-47825" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-47825</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524</a></p>
-</li>
-<li>
-<p><a href="https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-47825" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-47825</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-47825" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-47825</a></li>
+<li><a href="https://github.com/cilium/cilium" rel="noopener noreferrer">https://github.com/cilium/cilium</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/02d28d9ac9afcaddd301fae6fb4d6cda8c2d0c45</a></li>
+<li><a href="https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524" rel="noopener noreferrer">https://github.com/cilium/cilium/commit/9c01afb5646af3f0c696421a410dc66c513b6524</a></li>
+<li><a href="https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6" rel="noopener noreferrer">https://github.com/cilium/cilium/security/advisories/GHSA-3wwx-63fv-pfq6</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-47825" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-47825</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1575,61 +1257,27 @@ Installed: 1.14.5
 <p>Update github.com/docker/docker from 25.0.5+incompatible to 23.0.15, 26.1.5, 27.1.1, 25.0.6.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-41110" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-41110</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-41110" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-41110</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby" rel="noopener noreferrer">https://github.com/moby/moby</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191" rel="noopener noreferrer">https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76" rel="noopener noreferrer">https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919" rel="noopener noreferrer">https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b" rel="noopener noreferrer">https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0" rel="noopener noreferrer">https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1" rel="noopener noreferrer">https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801" rel="noopener noreferrer">https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb" rel="noopener noreferrer">https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb</a></p>
-</li>
-<li>
-<p><a href="https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq" rel="noopener noreferrer">https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-41110" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-41110</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-41110" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-41110</a></p>
-</li>
-<li>
-<p><a href="https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin" rel="noopener noreferrer">https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-41110" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-41110</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-41110" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-41110</a></li>
+<li><a href="https://github.com/moby/moby" rel="noopener noreferrer">https://github.com/moby/moby</a></li>
+<li><a href="https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191" rel="noopener noreferrer">https://github.com/moby/moby/commit/411e817ddf710ff8e08fa193da80cb78af708191</a></li>
+<li><a href="https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76" rel="noopener noreferrer">https://github.com/moby/moby/commit/42f40b1d6dd7562342f832b9cd2adf9e668eeb76</a></li>
+<li><a href="https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919" rel="noopener noreferrer">https://github.com/moby/moby/commit/65cc597cea28cdc25bea3b8a86384b4251872919</a></li>
+<li><a href="https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b" rel="noopener noreferrer">https://github.com/moby/moby/commit/852759a7df454cbf88db4e954c919becd48faa9b</a></li>
+<li><a href="https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0" rel="noopener noreferrer">https://github.com/moby/moby/commit/a31260625655cff9ae226b51757915e275e304b0</a></li>
+<li><a href="https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1" rel="noopener noreferrer">https://github.com/moby/moby/commit/a79fabbfe84117696a19671f4aa88b82d0f64fc1</a></li>
+<li><a href="https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae160b4edddb72ef4bd71f66b975a1a1cc434f00</a></li>
+<li><a href="https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f" rel="noopener noreferrer">https://github.com/moby/moby/commit/ae2b3666c517c96cbc2adf1af5591a6b00d4ec0f</a></li>
+<li><a href="https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801" rel="noopener noreferrer">https://github.com/moby/moby/commit/cc13f952511154a2866bddbb7dddebfe9e83b801</a></li>
+<li><a href="https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb" rel="noopener noreferrer">https://github.com/moby/moby/commit/fc274cd2ff4cf3b48c91697fb327dd1fb95588fb</a></li>
+<li><a href="https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq" rel="noopener noreferrer">https://github.com/moby/moby/security/advisories/GHSA-v23v-6jw2-98fq</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-41110" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-41110</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-41110" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-41110</a></li>
+<li><a href="https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin" rel="noopener noreferrer">https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1651,129 +1299,47 @@ Installed: 25.0.5+incompatible
 <p>Update github.com/go-jose/go-jose/v3 from 3.0.1 to 3.0.3.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-28180" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28180</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/errata/RHSA-2024:3827" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:3827</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-28180" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-28180</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/2268820</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/2268854</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268820</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268854</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180</a></p>
-</li>
-<li>
-<p><a href="https://errata.almalinux.org/9/ALSA-2024-3827.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-3827.html</a></p>
-</li>
-<li>
-<p><a href="https://errata.rockylinux.org/RLSA-2024:3827" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:3827</a></p>
-</li>
-<li>
-<p><a href="https://github.com/go-jose/go-jose" rel="noopener noreferrer">https://github.com/go-jose/go-jose</a></p>
-</li>
-<li>
-<p><a href="https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298</a></p>
-</li>
-<li>
-<p><a href="https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a</a></p>
-</li>
-<li>
-<p><a href="https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502</a></p>
-</li>
-<li>
-<p><a href="https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g" rel="noopener noreferrer">https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/cve/CVE-2024-28180.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-28180.html</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/errata/ELSA-2024-3968.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3968.html</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28180" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28180</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-28180" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-28180</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-28180" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-28180</a></li>
+<li><a href="https://access.redhat.com/errata/RHSA-2024:3827" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:3827</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-28180" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-28180</a></li>
+<li><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></li>
+<li><a href="https://bugzilla.redhat.com/2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/2268820</a></li>
+<li><a href="https://bugzilla.redhat.com/2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/2268854</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268820" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268820</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268854" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268854</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28176</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-28180</a></li>
+<li><a href="https://errata.almalinux.org/9/ALSA-2024-3827.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-3827.html</a></li>
+<li><a href="https://errata.rockylinux.org/RLSA-2024:3827" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:3827</a></li>
+<li><a href="https://github.com/go-jose/go-jose" rel="noopener noreferrer">https://github.com/go-jose/go-jose</a></li>
+<li><a href="https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/0dd4dd541c665fb292d664f77604ba694726f298</a></li>
+<li><a href="https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/add6a284ea0f844fd6628cba637be5451fe4b28a</a></li>
+<li><a href="https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502" rel="noopener noreferrer">https://github.com/go-jose/go-jose/commit/f4c051a0653d78199a053892f7619ebf96339502</a></li>
+<li><a href="https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g" rel="noopener noreferrer">https://github.com/go-jose/go-jose/security/advisories/GHSA-c5q2-7r4c-mv6g</a></li>
+<li><a href="https://linux.oracle.com/cve/CVE-2024-28180.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-28180.html</a></li>
+<li><a href="https://linux.oracle.com/errata/ELSA-2024-3968.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3968.html</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GD2GSBQTBLYADASUBHHZV2CZPTSLIPQJ/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/I6MMWFBOXJA6ZCXNVPDFJ4XMK5PVG5RG/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IJ6LAJJ2FTA2JVVOACCV5RZTOIZLXUNJ/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/JNPMXL36YGS3GQEVI3Q5HKHJ7YAAQXL5/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KXKGNCRU7OTM5AHC7YIYBNOWI742PRMY/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/MSOMHDKRPU3A2JEMRODT2IREDFBLVPGS/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UG5FSEYJ3GP27FZXC5YAAMMEC5XWKJHG/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UJO2U5ACZVACNQXJ5EBRFLFW6DP5BROY/</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XJDO5VSIAOGT2WP63AXAAWNRSVJCNCRH/</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-28180" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-28180</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-28180" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-28180</a></li>
 </ul>
 <h2>Reported by</h2>
 <h3>trivy</h3>
@@ -1786,7 +1352,7 @@ Installed: 25.0.5+incompatible
 <p><strong>Remediation</strong>: Update gopkg.in/go-jose/go-jose.v2 from 2.6.1 to 2.6.3.</p>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target (trivy)</h3>
@@ -1812,64 +1378,28 @@ Installed: 2.6.1
 <p>Update github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.7.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-6104" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-6104</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/errata/RHSA-2024:9115" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:9115</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-6104" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-6104</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2279814" rel="noopener noreferrer">https://bugzilla.redhat.com/2279814</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2292668" rel="noopener noreferrer">https://bugzilla.redhat.com/2292668</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2292787" rel="noopener noreferrer">https://bugzilla.redhat.com/2292787</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2294000" rel="noopener noreferrer">https://bugzilla.redhat.com/2294000</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2295310" rel="noopener noreferrer">https://bugzilla.redhat.com/2295310</a></p>
-</li>
-<li>
-<p><a href="https://discuss.hashicorp.com/c/security" rel="noopener noreferrer">https://discuss.hashicorp.com/c/security</a></p>
-</li>
-<li>
-<p><a href="https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027" rel="noopener noreferrer">https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027</a></p>
-</li>
-<li>
-<p><a href="https://errata.almalinux.org/9/ALSA-2024-9115.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-9115.html</a></p>
-</li>
-<li>
-<p><a href="https://github.com/advisories/GHSA-v6v8-xj6m-xwqh" rel="noopener noreferrer">https://github.com/advisories/GHSA-v6v8-xj6m-xwqh</a></p>
-</li>
-<li>
-<p><a href="https://github.com/hashicorp/go-retryablehttp" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp</a></p>
-</li>
-<li>
-<p><a href="https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/cve/CVE-2024-6104.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-6104.html</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/errata/ELSA-2024-9115.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-9115.html</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-6104" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-6104</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-6104" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-6104</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-6104" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-6104</a></li>
+<li><a href="https://access.redhat.com/errata/RHSA-2024:9115" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:9115</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-6104" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-6104</a></li>
+<li><a href="https://bugzilla.redhat.com/2279814" rel="noopener noreferrer">https://bugzilla.redhat.com/2279814</a></li>
+<li><a href="https://bugzilla.redhat.com/2292668" rel="noopener noreferrer">https://bugzilla.redhat.com/2292668</a></li>
+<li><a href="https://bugzilla.redhat.com/2292787" rel="noopener noreferrer">https://bugzilla.redhat.com/2292787</a></li>
+<li><a href="https://bugzilla.redhat.com/2294000" rel="noopener noreferrer">https://bugzilla.redhat.com/2294000</a></li>
+<li><a href="https://bugzilla.redhat.com/2295310" rel="noopener noreferrer">https://bugzilla.redhat.com/2295310</a></li>
+<li><a href="https://discuss.hashicorp.com/c/security" rel="noopener noreferrer">https://discuss.hashicorp.com/c/security</a></li>
+<li><a href="https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027" rel="noopener noreferrer">https://discuss.hashicorp.com/t/hcsec-2024-12-go-retryablehttp-can-leak-basic-auth-credentials-to-log-files/68027</a></li>
+<li><a href="https://errata.almalinux.org/9/ALSA-2024-9115.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-9115.html</a></li>
+<li><a href="https://github.com/advisories/GHSA-v6v8-xj6m-xwqh" rel="noopener noreferrer">https://github.com/advisories/GHSA-v6v8-xj6m-xwqh</a></li>
+<li><a href="https://github.com/hashicorp/go-retryablehttp" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp</a></li>
+<li><a href="https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a" rel="noopener noreferrer">https://github.com/hashicorp/go-retryablehttp/commit/a99f07beb3c5faaa0a283617e6eb6bcf25f5049a</a></li>
+<li><a href="https://linux.oracle.com/cve/CVE-2024-6104.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2024-6104.html</a></li>
+<li><a href="https://linux.oracle.com/errata/ELSA-2024-9115.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-9115.html</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-6104" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-6104</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-6104" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-6104</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1891,25 +1421,15 @@ Installed: 0.7.5
 <p>Update github.com/kyverno/kyverno from 1.9.2 to 1.10.5.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2023-47630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-47630</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.11.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.11.0</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-47630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-47630</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2023-47630" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-47630</a></li>
+<li><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></li>
+<li><a href="https://github.com/kyverno/kyverno/releases/tag/v1.11.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.11.0</a></li>
+<li><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-3hfq-cx9j-923w</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-47630" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-47630</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1931,22 +1451,14 @@ Installed: 1.9.2
 <p>Update github.com/kyverno/kyverno from 1.9.2 to 1.13.0.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-48921" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-48921</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-48921" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-48921</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-48921" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-48921</a></li>
+<li><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></li>
+<li><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-qjvc-p88j-j9rm</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-48921" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-48921</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -1968,28 +1480,16 @@ Installed: 1.9.2
 <p>Update github.com/kyverno/kyverno from 1.9.2 to 1.9.4.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2023-33191" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-33191</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/pull/7263" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7263</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.4" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.4</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-33191" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-33191</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2023-33191" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-33191</a></li>
+<li><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></li>
+<li><a href="https://github.com/kyverno/kyverno/pull/7263" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7263</a></li>
+<li><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.4" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.4</a></li>
+<li><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-33hq-f2mf-jm3c</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-33191" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-33191</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2011,25 +1511,15 @@ Installed: 1.9.2
 <p>Update github.com/kyverno/kyverno from 1.9.2 to 1.10.0.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2023-34091" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-34091</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.10.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.10.0</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-34091" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-34091</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2023-34091" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-34091</a></li>
+<li><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></li>
+<li><a href="https://github.com/kyverno/kyverno/releases/tag/v1.10.0" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.10.0</a></li>
+<li><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hq4m-4948-64cc</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-34091" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-34091</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2094,25 +1584,15 @@ Nmap done: 1 IP address (1 host up) scanned in 12.72 seconds
 <p>Update github.com/kyverno/kyverno from 1.9.2 to 1.9.5.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://github.com/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/advisories/GHSA-hgv6-w7r3-w4qw</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/pull/7308" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7308</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.5" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.5</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw</a></p>
-</li>
+<li><a href="https://github.com/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/advisories/GHSA-hgv6-w7r3-w4qw</a></li>
+<li><a href="https://github.com/kyverno/kyverno" rel="noopener noreferrer">https://github.com/kyverno/kyverno</a></li>
+<li><a href="https://github.com/kyverno/kyverno/pull/7308" rel="noopener noreferrer">https://github.com/kyverno/kyverno/pull/7308</a></li>
+<li><a href="https://github.com/kyverno/kyverno/releases/tag/v1.9.5" rel="noopener noreferrer">https://github.com/kyverno/kyverno/releases/tag/v1.9.5</a></li>
+<li><a href="https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw" rel="noopener noreferrer">https://github.com/kyverno/kyverno/security/advisories/GHSA-hgv6-w7r3-w4qw</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2132,31 +1612,17 @@ Installed: 1.9.2
 <p>A flaw was discovered in the mholt/archiver package. This flaw allows an attacker to create a specially crafted tar file, which, when unpacked, may allow access to restricted files or directories. This issue can allow the creation or overwriting of files with the user's or application's privileges using the library.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-0406" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-0406</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-0406" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-0406</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2257749" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2257749</a></p>
-</li>
-<li>
-<p><a href="https://github.com/advisories/GHSA-rhh4-rh7c-7r5v" rel="noopener noreferrer">https://github.com/advisories/GHSA-rhh4-rh7c-7r5v</a></p>
-</li>
-<li>
-<p><a href="https://github.com/mholt/archiver" rel="noopener noreferrer">https://github.com/mholt/archiver</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-0406" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-0406</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-0406" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-0406</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-0406" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-0406</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-0406" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-0406</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2257749" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2257749</a></li>
+<li><a href="https://github.com/advisories/GHSA-rhh4-rh7c-7r5v" rel="noopener noreferrer">https://github.com/advisories/GHSA-rhh4-rh7c-7r5v</a></li>
+<li><a href="https://github.com/mholt/archiver" rel="noopener noreferrer">https://github.com/mholt/archiver</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-0406" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-0406</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-0406" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-0406</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2178,37 +1644,19 @@ Installed: 3.5.1
 <p>Update github.com/open-policy-agent/opa from 0.60.0 to 0.68.0.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-8260" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-8260</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-8260" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-8260</a></p>
-</li>
-<li>
-<p><a href="https://github.com/open-policy-agent/opa" rel="noopener noreferrer">https://github.com/open-policy-agent/opa</a></p>
-</li>
-<li>
-<p><a href="https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e</a></p>
-</li>
-<li>
-<p><a href="https://github.com/open-policy-agent/opa/releases/tag/v0.68.0" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/releases/tag/v0.68.0</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-8260" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-8260</a></p>
-</li>
-<li>
-<p><a href="https://pkg.go.dev/vuln/GO-2024-3141" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-3141</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-8260" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-8260</a></p>
-</li>
-<li>
-<p><a href="https://www.tenable.com/security/research/tra-2024-36" rel="noopener noreferrer">https://www.tenable.com/security/research/tra-2024-36</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-8260" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-8260</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-8260" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-8260</a></li>
+<li><a href="https://github.com/open-policy-agent/opa" rel="noopener noreferrer">https://github.com/open-policy-agent/opa</a></li>
+<li><a href="https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/commit/10f4d553e6bb6ae9c69611ecdd9a77dda857070e</a></li>
+<li><a href="https://github.com/open-policy-agent/opa/releases/tag/v0.68.0" rel="noopener noreferrer">https://github.com/open-policy-agent/opa/releases/tag/v0.68.0</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-8260" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-8260</a></li>
+<li><a href="https://pkg.go.dev/vuln/GO-2024-3141" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-3141</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-8260" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-8260</a></li>
+<li><a href="https://www.tenable.com/security/research/tra-2024-36" rel="noopener noreferrer">https://www.tenable.com/security/research/tra-2024-36</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2230,40 +1678,20 @@ Installed: 0.60.0
 <p>Update github.com/sigstore/cosign/v2 from 2.2.2 to 2.2.4.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-29902" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29902</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-29902" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29902</a></p>
-</li>
-<li>
-<p><a href="https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40" rel="noopener noreferrer">https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29902" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29902</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-29902" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29902</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-29902" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29902</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-29902" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29902</a></li>
+<li><a href="https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40" rel="noopener noreferrer">https://github.com/google/go-containerregistry/blob/a0658aa1d0cc7a7f1bcc4a3af9155335b6943f40/pkg/v1/remote/layer.go#L36-L40</a></li>
+<li><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></li>
+<li><a href="https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/9bc3ee309bf35d2f6e17f5d23f231a3d8bf580bc/pkg/oci/remote/remote.go#L228-L239</a></li>
+<li><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></li>
+<li><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></li>
+<li><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-88jx-383q-w4qc</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29902" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29902</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-29902" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29902</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2285,40 +1713,20 @@ Installed: 2.2.2
 <p>Update github.com/sigstore/cosign/v2 from 2.2.2 to 2.2.4.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2024-29903" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29903</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2024-29903" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29903</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></p>
-</li>
-<li>
-<p><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29903" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29903</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2024-29903" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29903</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2024-29903" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2024-29903</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2024-29903" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2024-29903</a></li>
+<li><a href="https://github.com/sigstore/cosign" rel="noopener noreferrer">https://github.com/sigstore/cosign</a></li>
+<li><a href="https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/14795db16417579fac0c00c11e166868d7976b61/pkg/cosign/verify.go#L948-L955</a></li>
+<li><a href="https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70" rel="noopener noreferrer">https://github.com/sigstore/cosign/blob/286a98a4a99c1b2f32f84b0d560e324100312280/pkg/oci/remote/signatures.go#L56-L70</a></li>
+<li><a href="https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e" rel="noopener noreferrer">https://github.com/sigstore/cosign/commit/629f5f8fa672973503edde75f84dcd984637629e</a></li>
+<li><a href="https://github.com/sigstore/cosign/releases/tag/v2.2.4" rel="noopener noreferrer">https://github.com/sigstore/cosign/releases/tag/v2.2.4</a></li>
+<li><a href="https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv" rel="noopener noreferrer">https://github.com/sigstore/cosign/security/advisories/GHSA-95pr-fxf5-86gv</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-29903" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2024-29903</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2024-29903" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2024-29903</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2340,124 +1748,48 @@ Installed: 2.2.2
 <p>Update golang.org/x/net from 0.22.0 to 0.23.0.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://avd.aquasec.com/nvd/cve-2023-45288" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-45288</a></p>
-</li>
-<li>
-<p><a href="http://www.openwall.com/lists/oss-security/2024/04/03/16" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/03/16</a></p>
-</li>
-<li>
-<p><a href="http://www.openwall.com/lists/oss-security/2024/04/05/4" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/05/4</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/errata/RHSA-2024:2724" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:2724</a></p>
-</li>
-<li>
-<p><a href="https://access.redhat.com/security/cve/CVE-2023-45288" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2023-45288</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/2268018</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/2268019</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/2268273</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268018</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268019</a></p>
-</li>
-<li>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268273</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></p>
-</li>
-<li>
-<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783</a></p>
-</li>
-<li>
-<p><a href="https://errata.almalinux.org/9/ALSA-2024-2724.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-2724.html</a></p>
-</li>
-<li>
-<p><a href="https://errata.rockylinux.org/RLSA-2024:2724" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:2724</a></p>
-</li>
-<li>
-<p><a href="https://go.dev/cl/576155" rel="noopener noreferrer">https://go.dev/cl/576155</a></p>
-</li>
-<li>
-<p><a href="https://go.dev/issue/65051" rel="noopener noreferrer">https://go.dev/issue/65051</a></p>
-</li>
-<li>
-<p><a href="https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M" rel="noopener noreferrer">https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M</a></p>
-</li>
-<li>
-<p><a href="https://kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://kb.cert.org/vuls/id/421644</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/cve/CVE-2023-45288.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2023-45288.html</a></p>
-</li>
-<li>
-<p><a href="https://linux.oracle.com/errata/ELSA-2024-3346.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3346.html</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT</a></p>
-</li>
-<li>
-<p><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/</a></p>
-</li>
-<li>
-<p><a href="https://nowotarski.info/http2-continuation-flood-technical-details" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood-technical-details</a></p>
-</li>
-<li>
-<p><a href="https://nowotarski.info/http2-continuation-flood/" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood/</a></p>
-</li>
-<li>
-<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-45288" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-45288</a></p>
-</li>
-<li>
-<p><a href="https://pkg.go.dev/vuln/GO-2024-2687" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2687</a></p>
-</li>
-<li>
-<p><a href="https://security.netapp.com/advisory/ntap-20240419-0009" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009</a></p>
-</li>
-<li>
-<p><a href="https://security.netapp.com/advisory/ntap-20240419-0009/" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009/</a></p>
-</li>
-<li>
-<p><a href="https://ubuntu.com/security/notices/USN-6886-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-6886-1</a></p>
-</li>
-<li>
-<p><a href="https://ubuntu.com/security/notices/USN-7109-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7109-1</a></p>
-</li>
-<li>
-<p><a href="https://ubuntu.com/security/notices/USN-7111-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7111-1</a></p>
-</li>
-<li>
-<p><a href="https://www.cve.org/CVERecord?id=CVE-2023-45288" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2023-45288</a></p>
-</li>
-<li>
-<p><a href="https://www.kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://www.kb.cert.org/vuls/id/421644</a></p>
-</li>
+<li><a href="https://avd.aquasec.com/nvd/cve-2023-45288" rel="noopener noreferrer">https://avd.aquasec.com/nvd/cve-2023-45288</a></li>
+<li><a href="http://www.openwall.com/lists/oss-security/2024/04/03/16" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/03/16</a></li>
+<li><a href="http://www.openwall.com/lists/oss-security/2024/04/05/4" rel="noopener noreferrer">http://www.openwall.com/lists/oss-security/2024/04/05/4</a></li>
+<li><a href="https://access.redhat.com/errata/RHSA-2024:2724" rel="noopener noreferrer">https://access.redhat.com/errata/RHSA-2024:2724</a></li>
+<li><a href="https://access.redhat.com/security/cve/CVE-2023-45288" rel="noopener noreferrer">https://access.redhat.com/security/cve/CVE-2023-45288</a></li>
+<li><a href="https://bugzilla.redhat.com/2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/2268017</a></li>
+<li><a href="https://bugzilla.redhat.com/2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/2268018</a></li>
+<li><a href="https://bugzilla.redhat.com/2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/2268019</a></li>
+<li><a href="https://bugzilla.redhat.com/2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/2268273</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268017" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268017</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268018" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268018</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268019" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268019</a></li>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=2268273" rel="noopener noreferrer">https://bugzilla.redhat.com/show_bug.cgi?id=2268273</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45288</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45289</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-45290</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783" rel="noopener noreferrer">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-24783</a></li>
+<li><a href="https://errata.almalinux.org/9/ALSA-2024-2724.html" rel="noopener noreferrer">https://errata.almalinux.org/9/ALSA-2024-2724.html</a></li>
+<li><a href="https://errata.rockylinux.org/RLSA-2024:2724" rel="noopener noreferrer">https://errata.rockylinux.org/RLSA-2024:2724</a></li>
+<li><a href="https://go.dev/cl/576155" rel="noopener noreferrer">https://go.dev/cl/576155</a></li>
+<li><a href="https://go.dev/issue/65051" rel="noopener noreferrer">https://go.dev/issue/65051</a></li>
+<li><a href="https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M" rel="noopener noreferrer">https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M</a></li>
+<li><a href="https://kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://kb.cert.org/vuls/id/421644</a></li>
+<li><a href="https://linux.oracle.com/cve/CVE-2023-45288.html" rel="noopener noreferrer">https://linux.oracle.com/cve/CVE-2023-45288.html</a></li>
+<li><a href="https://linux.oracle.com/errata/ELSA-2024-3346.html" rel="noopener noreferrer">https://linux.oracle.com/errata/ELSA-2024-3346.html</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT</a></li>
+<li><a href="https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/" rel="noopener noreferrer">https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/QRYFHIQ6XRKRYBI2F5UESH67BJBQXUPT/</a></li>
+<li><a href="https://nowotarski.info/http2-continuation-flood-technical-details" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood-technical-details</a></li>
+<li><a href="https://nowotarski.info/http2-continuation-flood/" rel="noopener noreferrer">https://nowotarski.info/http2-continuation-flood/</a></li>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2023-45288" rel="noopener noreferrer">https://nvd.nist.gov/vuln/detail/CVE-2023-45288</a></li>
+<li><a href="https://pkg.go.dev/vuln/GO-2024-2687" rel="noopener noreferrer">https://pkg.go.dev/vuln/GO-2024-2687</a></li>
+<li><a href="https://security.netapp.com/advisory/ntap-20240419-0009" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009</a></li>
+<li><a href="https://security.netapp.com/advisory/ntap-20240419-0009/" rel="noopener noreferrer">https://security.netapp.com/advisory/ntap-20240419-0009/</a></li>
+<li><a href="https://ubuntu.com/security/notices/USN-6886-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-6886-1</a></li>
+<li><a href="https://ubuntu.com/security/notices/USN-7109-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7109-1</a></li>
+<li><a href="https://ubuntu.com/security/notices/USN-7111-1" rel="noopener noreferrer">https://ubuntu.com/security/notices/USN-7111-1</a></li>
+<li><a href="https://www.cve.org/CVERecord?id=CVE-2023-45288" rel="noopener noreferrer">https://www.cve.org/CVERecord?id=CVE-2023-45288</a></li>
+<li><a href="https://www.kb.cert.org/vuls/id/421644" rel="noopener noreferrer">https://www.kb.cert.org/vuls/id/421644</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
-<li>unknown (.)</li>
+<li>local (filesystem)</li>
 </ul>
 <h2>Evidence</h2>
 <h3>target</h3>
@@ -2544,18 +1876,10 @@ Installed: 0.22.0
 <p>It should be noted that various attacks exist against SSL in general, and in the context of HTTPS web connections in particular. It may be possible for a determined and suitably-positioned attacker to compromise SSL connections without user detection even when a valid SSL certificate is used.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="https://wiki.mozilla.org/Security/Server_Side_TLS" rel="noopener noreferrer">https://wiki.mozilla.org/Security/Server_Side_TLS</a></p>
-</li>
-<li>
-<p><a href="https://cwe.mitre.org/data/definitions/295.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/295.html</a></p>
-</li>
-<li>
-<p><a href="https://cwe.mitre.org/data/definitions/326.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/326.html</a></p>
-</li>
-<li>
-<p><a href="https://cwe.mitre.org/data/definitions/327.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/327.html</a></p>
-</li>
+<li><a href="https://wiki.mozilla.org/Security/Server_Side_TLS" rel="noopener noreferrer">https://wiki.mozilla.org/Security/Server_Side_TLS</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/295.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/295.html</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/326.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/326.html</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/327.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/327.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -2599,15 +1923,9 @@ These measures might include blocking network access from the application server
 <p>If the ability to trigger arbitrary external service interactions is not intended behavior, then you should implement a whitelist of permitted services and hosts, and block any interactions that do not appear on this whitelist.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html" rel="noopener noreferrer">http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html</a></p>
-</li>
-<li>
-<p><a href="https://cwe.mitre.org/data/definitions/918.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/918.html</a></p>
-</li>
-<li>
-<p><a href="https://cwe.mitre.org/data/definitions/406.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/406.html</a></p>
-</li>
+<li><a href="http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html" rel="noopener noreferrer">http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/918.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/918.html</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/406.html" rel="noopener noreferrer">https://cwe.mitre.org/data/definitions/406.html</a></li>
 </ul>
 <h2>Hosts</h2>
 <ul>
@@ -2716,15 +2034,9 @@ These measures might include blocking network access from the application server
 </ul>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://www.oxid.it/downloads/rdp-gbu.pdf" rel="noopener noreferrer">http://www.oxid.it/downloads/rdp-gbu.pdf</a></p>
-</li>
-<li>
-<p><a href="http://www.nessus.org/u?e2628096" rel="noopener noreferrer">http://www.nessus.org/u?e2628096</a></p>
-</li>
-<li>
-<p><a href="http://technet.microsoft.com/en-us/library/cc782610.aspx" rel="noopener noreferrer">http://technet.microsoft.com/en-us/library/cc782610.aspx</a></p>
-</li>
+<li><a href="http://www.oxid.it/downloads/rdp-gbu.pdf" rel="noopener noreferrer">http://www.oxid.it/downloads/rdp-gbu.pdf</a></li>
+<li><a href="http://www.nessus.org/u?e2628096" rel="noopener noreferrer">http://www.nessus.org/u?e2628096</a></li>
+<li><a href="http://technet.microsoft.com/en-us/library/cc782610.aspx" rel="noopener noreferrer">http://technet.microsoft.com/en-us/library/cc782610.aspx</a></li>
 </ul>
 <h2>Reported by</h2>
 <h3>nessus</h3>
@@ -2734,14 +2046,17 @@ These measures might include blocking network access from the application server
 <p>This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.</p>
 <p><strong>Remediation</strong>: - Force the use of SSL as a transport layer for this service if supported, or/and
 - Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.</p>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.1 (CVSS2#AV:N/AC:H/Au:N/C:P/I:P/A:P)</p>
+<p>It may be possible to get access to the remote host.</p>
+<p>The remote version of the Remote Desktop Protocol Server (Terminal Service) is vulnerable to a man-in-the-middle (MiTM) attack. The RDP client makes no effort to validate the identity of the server when setting up encryption. An attacker with the ability to intercept traffic from the RDP server can establish encryption with the client and server without being detected. A MiTM attack of this nature would allow the attacker to obtain any sensitive information transmitted, including authentication credentials.</p>
+<p>This flaw exists because the RDP server stores a hardcoded RSA private key in the mstlsapi.dll library. Any local user with access to this file (on any Windows system) can retrieve the key and use it for this attack.</p>
+<p><strong>Remediation</strong>: - Force the use of SSL as a transport layer for this service if supported, or/and
+- Select the 'Allow connections only from computers running Remote Desktop with Network Level Authentication' setting if it is available.</p>
 <h2>Hosts</h2>
 <ul>
-<li>
-<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
-<li>
-<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
+<li>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
+<li>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
 </ul>
 <h2>Evidence</h2>
 <h3>port-info (nessus)</h3>
@@ -2784,14 +2099,24 @@ Service: msrdp
 <p>FIPS Compliant</p>
 </li>
 </ol>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 4.3 (CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N)</p>
+<p>The remote host is using weak cryptography.</p>
+<p>The remote Terminal Services service is not configured to use strong cryptography. </p>
+<p>Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</p>
+<p><strong>Remediation</strong>: Change RDP encryption level to one of :</p>
+<ol>
+<li>
+<p>High</p>
+</li>
+<li>
+<p>FIPS Compliant</p>
+</li>
+</ol>
 <h2>Hosts</h2>
 <ul>
-<li>
-<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
-<li>
-<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
+<li>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
+<li>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
 </ul>
 <h2>Evidence</h2>
 <h3>port-info (nessus)</h3>
@@ -2816,29 +2141,23 @@ Service: msrdp
 <p>Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
 <h2>References</h2>
 <ul>
-<li>
-<p><a href="http://support.microsoft.com/kb/887429" rel="noopener noreferrer">http://support.microsoft.com/kb/887429</a></p>
-</li>
-<li>
-<p><a href="http://www.nessus.org/u?74b80723" rel="noopener noreferrer">http://www.nessus.org/u?74b80723</a></p>
-</li>
-<li>
-<p><a href="http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html" rel="noopener noreferrer">http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</a></p>
-</li>
+<li><a href="http://support.microsoft.com/kb/887429" rel="noopener noreferrer">http://support.microsoft.com/kb/887429</a></li>
+<li><a href="http://www.nessus.org/u?74b80723" rel="noopener noreferrer">http://www.nessus.org/u?74b80723</a></li>
+<li><a href="http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html" rel="noopener noreferrer">http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</a></li>
 </ul>
 <h2>Reported by</h2>
 <h3>nessus</h3>
 <p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)</p>
 <p>Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.</p>
 <p><strong>Remediation</strong>: Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
+<h3>nessus</h3>
+<p><strong>Severity</strong>: Medium, <strong>CVSS Score</strong>: 5.0 (CVSS2#AV:N/AC:L/Au:N/C:N/I:P/A:N)</p>
+<p>Signing is disabled on the remote SMB server.  This can allow man-in-the-middle attacks against the SMB server.</p>
+<p><strong>Remediation</strong>: Enforce message signing in the host's configuration.  On Windows, this is found in the Local Security Policy.  On Samba, the setting is called 'server signing'.  See the 'see also' links for further details.</p>
 <h2>Hosts</h2>
 <ul>
-<li>
-<p>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
-<li>
-<p>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</p>
-</li>
+<li>10.31.112.24 (qa3app04) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
+<li>10.31.112.23 (qa3app03) - OS: Microsoft Windows Server 2008 R2 Standard Service Pack 1</li>
 </ul>
 <h2>Evidence</h2>
 <h3>port-info (nessus)</h3>
