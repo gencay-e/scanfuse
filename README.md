@@ -29,7 +29,7 @@ pipx install git+https://github.com/gencay-e/scanfuse   # latest main branch
 
 You can also install with `pip install scanfuse`, or from a local checkout with `pipx install .`.
 
-Standalone executables for Linux (`x86_64`), Windows (`x86_64`), and macOS (`arm64`) are attached to each release on the [Releases page](https://github.com/gencay-e/scanfuse/releases) along with `SHA256SUMS`. To compile your own executable, see [Build a standalone executable](#build-a-standalone-executable).
+Standalone executables for Linux (`x86_64`), Windows (`x86_64`), and macOS (`arm64`) are attached to each release on the [Releases page](https://github.com/gencay-e/scanfuse/releases) along with `SHA256SUMS`. To compile your own executable, see [Development and building](#development-and-building).
 
 ## Usage
 
